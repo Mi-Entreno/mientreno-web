@@ -1,0 +1,265 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Mi Entreno — design system compartido con la app móvil (theme.ts / typography.ts).
+ * Cada token de abajo es el equivalente web de `Colors`, `ct`, `spacing`,
+ * `radius`, `layout`, `FONTS`, `FONT_SIZES` y `lineHeight`.
+ */
+@theme inline {
+  /* ── Tipografía: familias (FONTS) ──────────────────────────────────── */
+  /* FONTS.primary / primaryRegular → Oswald (títulos y botones)          */
+  --font-heading: var(--font-oswald), 'Oswald Fallback', sans-serif;
+  /* FONTS.secondary* → Montserrat (cuerpo)                               */
+  --font-sans: var(--font-montserrat), 'Montserrat Fallback', sans-serif;
+  --font-mono: var(--font-geist-mono), 'Geist Mono Fallback';
+
+  /* ── Tipografía: escala canónica (FONT_SIZES) ──────────────────────── */
+  /* Mínimo legible 12px: ningún texto debe bajar de `caption`.           */
+  --text-caption: 12px;
+  --text-caption--line-height: 20px; /* lineHeight.tight */
+  --text-body: 14px;
+  --text-body--line-height: 21px; /* lineHeight.normal */
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px; /* lineHeight.relaxed */
+  --text-subtitle: 18px;
+  --text-subtitle--line-height: 1.25;
+  --text-title: 22px;
+  --text-title--line-height: 1.2;
+  --text-headline: 28px;
+  --text-headline--line-height: 1.15;
+  --text-display: 34px;
+  --text-display--line-height: 1.1;
+
+  /* ── Tipografía: escala t-shirt (fontSize) ─────────────────────────── */
+  /* Paridad con las clases NativeWind del móvil. `sm` y `xs` colapsan    */
+  /* ambos a 12px por accesibilidad, tal como en theme.ts.                */
+  --text-xs: 12px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 20px;
+  --text-3xl: 22px;
+  --text-4xl: 24px;
+
+  /* ── Interlineado (lineHeight) ─────────────────────────────────────── */
+  --leading-tight: 20px;
+  --leading-normal: 21px;
+  --leading-relaxed: 24px;
+
+  /* ── Paleta de marca (Colors) ──────────────────────────────────────── */
+  --color-brand-navy: var(--brand-navy); /* azulFuerte     */
+  --color-brand-green: var(--brand-green); /* verdeEnergia   */
+  --color-brand-orange: var(--brand-orange); /* naranjaImpulso */
+  --color-brand-purple: var(--brand-purple); /* moradoEnfoque  */
+  --color-brand-blue: var(--brand-blue); /* azulActivo     */
+  --color-brand-gray: var(--brand-gray); /* grisClaro      */
+
+  /* ── Superficies y texto (ct) ──────────────────────────────────────── */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-surface: var(--card); /* ct.surface / surfaceElevated / surfaceRaised */
+  /* `--text-*` es el namespace de tamaños de fuente en Tailwind v4, así que los
+     colores de texto del sistema viven bajo `--color-foreground-*`. */
+  --color-foreground-secondary: var(--foreground-secondary); /* ct.textSecondary */
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground); /* ct.textMuted */
+  --color-foreground-disabled: var(--foreground-disabled); /* ct.textDisabled */
+
+  /* ── Marca semántica (ct) ──────────────────────────────────────────── */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-text: var(--primary-text); /* verde accesible AA */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-focus: var(--focus);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* ── Estado (ct) ───────────────────────────────────────────────────── */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-surface: var(--success-surface);
+  --color-success-text: var(--success-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-text: var(--warning-text);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-error: var(--destructive); /* ct.error */
+  --color-error-surface: var(--error-surface);
+  --color-error-text: var(--error-text);
+
+  /* ── Macros de nutrición (ct.macro) ────────────────────────────────── */
+  --color-macro-calories: var(--brand-orange);
+  --color-macro-protein: var(--brand-blue);
+  --color-macro-carbs: var(--brand-green);
+  --color-macro-fats: var(--brand-purple);
+
+  /* ── Overlays, rating y deshabilitado (ct) ─────────────────────────── */
+  --color-overlay-light: var(--overlay-light);
+  --color-overlay-dark: var(--overlay-dark);
+  --color-overlay-modal: var(--overlay-modal);
+  --color-rating-filled: var(--brand-green);
+  --color-rating-empty: var(--border);
+  --color-disabled-surface: var(--disabled-surface);
+  --color-disabled-text: var(--foreground-disabled);
+
+  /* ── Bordes y foco (ct) ────────────────────────────────────────────── */
+  --color-border: var(--border);
+  --color-border-dark: var(--border-dark);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* ── Sidebar (deriva de azulFuerte) ────────────────────────────────── */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* ── Gráficas (paleta de marca) ────────────────────────────────────── */
+  --color-chart-1: var(--brand-green);
+  --color-chart-2: var(--brand-orange);
+  --color-chart-3: var(--brand-blue);
+  --color-chart-4: var(--brand-purple);
+  --color-chart-5: var(--brand-navy);
+
+  /* ── Radios (radius) ───────────────────────────────────────────────── */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ── Espaciado con nombre (spacing) ────────────────────────────────── */
+  /* La escala numérica de Tailwind (4px) ya cubre xxs…4xl.              */
+  --spacing-icon-sm: 40px;
+  --spacing-icon-md: 48px;
+  --spacing-icon-lg: 56px;
+  --spacing-avatar-sm: 40px;
+  --spacing-avatar-md: 44px;
+  --spacing-avatar-lg: 56px;
+  --spacing-avatar-xl: 64px;
+  --spacing-auth-logo: 80px;
+  --spacing-otp-box: 48px;
+  --spacing-tab-bar: 48px;
+
+  /* ── Layout (layout) ───────────────────────────────────────────────── */
+  --container-app: 448px; /* layout.maxWidth / authCardMaxWidth */
+}
+
+:root {
+  color-scheme: light;
+
+  /* Colors */
+  --brand-navy: #081324;
+  --brand-green: #7ed957;
+  --brand-orange: #ff7a00;
+  --brand-purple: #7b4dff;
+  --brand-blue: #00b4ff;
+  --brand-gray: #f2f4f7;
+
+  /* ct — superficies y texto */
+  --background: #f2f4f7;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --foreground-secondary: #081324;
+  --muted-foreground: #6b7280;
+  --foreground-disabled: #9ca3af;
+
+  /* ct — marca */
+  --primary: #7ed957;
+  --primary-foreground: #081324;
+  --primary-hover: #6bc946;
+  --primary-text: #0b7a5d;
+  --info: #00b4ff;
+  --info-foreground: #081324;
+
+  /* Superficies neutras del kit (hover, chips, paneles) */
+  --secondary: #e5e7eb;
+  --secondary-foreground: #081324;
+  --muted: #e5e7eb;
+  --accent: #e5e7eb;
+  --accent-foreground: #081324;
+
+  /* ct — estado */
+  --success: #7ed957;
+  --success-foreground: #081324;
+  --success-surface: #7ed95733;
+  --success-text: #0b7a5d;
+  --warning: #ff7a00;
+  /* Sobre rellenos brillantes el texto va oscuro (azulFuerte), no blanco:
+     #FFFFFF sobre #FF7A00 se queda en 2.9:1 y no llega a AA. */
+  --warning-foreground: #081324;
+  --warning-surface: #ff7a0033;
+  --warning-text: #b45309;
+  --destructive: #ff4d4d;
+  --destructive-foreground: #081324;
+  --error-surface: #ff4d4d33;
+  --error-text: #dc2626;
+
+  /* ct — overlays y deshabilitado */
+  --overlay-light: rgba(255, 255, 255, 0.8);
+  --overlay-dark: rgba(0, 0, 0, 0.5);
+  --overlay-modal: rgba(0, 0, 0, 0.5);
+  --disabled-surface: #e5e7eb;
+
+  /* ct — bordes y foco */
+  --border: #e5e7eb;
+  --border-dark: #6b7280;
+  --input: #e5e7eb;
+  --focus: #7ed957;
+  --ring: #7ed957;
+
+  /* radius.lg — radio por defecto del kit */
+  --radius: 16px;
+
+  /* Sidebar sobre azulFuerte */
+  --sidebar: #081324;
+  --sidebar-foreground: #f2f4f7;
+  --sidebar-primary: #7ed957;
+  --sidebar-primary-foreground: #081324;
+  --sidebar-accent: #0f2036;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #7ed957;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    /* TEXT_STYLES.body — Montserrat 14/21 */
+    @apply bg-background font-sans text-body text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* TEXT_STYLES.display / title / subtitle — Oswald */
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+  }
+}
