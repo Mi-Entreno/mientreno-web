@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { StatusBadge } from "@/components/dashboard/status-badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -66,25 +66,13 @@ export function StudentDetailScreen({ subscriptionId }: { subscriptionId: number
     )
   }
 
-  const initials =
-    data.studentName
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "A"
-
   return (
     <div className="flex flex-col gap-6">
       <BackLink />
 
       <header className="flex flex-col gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <Avatar className="size-14 shrink-0">
-            <AvatarImage src={data.studentAvatarUrl ?? "/placeholder.svg"} alt="" />
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
+          <UserAvatar name={data.studentName} src={data.studentAvatarUrl} className="size-14" />
           <div className="min-w-0">
             <h2 className="truncate font-heading text-subtitle font-semibold tracking-tight">
               {data.studentName}

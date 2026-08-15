@@ -45,31 +45,4 @@ export interface RatingDistribution {
   buckets: StarBucket[]
 }
 
-export interface DirectoryFilters {
-  search: string
-  location: string
-  specialty: string | null
-  minRating: number | null
-  maxPrice: string
-}
-
-export const DIRECTORY_PAGE_SIZE = 12
 export const REVIEWS_PAGE_SIZE = 10
-
-export const EMPTY_DIRECTORY_FILTERS: DirectoryFilters = {
-  search: "",
-  location: "",
-  specialty: null,
-  minRating: null,
-  maxPrice: "",
-}
-
-export function hasDirectoryFilters(filters: DirectoryFilters): boolean {
-  return Boolean(
-    filters.search.trim() ||
-      filters.location.trim() ||
-      filters.specialty ||
-      filters.minRating !== null ||
-      filters.maxPrice.trim(),
-  )
-}

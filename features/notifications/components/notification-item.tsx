@@ -1,11 +1,12 @@
 "use client"
 
-import { Check } from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
+import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { describeType, relativeTime, type AppNotification } from "../model/notification.model"
+import { describeType, linkFor, relativeTime, type AppNotification } from "../model/notification.model"
 
 const TONE_CLASSES: Record<string, string> = {
   info: "bg-secondary text-muted-foreground",
@@ -18,10 +19,18 @@ interface NotificationItemProps {
   notification: AppNotification
   onMarkRead: (id: number) => void
   isPending?: boolean
+  /** Lets the bell's panel close itself when a row navigates away. */
+  onNavigate?: () => void
 }
 
-export function NotificationItem({ notification, onMarkRead, isPending }: NotificationItemProps) {
+export function NotificationItem({
+  notification,
+  onMarkRead,
+  isPending,
+  onNavigate,
+}: NotificationItemProps) {
   const descriptor = describeType(notification.type)
+  const href = linkFor(notification)
 
   return (
     <li
@@ -57,10 +66,26 @@ export function NotificationItem({ notification, onMarkRead, isPending }: Notifi
 
         <p
           className="mt-1 text-caption text-muted-foreground"
-          title={new Date(notification.createdAt).toLocaleString("es-ES")}
+          title={new Date(notification.createdAt).toLocaleString("es-AR")}
         >
           {relativeTime(notification.createdAt)}
         </p>
+
+        {/* Only rendered when `metadata` actually carried an id — a link that
+            cannot be built must not appear as a dead affordance. */}
+        {href && (
+          <Link
+            href={href}
+            onClick={() => {
+              if (!notification.read) onMarkRead(notification.id)
+              onNavigate?.()
+            }}
+            className="mt-2 inline-flex items-center gap-1 text-body font-medium text-primary-text underline-offset-4 hover:underline"
+          >
+            Ver detalle
+            <ArrowRight className="size-3.5" />
+          </Link>
+        )}
       </div>
 
       {!notification.read && (

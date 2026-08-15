@@ -37,7 +37,15 @@ export interface TrainerProfileFormValues {
   experienceYears: string
   location: string
   avatarPath: string
-  specialtyIds: number[]
+  /**
+   * Free text, not ids.
+   *
+   * The profile is read and written in the same currency now — names — so
+   * there is no catalogue to look anything up in and nothing a trainer can
+   * want to say that the form cannot carry. The backend resolves each name to
+   * a row, creating it when it is new.
+   */
+  specialties: string[]
   certifications: Certification[]
 }
 

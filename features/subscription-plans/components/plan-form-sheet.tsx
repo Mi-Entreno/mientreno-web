@@ -148,14 +148,14 @@ function PlanForm({ plan, onDone }: { plan: SubscriptionPlan | null; onDone: () 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="plan-price">
-              Precio (€) <span className="text-error-text">*</span>
+              Precio ($) <span className="text-error-text">*</span>
             </Label>
             <Input
               id="plan-price"
               inputMode="decimal"
               value={values.price}
               disabled={mutation.isPending}
-              placeholder="49.90"
+              placeholder="25000"
               onChange={(event) => patch({ price: event.target.value })}
             />
             {allErrors.price && <p className="text-body text-error-text">{allErrors.price}</p>}

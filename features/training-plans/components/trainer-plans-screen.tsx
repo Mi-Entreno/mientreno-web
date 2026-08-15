@@ -4,7 +4,7 @@ import { ArrowRight, Dumbbell, Users } from "lucide-react"
 import Link from "next/link"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
@@ -89,15 +89,6 @@ export function TrainerPlansScreen() {
 }
 
 function StudentPlanRow({ row }: { row: StudentPlanSummary }) {
-  const initials =
-    row.studentName
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "A"
-
   const dayCount = row.currentPlan?.days.length ?? 0
 
   return (
@@ -106,10 +97,7 @@ function StudentPlanRow({ row }: { row: StudentPlanSummary }) {
         href={`/dashboard/students/${row.subscriptionId}?tab=training`}
         className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-input focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
       >
-        <Avatar className="size-10 shrink-0">
-          <AvatarImage src={row.studentAvatarUrl ?? "/placeholder.svg"} alt="" />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={row.studentName} src={row.studentAvatarUrl} className="size-10" />
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{row.studentName}</p>

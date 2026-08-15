@@ -82,9 +82,28 @@ export const qk = {
 
   trainers: {
     all: ["trainers"] as const,
-    search: (params: Record<string, unknown>) => ["trainers", "search", params] as const,
     detail: (id: number) => ["trainers", "detail", id] as const,
     reviews: (id: number) => ["trainers", "reviews", id] as const,
     reviewDistribution: (id: number) => ["trainers", "reviews", id, "distribution"] as const,
+  },
+
+  /** Candidate students the trainer can invite — not the roster. */
+  studentSearch: {
+    all: ["student-search"] as const,
+    query: (params: Record<string, unknown>) => ["student-search", "query", params] as const,
+  },
+
+  planInvitations: {
+    all: ["plan-invitations"] as const,
+    /** Sent by this trainer, optionally narrowed to one status. */
+    sent: (status: string | null) => ["plan-invitations", "sent", status] as const,
+    counts: ["plan-invitations", "counts"] as const,
+    /** Public read by opaque token — the student's side of the link. */
+    byToken: (token: string) => ["plan-invitations", "token", token] as const,
+  },
+
+  payments: {
+    all: ["payments"] as const,
+    mercadoPago: ["payments", "mercado-pago"] as const,
   },
 } as const

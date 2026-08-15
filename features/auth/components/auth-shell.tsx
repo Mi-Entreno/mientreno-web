@@ -1,4 +1,4 @@
-import { Dumbbell } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 /**
@@ -18,14 +18,18 @@ export function AuthShell({
 }) {
   return (
     <div className="w-full max-w-app">
-      <Link href="/login" className="mb-8 flex items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <Dumbbell className="size-6" />
-        </div>
-        <div>
-          <p className="font-heading text-title font-semibold tracking-tight">Mi Entreno</p>
-          <p className="text-body text-muted-foreground">Espacio del entrenador</p>
-        </div>
+      <Link href="/login" className="mb-8 flex items-center gap-4">
+        <Image
+          src="/logo.png"
+          alt="Mi Entreno"
+          width={410}
+          height={241}
+          priority
+          className="h-16 w-auto"
+        />
+        <span className="border-l border-border pl-4 text-body text-muted-foreground">
+          Espacio del entrenador
+        </span>
       </Link>
 
       <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">

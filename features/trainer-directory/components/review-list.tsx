@@ -3,7 +3,7 @@
 import { Loader2, MessageSquare, Star } from "lucide-react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
@@ -64,21 +64,9 @@ export function ReviewList({ trainerId }: { trainerId: number }) {
 }
 
 function ReviewCard({ review }: { review: Review }) {
-  const initials =
-    review.studentName
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "A"
-
   return (
     <li className="flex gap-3 rounded-xl border border-border bg-card p-4">
-      <Avatar className="size-10 shrink-0">
-        <AvatarImage src={review.studentAvatarUrl ?? "/placeholder.svg"} alt="" />
-        <AvatarFallback>{initials}</AvatarFallback>
-      </Avatar>
+      <UserAvatar name={review.studentName} src={review.studentAvatarUrl} className="size-10" />
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center justify-between gap-2">

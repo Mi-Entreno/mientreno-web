@@ -1,5 +1,19 @@
 import type { NotificationType } from "../dto/notification.dto"
 
+/**
+ * The parsed `metadata` payload.
+ *
+ * Every field is optional: the backend adds keys as features land, and an
+ * older dashboard must ignore what it does not know rather than fail to render
+ * the notification.
+ */
+export interface NotificationMetadata {
+  invitationId?: number
+  subscriptionId?: number
+  studentId?: number
+  planId?: number
+}
+
 export interface AppNotification {
   id: number
   type: NotificationType
@@ -8,13 +22,14 @@ export interface AppNotification {
   read: boolean
   readAt: string | null
   createdAt: string
+  metadata: NotificationMetadata
 }
 
 /** Page size for the list; `@PageableDefault(size = 20)` upstream. */
 export const NOTIFICATIONS_PAGE_SIZE = 20
 
 /** How often the badge re-checks. There are no websockets upstream. */
-export const UNREAD_POLL_MS = 60_000
+export const UNREAD_POLL_MS = 1000_000
 
 export type NotificationTone = "info" | "success" | "warning" | "danger"
 
@@ -33,6 +48,10 @@ const TYPES: Record<NotificationType, TypeDescriptor> = {
   SUBSCRIPTION_EXPIRING: { label: "Suscripción por vencer", tone: "warning" },
   SUBSCRIPTION_EXPIRED: { label: "Suscripción vencida", tone: "warning" },
   TRAINER_ANNOUNCEMENT: { label: "Anuncio", tone: "info" },
+  PLAN_INVITATION_RECEIVED: { label: "Invitación recibida", tone: "info" },
+  PLAN_INVITATION_ACCEPTED: { label: "Invitación aceptada", tone: "success" },
+  PLAN_INVITATION_REJECTED: { label: "Invitación rechazada", tone: "danger" },
+  PLAN_INVITATION_EXPIRED: { label: "Invitación caducada", tone: "warning" },
 }
 
 /**
@@ -41,6 +60,53 @@ const TYPES: Record<NotificationType, TypeDescriptor> = {
  */
 export function describeType(type: NotificationType): TypeDescriptor {
   return TYPES[type] ?? { label: "Notificación", tone: "info" }
+}
+
+/**
+ * Where clicking a notification should take the trainer, or null when there is
+ * nowhere useful to go.
+ *
+ * Driven by `metadata`, so a type whose payload the backend has not filled in
+ * yet simply renders as text — the row must never link somewhere that 404s.
+ * Invitation notifications fall back to the invitations list, which is always a
+ * sensible destination even without an id.
+ *
+ * That fallback carries a business rule for `PLAN_INVITATION_ACCEPTED`: the
+ * backend omits `subscriptionId` while the subscription is still
+ * `PENDING_PAYMENT`, precisely so this row cannot open a student page for
+ * someone who has not paid. `NEW_STUDENT` — which only fires after an approved
+ * payment — is the notification that does carry it.
+ */
+export function linkFor(notification: AppNotification): string | null {
+  const { subscriptionId } = notification.metadata
+  const student = subscriptionId ? `/dashboard/students/${subscriptionId}` : null
+
+  switch (notification.type) {
+    case "PLAN_INVITATION_ACCEPTED":
+      return student ?? "/dashboard/invitations"
+    case "PLAN_INVITATION_REJECTED":
+    case "PLAN_INVITATION_EXPIRED":
+    case "PLAN_INVITATION_RECEIVED":
+      return "/dashboard/invitations"
+
+    case "PLAN_READY":
+    case "PLAN_UPDATED":
+      return student && `${student}?tab=training`
+    case "NUTRITION_PLAN_READY":
+      return student && `${student}?tab=nutrition`
+
+    case "NEW_STUDENT":
+      return student ?? "/dashboard/students"
+
+    case "PAYMENT_APPROVED":
+    case "PAYMENT_REJECTED":
+    case "SUBSCRIPTION_EXPIRING":
+    case "SUBSCRIPTION_EXPIRED":
+      return student
+
+    default:
+      return null
+  }
 }
 
 /** Relative time in Spanish; the exact timestamp stays in the title attribute. */

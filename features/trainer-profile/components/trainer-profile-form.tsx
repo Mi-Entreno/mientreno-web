@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/core/http/errors"
-import { SpecialtyMultiSelect } from "@/features/specialties/components/specialty-multi-select"
+import { SpecialtyTagsInput } from "@/features/specialties/components/specialty-tags-input"
 import type {
   CompleteProfileIdentityValues,
   TrainerProfileFormValues,
@@ -228,13 +228,13 @@ export function TrainerProfileForm({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="basePrice">Tarifa base (€)</Label>
+            <Label htmlFor="basePrice">Tarifa base ($)</Label>
             <Input
               id="basePrice"
               inputMode="decimal"
               value={values.basePrice}
               disabled={isPending}
-              placeholder="45"
+              placeholder="25000"
               onChange={(event) => patch({ basePrice: event.target.value })}
             />
             {allErrors.basePrice && (
@@ -276,13 +276,13 @@ export function TrainerProfileForm({
         <div>
           <h2 className="font-heading text-subtitle font-semibold tracking-tight">Especialidades</h2>
           <p className="mt-1 text-body text-muted-foreground">
-            Los alumnos filtran por estas etiquetas al buscar entrenador.
+            Escribe las que quieras: los alumnos filtran por estas etiquetas al buscar entrenador.
           </p>
         </div>
-        <SpecialtyMultiSelect
-          value={values.specialtyIds}
+        <SpecialtyTagsInput
+          value={values.specialties}
           disabled={isPending}
-          onChange={(specialtyIds) => patch({ specialtyIds })}
+          onChange={(specialties) => patch({ specialties })}
         />
       </section>
 

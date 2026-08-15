@@ -22,8 +22,11 @@ export interface CertificationRequestDTO {
 /**
  * `GET /api/trainer/profile` — `TrainerProfileResponseDTO`.
  *
- * Note the asymmetry that shapes the whole feature: specialties come back as
- * **names**, but both write endpoints take **ids** (`List<Long> specialtyIds`).
+ * Specialties come back as **names**, and — since the field became free text —
+ * both write endpoints accept names too (`List<String> specialties`). The old
+ * `specialtyIds` still exists upstream for clients that pick from the closed
+ * catalogue, but this app no longer sends it: an id can only ever name
+ * something that already existed, which is the constraint we removed.
  */
 export interface TrainerProfileResponseDTO {
   id: number
@@ -59,7 +62,8 @@ export interface CompleteTrainerProfileRequestDTO {
   experienceYears: number | null
   location: string | null
   profileImageUrl: string | null
-  specialtyIds: number[]
+  /** Free text; the server resolves or creates each one. */
+  specialties: string[]
   certifications: CertificationRequestDTO[]
 }
 
@@ -70,6 +74,7 @@ export interface UpdateTrainerProfileRequestDTO {
   experienceYears: number | null
   location: string | null
   profileImageUrl: string | null
-  specialtyIds: number[]
+  /** Free text; the server resolves or creates each one. */
+  specialties: string[]
   certifications: CertificationRequestDTO[]
 }

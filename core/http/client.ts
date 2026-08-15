@@ -26,8 +26,8 @@ export interface RequestOptions {
   signal?: AbortSignal
 }
 
-function buildUrl(path: string, query?: RequestOptions["query"]): string {
-  const url = `/api/backend${path.startsWith("/") ? path : `/${path}`}`
+function buildUrl(path: string, query?: RequestOptions["query"], base = "/api/backend"): string {
+  const url = `${base}${path.startsWith("/") ? path : `/${path}`}`
   if (!query) return url
 
   const params = new URLSearchParams()
@@ -41,6 +41,22 @@ function buildUrl(path: string, query?: RequestOptions["query"]): string {
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  return request<T>(path, options, "/api/backend")
+}
+
+/**
+ * Same transport, aimed at the *unauthenticated* proxy.
+ *
+ * A student opening an invitation link has no dashboard session — this app is
+ * trainer-only — so `/api/backend/*` would answer 401 before the request ever
+ * left. `/api/public/*` forwards a small allowlist of `permitAll` endpoints
+ * instead, without attaching a token.
+ */
+export async function publicApiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  return request<T>(path, options, "/api/public")
+}
+
+async function request<T>(path: string, options: RequestOptions, base: string): Promise<T> {
   const { method = "GET", body, formData, query, signal } = options
 
   const init: RequestInit = {
@@ -60,7 +76,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
 
   let response: Response
   try {
-    response = await fetch(buildUrl(path, query), init)
+    response = await fetch(buildUrl(path, query, base), init)
   } catch (cause) {
     throw new ApiError(networkError(cause))
   }

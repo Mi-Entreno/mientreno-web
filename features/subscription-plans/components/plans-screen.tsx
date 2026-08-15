@@ -1,6 +1,7 @@
 "use client"
 
-import { Apple, CreditCard, Pencil, Plus, Trash2, Users } from "lucide-react"
+import { Apple, CreditCard, Pencil, Plus, Send, Trash2, Users, Wallet } from "lucide-react"
+import Link from "next/link"
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
@@ -8,6 +9,9 @@ import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useMercadoPagoConnection } from "@/features/payments/hooks/use-mercado-pago"
+import { isOperational } from "@/features/payments/model/mercado-pago.model"
+import { InviteStudentSheet } from "@/features/plan-invitations/components/invite-student-sheet"
 import { formatCurrency } from "@/lib/format"
 import { useDeactivatePlan, useMyPlans } from "../hooks/use-subscription-plans"
 import { billingLabel, billingSuffix, type SubscriptionPlan } from "../model/subscription-plan.model"
@@ -20,6 +24,7 @@ export function PlansScreen() {
   const [editing, setEditing] = useState<SubscriptionPlan | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<SubscriptionPlan | null>(null)
+  const [offering, setOffering] = useState<SubscriptionPlan | null>(null)
 
   function openCreate() {
     setEditing(null)
@@ -42,6 +47,8 @@ export function PlansScreen() {
           Nuevo plan
         </Button>
       </div>
+
+      <PaymentsNotice hasPaidPlans={(plans ?? []).some((plan) => plan.price > 0)} />
 
       {isLoading && (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -111,20 +118,27 @@ export function PlansScreen() {
                 )}
               </ul>
 
-              <div className="flex items-center justify-between border-t border-border pt-3">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}>
-                  <Pencil className="size-4" />
-                  Editar
+              <div className="mt-auto flex flex-col gap-2 border-t border-border pt-3">
+                <Button variant="outline" size="sm" onClick={() => setOffering(plan)}>
+                  <Send className="size-4" />
+                  Enviar a un alumno
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-error-text focus-visible:text-error-text"
-                  onClick={() => setPendingDelete(plan)}
-                >
-                  <Trash2 className="size-4" />
-                  Desactivar
-                </Button>
+
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}>
+                    <Pencil className="size-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-error-text focus-visible:text-error-text"
+                    onClick={() => setPendingDelete(plan)}
+                  >
+                    <Trash2 className="size-4" />
+                    Desactivar
+                  </Button>
+                </div>
               </div>
             </li>
           ))}
@@ -132,6 +146,13 @@ export function PlansScreen() {
       )}
 
       <PlanFormSheet open={sheetOpen} onOpenChange={setSheetOpen} plan={editing} />
+
+      {/* Opened from a plan card, so the wizard starts with that plan chosen. */}
+      <InviteStudentSheet
+        open={offering !== null}
+        onOpenChange={(open) => !open && setOffering(null)}
+        initialPlan={offering}
+      />
 
       <ConfirmDialog
         open={pendingDelete !== null}
@@ -147,5 +168,33 @@ export function PlansScreen() {
         }}
       />
     </div>
+  )
+}
+
+/**
+ * A paid plan with no Mercado Pago account behind it cannot be charged, so the
+ * trainer would collect acceptances and no money.
+ *
+ * Shown only once there is a paid plan to charge for — a trainer who has not
+ * created anything yet does not need a payments errand — and only when the
+ * status is actually known, so a failing or missing endpoint stays quiet here
+ * and reports itself on the payments screen.
+ */
+function PaymentsNotice({ hasPaidPlans }: { hasPaidPlans: boolean }) {
+  const connection = useMercadoPagoConnection()
+
+  if (!hasPaidPlans || !connection.isSuccess || isOperational(connection.data)) return null
+
+  return (
+    <p className="flex items-start gap-2 rounded-lg border border-warning bg-warning-surface p-3 text-body text-warning-text">
+      <Wallet className="mt-0.5 size-4 shrink-0" />
+      <span className="text-pretty">
+        Tus alumnos no pueden pagar estos planes todavía: falta vincular tu cuenta de Mercado
+        Pago.{" "}
+        <Link href="/dashboard/payments" className="font-medium underline underline-offset-4">
+          Configurar cobros
+        </Link>
+      </span>
+    </p>
   )
 }

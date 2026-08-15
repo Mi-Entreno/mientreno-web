@@ -102,6 +102,7 @@ function NotificationPanel({ onNavigate }: { onNavigate: () => void }) {
                 notification={notification}
                 isPending={markRead.isPending}
                 onMarkRead={(id) => markRead.mutate(id)}
+                onNavigate={onNavigate}
               />
             ))}
           </ul>

@@ -51,15 +51,3 @@ export interface RatingDistributionDTO {
   totalReviews: number | null
   distribution: { stars: number; count: number }[]
 }
-
-/**
- * Filters for `GET /api/trainers`.
- * Paging is Spring's, defaulting to `size = 10, sort = "fullName"`.
- */
-export interface DirectoryQuery {
-  location?: string
-  specialty?: string
-  search?: string
-  minRating?: number
-  maxPrice?: number
-}

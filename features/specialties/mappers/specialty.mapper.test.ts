@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { SpecialtyDTO } from "../dto/specialty.dto"
-import { resolveSpecialtyIds, toSpecialties, toSpecialty } from "./specialty.mapper"
+import { toSpecialties, toSpecialty } from "./specialty.mapper"
 
 /** The endpoint returns the JPA entity, so audit columns come along. */
 const DTO: SpecialtyDTO = {
@@ -23,29 +23,11 @@ describe("toSpecialty", () => {
   })
 })
 
-describe("resolveSpecialtyIds", () => {
-  // The profile response lists specialties as names; the write endpoints take
-  // ids. This bridges the two.
-  const catalogue = toSpecialties([
-    DTO,
-    { id: 1, name: "Fuerza", slug: "fuerza" },
-    { id: 9, name: "Pérdida de peso", slug: "perdida-de-peso" },
-  ])
+describe("toSpecialties", () => {
+  it("maps a catalogue page", () => {
+    const catalogue = toSpecialties([DTO, { id: 1, name: "Fuerza", slug: "fuerza" }])
 
-  it("maps names back to ids", () => {
-    expect(resolveSpecialtyIds(["Fuerza", "Pérdida de peso"], catalogue)).toEqual([1, 9])
-  })
-
-  it("ignores case and accents", () => {
-    expect(resolveSpecialtyIds(["  perdida de peso ", "FUERZA"], catalogue)).toEqual([9, 1])
-  })
-
-  it("silently drops names not in the catalogue", () => {
-    // A renamed or deleted specialty must not become `undefined` in the payload.
-    expect(resolveSpecialtyIds(["Fuerza", "Yoga aéreo"], catalogue)).toEqual([1])
-  })
-
-  it("returns an empty list for no names", () => {
-    expect(resolveSpecialtyIds([], catalogue)).toEqual([])
+    expect(catalogue).toHaveLength(2)
+    expect(catalogue.map((item) => item.name)).toEqual(["Ganancia de masa muscular", "Fuerza"])
   })
 })

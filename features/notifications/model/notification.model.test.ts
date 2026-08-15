@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import type { NotificationResponseDTO, NotificationType } from "../dto/notification.dto"
-import { toNotification } from "../mappers/notification.mapper"
-import { badgeLabel, describeType, relativeTime } from "./notification.model"
+import { parseMetadata, toNotification } from "../mappers/notification.mapper"
+import { badgeLabel, describeType, linkFor, relativeTime } from "./notification.model"
 
 const DTO: NotificationResponseDTO = {
   id: 12,
@@ -28,9 +28,81 @@ describe("toNotification", () => {
     expect(toNotification({ ...DTO, body: null }).body).toBe("")
   })
 
-  it("does not carry metadata, which is always null upstream", () => {
-    // Exposing it would suggest a deep-link the backend cannot support.
-    expect("metadata" in toNotification(DTO)).toBe(false)
+  it("parses metadata into the ids the UI links with", () => {
+    const notification = toNotification({
+      ...DTO,
+      metadata: '{"invitationId":9,"subscriptionId":41}',
+    })
+
+    expect(notification.metadata).toEqual({ invitationId: 9, subscriptionId: 41 })
+  })
+})
+
+describe("parseMetadata", () => {
+  it("treats an absent column as no metadata", () => {
+    // Every notification the backend emits today passes null here.
+    expect(parseMetadata(null)).toEqual({})
+    expect(parseMetadata("")).toEqual({})
+  })
+
+  it("survives a column that is not JSON", () => {
+    // It is an unvalidated free-form String upstream; a throw here would take
+    // down the whole list render.
+    expect(parseMetadata("no soy json")).toEqual({})
+    expect(parseMetadata("[1,2,3]")).toEqual({})
+    expect(parseMetadata("null")).toEqual({})
+  })
+
+  it("ignores keys this build does not know", () => {
+    expect(parseMetadata('{"invitationId":3,"somethingNew":"x"}')).toEqual({ invitationId: 3 })
+  })
+
+  it("rejects ids that would build a broken URL", () => {
+    // A string, a zero and a float all produce a link that 404s, which is
+    // worse than showing no link at all.
+    expect(parseMetadata('{"subscriptionId":"41"}')).toEqual({})
+    expect(parseMetadata('{"subscriptionId":0}')).toEqual({})
+    expect(parseMetadata('{"subscriptionId":-1}')).toEqual({})
+    expect(parseMetadata('{"subscriptionId":1.5}')).toEqual({})
+  })
+})
+
+describe("linkFor", () => {
+  function notification(
+    type: NotificationType,
+    metadata: Record<string, number> = {},
+  ) {
+    return toNotification({ ...DTO, type, metadata: JSON.stringify(metadata) })
+  }
+
+  it("sends an accepted invitation to the new student", () => {
+    expect(linkFor(notification("PLAN_INVITATION_ACCEPTED", { subscriptionId: 41 }))).toBe(
+      "/dashboard/students/41",
+    )
+  })
+
+  it("falls back to the invitations list when there is no subscription yet", () => {
+    expect(linkFor(notification("PLAN_INVITATION_ACCEPTED"))).toBe("/dashboard/invitations")
+    expect(linkFor(notification("PLAN_INVITATION_REJECTED"))).toBe("/dashboard/invitations")
+  })
+
+  it("opens the right tab for a plan notification", () => {
+    expect(linkFor(notification("PLAN_READY", { subscriptionId: 8 }))).toBe(
+      "/dashboard/students/8?tab=training",
+    )
+    expect(linkFor(notification("NUTRITION_PLAN_READY", { subscriptionId: 8 }))).toBe(
+      "/dashboard/students/8?tab=nutrition",
+    )
+  })
+
+  it("has nowhere to go without an id", () => {
+    // Today's backend sends no metadata at all, so this is the common path.
+    expect(linkFor(notification("PLAN_READY"))).toBeNull()
+    expect(linkFor(notification("PAYMENT_APPROVED"))).toBeNull()
+  })
+
+  it("returns null for a type this build has never seen", () => {
+    expect(linkFor(notification("SOMETHING_NEW" as NotificationType))).toBeNull()
   })
 })
 
@@ -46,6 +118,10 @@ describe("describeType", () => {
       "SUBSCRIPTION_EXPIRED",
       "NEW_STUDENT",
       "TRAINER_ANNOUNCEMENT",
+      "PLAN_INVITATION_RECEIVED",
+      "PLAN_INVITATION_ACCEPTED",
+      "PLAN_INVITATION_REJECTED",
+      "PLAN_INVITATION_EXPIRED",
     ]
 
     for (const type of all) {

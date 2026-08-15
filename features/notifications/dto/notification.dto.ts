@@ -24,6 +24,15 @@ export type NotificationType =
   | "SUBSCRIPTION_EXPIRED"
   | "NEW_STUDENT"
   | "TRAINER_ANNOUNCEMENT"
+  // ── Plan invitations (BACKEND_REQUIREMENTS.md §4) ─────────────────────────
+  /** -> the **student**: a trainer has offered them a plan. */
+  | "PLAN_INVITATION_RECEIVED"
+  /** -> the **trainer**: the student accepted. */
+  | "PLAN_INVITATION_ACCEPTED"
+  /** -> the **trainer**: the student declined. */
+  | "PLAN_INVITATION_REJECTED"
+  /** -> the **trainer**: nobody answered before `expiresAt`. */
+  | "PLAN_INVITATION_EXPIRED"
 
 export interface NotificationResponseDTO {
   id: number
@@ -34,8 +43,13 @@ export interface NotificationResponseDTO {
   /** `Instant`, null while unread. */
   readAt: string | null
   /**
-   * Free-form String column. **Every call site passes null today**, so there is
-   * nothing to parse and no id to deep-link with.
+   * Free-form String column.
+   *
+   * Every call site upstream passes null today, which is why a notification
+   * cannot be clicked through to anything. `BACKEND_REQUIREMENTS.md` §4.2 asks
+   * for a small JSON object here — `{"invitationId":12,"subscriptionId":7}` —
+   * and `notification.mapper.ts` parses it defensively so a null, a malformed
+   * string or an unknown key all degrade to "no link" rather than to a crash.
    */
   metadata: string | null
   createdAt: string

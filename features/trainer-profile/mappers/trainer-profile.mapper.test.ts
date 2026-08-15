@@ -85,7 +85,7 @@ describe("toTrainerProfile", () => {
 describe("toFormValues", () => {
   it("keeps blank numbers blank rather than collapsing to zero", () => {
     const profile = toTrainerProfile({ ...RESPONSE, basePrice: null, experienceYears: null })
-    const values = toFormValues(profile, [])
+    const values = toFormValues(profile)
 
     // "" and "0" mean different things: a zero price would be a real offer.
     expect(values.basePrice).toBe("")
@@ -99,7 +99,7 @@ const FORM: TrainerProfileFormValues = {
   experienceYears: "8",
   location: "Madrid",
   avatarPath: "http://localhost:8080/api/files/avatars/12/photo.jpg",
-  specialtyIds: [1, 4],
+  specialties: ["Fuerza", "Ganancia de masa muscular"],
   certifications: [
     {
       id: 3,
@@ -143,8 +143,21 @@ describe("toUpdateRequest", () => {
     expect(request.basePrice).toBeNull()
   })
 
-  it("sends specialty ids, since the write endpoints do not take names", () => {
-    expect(toUpdateRequest(FORM).specialtyIds).toEqual([1, 4])
+  it("sends specialty names, so a trainer can write one that is not in any list", () => {
+    expect(toUpdateRequest({ ...FORM, specialties: ["Rehabilitación deportiva"] }).specialties)
+      .toEqual(["Rehabilitación deportiva"])
+  })
+
+  it("drops blanks and specialties the backend would merge into one row", () => {
+    // `SpecialtyResolver` keys on a slug, so casing, accents and surrounding
+    // space collapse into a single row upstream. Sending the variants would
+    // make chips silently disappear on the next load.
+    const request = toUpdateRequest({
+      ...FORM,
+      specialties: ["CrossFit", "  crossfit ", "Preparación física", "PREPARACION FISICA", "   "],
+    })
+
+    expect(request.specialties).toEqual(["CrossFit", "Preparación física"])
   })
 })
 
@@ -174,7 +187,7 @@ describe("toCompleteRequest", () => {
     const request = toCompleteRequest(FORM, identity)
 
     expect(request.basePrice).toBe(45.5)
-    expect(request.specialtyIds).toEqual([1, 4])
+    expect(request.specialties).toEqual(["Fuerza", "Ganancia de masa muscular"])
     expect(request.certifications).toHaveLength(1)
   })
 

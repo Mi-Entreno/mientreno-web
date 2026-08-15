@@ -6,8 +6,6 @@ import { useMemo } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useSpecialties } from "@/features/specialties/hooks/use-specialties"
-import { resolveSpecialtyIds } from "@/features/specialties/mappers/specialty.mapper"
 import { useUserProfile } from "@/features/user/hooks/use-user"
 import {
   useCompleteTrainerProfile,
@@ -28,7 +26,7 @@ const BLANK_FORM: TrainerProfileFormValues = {
   experienceYears: "",
   location: "",
   avatarPath: "",
-  specialtyIds: [],
+  specialties: [],
   certifications: [],
 }
 
@@ -44,7 +42,6 @@ const BLANK_FORM: TrainerProfileFormValues = {
 export function TrainerProfileScreen() {
   const params = useSearchParams()
   const profile = useTrainerProfile()
-  const specialties = useSpecialties()
   // Only needed to prefill the identity fields of the create form.
   const userProfile = useUserProfile()
 
@@ -54,17 +51,10 @@ export function TrainerProfileScreen() {
   const isCreating = profile.data === null
   const forcedByGuard = params.get("complete") === "1"
 
-  const initialValues = useMemo<TrainerProfileFormValues>(() => {
-    if (!profile.data) return BLANK_FORM
-
-    // The read endpoint returns specialty *names*; both write endpoints take
-    // ids. Resolving needs the catalogue, so this waits for it.
-    const ids = specialties.data
-      ? resolveSpecialtyIds(profile.data.specialtyNames, specialties.data)
-      : []
-
-    return toFormValues(profile.data, ids)
-  }, [profile.data, specialties.data])
+  const initialValues = useMemo<TrainerProfileFormValues>(
+    () => (profile.data ? toFormValues(profile.data) : BLANK_FORM),
+    [profile.data],
+  )
 
   const initialIdentity = useMemo<CompleteProfileIdentityValues>(
     () => ({
@@ -77,7 +67,7 @@ export function TrainerProfileScreen() {
     [userProfile.data],
   )
 
-  if (profile.isLoading || specialties.isLoading) {
+  if (profile.isLoading) {
     return (
       <div className="flex flex-col gap-6">
         <Skeleton className="h-24 w-full rounded-xl" />

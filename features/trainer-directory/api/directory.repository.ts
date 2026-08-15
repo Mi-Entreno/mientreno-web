@@ -5,52 +5,27 @@ import type {
   RatingDistributionDTO,
   ReviewResponseDTO,
   TrainerDetailResponseDTO,
-  TrainerSummaryResponseDTO,
 } from "../dto/directory.dto"
 import {
-  toDirectoryTrainer,
   toDirectoryTrainerDetail,
   toRatingDistribution,
   toReview,
 } from "../mappers/directory.mapper"
 import {
-  DIRECTORY_PAGE_SIZE,
   REVIEWS_PAGE_SIZE,
-  type DirectoryFilters,
-  type DirectoryTrainer,
   type DirectoryTrainerDetail,
   type RatingDistribution,
   type Review,
 } from "../model/directory.model"
 
 /**
- * The public trainer directory.
+ * A trainer's public profile, as a student sees it.
  *
  * Every endpoint here is `permitAll` upstream, but they still go through the
- * BFF proxy: the only consumer is a signed-in trainer looking at how they and
- * their competitors appear, so there is no reason for a second network path.
+ * BFF proxy: the only consumer is a signed-in trainer previewing how they
+ * appear, so there is no reason for a second network path.
  */
 export const directoryRepository = {
-  async list(
-    filters: DirectoryFilters,
-    page: number,
-    size: number = DIRECTORY_PAGE_SIZE,
-  ): Promise<PageResponse<DirectoryTrainer>> {
-    const dto = await apiFetch<SpringPage<TrainerSummaryResponseDTO>>("/api/trainers", {
-      query: {
-        search: filters.search.trim() || undefined,
-        location: filters.location.trim() || undefined,
-        specialty: filters.specialty ?? undefined,
-        minRating: filters.minRating ?? undefined,
-        maxPrice: filters.maxPrice.trim() ? Number(filters.maxPrice.replace(",", ".")) : undefined,
-        page,
-        size,
-      },
-    })
-
-    return mapPage(dto, toDirectoryTrainer)
-  },
-
   async getById(trainerId: number): Promise<DirectoryTrainerDetail> {
     return toDirectoryTrainerDetail(
       await apiFetch<TrainerDetailResponseDTO>(`/api/trainers/${trainerId}`),

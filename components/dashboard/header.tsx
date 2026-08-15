@@ -1,8 +1,8 @@
 "use client"
 
-import { LogOut, Settings, User } from "lucide-react"
+import { LogOut, Send, Settings, User, Wallet } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useLogout } from "@/features/auth/hooks/use-auth-actions"
 import { NotificationBell } from "@/features/notifications/components/notification-bell"
 import { useTrainerProfile } from "@/features/trainer-profile/hooks/use-trainer-profile"
 
@@ -21,13 +22,13 @@ const TITLES: Record<string, string> = {
   "/dashboard/settings": "Ajustes",
   "/dashboard/notifications": "Notificaciones",
   "/dashboard/profile/preview": "Vista pública",
-  "/dashboard/directory": "Directorio",
   "/dashboard/plans": "Planes de suscripción",
   "/dashboard/students": "Mis alumnos",
+  "/dashboard/invitations": "Invitaciones",
+  "/dashboard/payments": "Cobros",
+  "/dashboard/payments/callback": "Cobros",
   "/dashboard/training-plans": "Planes de entrenamiento",
   "/dashboard/nutrition-plans": "Planes de nutrición",
-  "/dashboard/exercises": "Catálogo de ejercicios",
-  "/dashboard/foods": "Catálogo de alimentos",
 }
 
 function titleFor(pathname: string) {
@@ -40,20 +41,7 @@ export function DashboardHeader() {
   const pathname = usePathname()
   const title = titleFor(pathname)
   const { data: profile } = useTrainerProfile()
-
-  async function logout() {
-    await fetch("/auth/logout", { method: "POST" })
-    router.push("/login")
-    router.refresh()
-  }
-
-  const initials = profile?.fullName
-    ? profile.fullName
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-    : "T"
+  const logout = useLogout()
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
@@ -62,16 +50,15 @@ export function DashboardHeader() {
       <div className="flex items-center gap-1">
         <NotificationBell />
 
+        {/* Mobile only: below `md` there is no sidebar, so this stays the one
+            way into the profile, settings and logout. */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="ghost" className="flex items-center gap-2 px-2" />}
+            render={<Button variant="ghost" className="flex items-center gap-2 px-2 md:hidden" />}
           >
-            <Avatar className="size-8">
-              {/* `avatarUrl` is already routed through the authenticated media
-                  proxy by the mapper, so locally-stored files load. */}
-              <AvatarImage src={profile?.avatarUrl ?? "/placeholder.svg"} alt="" />
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
+            {/* `avatarUrl` is already routed through the authenticated media
+                proxy by the mapper, so locally-stored files load. */}
+            <UserAvatar name={profile?.fullName} src={profile?.avatarUrl} className="size-8" />
             <span className="hidden text-body font-medium sm:inline">
               {profile?.fullName ?? "Entrenador"}
             </span>
@@ -82,6 +69,15 @@ export function DashboardHeader() {
             <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
               <User className="size-4" />
               Perfil
+            </DropdownMenuItem>
+            {/* Below `md` the bottom nav has no room for these two. */}
+            <DropdownMenuItem onClick={() => router.push("/dashboard/invitations")}>
+              <Send className="size-4" />
+              Invitaciones
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push("/dashboard/payments")}>
+              <Wallet className="size-4" />
+              Cobros
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
               <Settings className="size-4" />

@@ -4,7 +4,7 @@ import { ArrowLeft, Eye, MapPin, Star, Users } from "lucide-react"
 import Link from "next/link"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/format"
@@ -52,15 +52,6 @@ export function PublicProfilePreview() {
   }
 
   const trainer = detail.data
-  const initials =
-    trainer.fullName
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "T"
-
   return (
     <div className="flex flex-col gap-6">
       <Link
@@ -80,10 +71,7 @@ export function PublicProfilePreview() {
       </p>
 
       <header className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 sm:flex-row">
-        <Avatar className="size-20 shrink-0">
-          <AvatarImage src={trainer.avatarUrl ?? "/placeholder.svg"} alt="" />
-          <AvatarFallback>{initials}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={trainer.fullName} src={trainer.avatarUrl} className="size-20" />
 
         <div className="min-w-0 flex-1">
           <h2 className="font-heading text-title font-semibold tracking-tight">

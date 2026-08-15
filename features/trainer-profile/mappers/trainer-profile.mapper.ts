@@ -1,5 +1,6 @@
 import { toIsoDate } from "@/core/format/date"
 import { toMediaUrl } from "@/core/http/media"
+import { normaliseSpecialties } from "@/features/specialties/model/specialty.model"
 
 import type {
   CertificationDTO,
@@ -54,11 +55,15 @@ export function toTrainerProfile(dto: TrainerProfileResponseDTO): TrainerProfile
   }
 }
 
-/** Seeds the edit form from a loaded profile. */
-export function toFormValues(
-  profile: TrainerProfile,
-  specialtyIds: number[],
-): TrainerProfileFormValues {
+/**
+ * Seeds the edit form from a loaded profile.
+ *
+ * Specialties go straight in: read and write both speak names now, so there is
+ * no catalogue lookup between loading a profile and editing it — and no way for
+ * a saved specialty to disappear from the form because the catalogue did not
+ * contain it.
+ */
+export function toFormValues(profile: TrainerProfile): TrainerProfileFormValues {
   return {
     bio: profile.bio,
     // Numeric fields are strings in the form so an empty input stays empty
@@ -68,7 +73,7 @@ export function toFormValues(
     experienceYears: profile.experienceYears === null ? "" : String(profile.experienceYears),
     location: profile.location,
     avatarPath: profile.avatarPath ?? "",
-    specialtyIds,
+    specialties: normaliseSpecialties(profile.specialtyNames),
     certifications: profile.certifications,
   }
 }
@@ -92,7 +97,9 @@ function sharedFields(values: TrainerProfileFormValues) {
     location: emptyToNull(values.location),
     // The raw stored path, never the `/api/media/...` display form.
     profileImageUrl: emptyToNull(values.avatarPath),
-    specialtyIds: values.specialtyIds,
+    // Names, not ids. Re-normalised on the way out because the form is not the
+    // only thing that can put values here.
+    specialties: normaliseSpecialties(values.specialties),
     certifications: values.certifications
       .filter((item) => item.name.trim().length > 0)
       .map(toCertificationRequest),

@@ -39,7 +39,14 @@ export function toMediaUrl(url: string | null | undefined): string | null {
   return `/api/media/${key}`
 }
 
-/** `toMediaUrl` with a placeholder fallback, for `<img src>` and `<Avatar>`. */
+/**
+ * `toMediaUrl` with a placeholder fallback, for a plain `<img src>`.
+ *
+ * **Not for avatars.** Substituting a real placeholder file makes the image
+ * load, and `AvatarFallback` only renders while the image is *not* loaded — so
+ * the initials never appear. Use `UserAvatar`, which leaves the image unmounted
+ * when there is no photo.
+ */
 export function toMediaUrlOr(url: string | null | undefined, fallback: string): string {
   return toMediaUrl(url) ?? fallback
 }

@@ -1,64 +1,93 @@
 "use client"
 
-import { AlertTriangle, Pause, Play, Users } from "lucide-react"
+import { AlertTriangle, Pause, Play, Send, Users } from "lucide-react"
 import Link from "next/link"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { InviteStudentSheet } from "@/features/plan-invitations/components/invite-student-sheet"
 import { formatDate } from "@/lib/format"
 import { useState } from "react"
 import { useStudentPrefetch, useStudents, useSubscriptionStatus } from "../hooks/use-students"
 import { canPause, canResume, type StudentSubscription } from "../model/student.model"
 
-function initialsOf(name: string): string {
-  return (
-    name
-      .split(" ")
-      .map((part) => part[0])
-      .filter(Boolean)
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "A"
-  )
-}
-
 export function StudentsScreen() {
   const { students, isLoading, isError, trackPaused, untrackPaused } = useStudents()
   const prefetch = useStudentPrefetch()
   const [pendingPause, setPendingPause] = useState<StudentSubscription | null>(null)
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   const status = useSubscriptionStatus({
     onPaused: trackPaused,
     onResumed: untrackPaused,
   })
 
+  /**
+   * The invite action lives above every branch on purpose.
+   *
+   * "Aún no tienes alumnos" is exactly the state in which a trainer most needs
+   * to send an invitation, and it used to be an early return with no way out.
+   */
+  const header = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Link
+        href="/dashboard/invitations"
+        className="text-body text-muted-foreground underline-offset-4 hover:underline"
+      >
+        Ver invitaciones enviadas
+      </Link>
+      <Button onClick={() => setInviteOpen(true)} className="sm:shrink-0">
+        <Send className="size-4" />
+        Invitar alumno
+      </Button>
+    </div>
+  )
+
+  const inviteSheet = <InviteStudentSheet open={inviteOpen} onOpenChange={setInviteOpen} />
+
   if (isLoading) {
     return (
-      <ul className="flex flex-col gap-3">
-        {[0, 1, 2].map((key) => (
-          <li key={key}>
-            <Skeleton className="h-20 w-full rounded-xl" />
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-4">
+        {header}
+        <ul className="flex flex-col gap-3">
+          {[0, 1, 2].map((key) => (
+            <li key={key}>
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </li>
+          ))}
+        </ul>
+        {inviteSheet}
+      </div>
     )
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se han podido cargar tus alumnos.</p>
+    return (
+      <div className="flex flex-col gap-4">
+        {header}
+        <p className="text-body text-error-text">No se han podido cargar tus alumnos.</p>
+        {inviteSheet}
+      </div>
+    )
   }
 
   if (students.length === 0) {
     return (
-      <EmptyState
-        icon={Users}
-        title="Aún no tienes alumnos"
-        description="Cuando un alumno se suscriba a uno de tus planes aparecerá aquí."
-      />
+      <div className="flex flex-col gap-4">
+        {header}
+        <EmptyState
+          icon={Users}
+          title="Aún no tienes alumnos"
+          description="Invita a un alumno a uno de tus planes, o espera a que alguien se suscriba desde el directorio."
+          actionLabel="Invitar alumno"
+          onAction={() => setInviteOpen(true)}
+        />
+        {inviteSheet}
+      </div>
     )
   }
 
@@ -66,6 +95,8 @@ export function StudentsScreen() {
 
   return (
     <div className="flex flex-col gap-4">
+      {header}
+
       {hasPaused && (
         <p className="flex items-start gap-2 rounded-lg border border-warning bg-warning-surface p-3 text-body text-warning-text">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
@@ -90,10 +121,11 @@ export function StudentsScreen() {
               onFocus={() => prefetch(student.subscriptionId)}
               className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
-              <Avatar className="size-10 shrink-0">
-                <AvatarImage src={student.studentAvatarUrl ?? "/placeholder.svg"} alt="" />
-                <AvatarFallback>{initialsOf(student.studentName)}</AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                name={student.studentName}
+                src={student.studentAvatarUrl}
+                className="size-10"
+              />
 
               <div className="min-w-0">
                 <p className="truncate font-medium">{student.studentName}</p>
@@ -152,6 +184,8 @@ export function StudentsScreen() {
           )
         }}
       />
+
+      {inviteSheet}
     </div>
   )
 }
