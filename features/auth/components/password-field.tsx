@@ -1,12 +1,12 @@
 "use client"
 
-import { Check, Eye, EyeOff } from "lucide-react"
-import { useState } from "react"
+import { Check, Eye, EyeOff, Lock } from "lucide-react"
+import { useState, type ReactNode } from "react"
 
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { PASSWORD_RULES } from "../model/password"
+import { AUTH_CONTROL, AuthFieldFrame } from "./auth-field"
 
 interface PasswordFieldProps {
   id: string
@@ -17,6 +17,8 @@ interface PasswordFieldProps {
   autoComplete?: string
   /** Shows the live rule checklist. Off for "confirm" and sign-in fields. */
   showRules?: boolean
+  /** Opposite the label — where the "forgot password" link lives. */
+  action?: ReactNode
   onChange: (value: string) => void
 }
 
@@ -36,15 +38,25 @@ export function PasswordField({
   disabled,
   autoComplete = "new-password",
   showRules,
+  action,
   onChange,
 }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false)
 
   return (
-    <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>{label}</Label>
-
+    <AuthFieldFrame
+      id={id}
+      label={label}
+      error={error}
+      action={action}
+      footer={showRules && <PasswordRules value={value} />}
+    >
       <div className="relative">
+        <Lock
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within/field:text-primary-text"
+        />
+
         <Input
           id={id}
           type={visible ? "text" : "password"}
@@ -52,41 +64,52 @@ export function PasswordField({
           disabled={disabled}
           autoComplete={autoComplete}
           placeholder="••••••••"
-          className="pr-10"
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn(AUTH_CONTROL, "pr-11 pl-10 tracking-[0.12em]")}
           onChange={(event) => onChange(event.target.value)}
         />
+
         <button
           type="button"
           onClick={() => setVisible((current) => !current)}
           disabled={disabled}
           aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50"
+          className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-50"
         >
           {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
       </div>
 
-      {error && <p className="text-body text-error-text">{error}</p>}
+    </AuthFieldFrame>
+  )
+}
 
-      {showRules && (
-        <ul className="mt-1 flex flex-col gap-1">
-          {PASSWORD_RULES.map((rule) => {
-            const met = rule.test(value)
-            return (
-              <li
-                key={rule.id}
-                className={cn(
-                  "flex items-center gap-2 text-caption transition-colors",
-                  met ? "text-primary-text" : "text-muted-foreground",
-                )}
-              >
-                <Check className={cn("size-3.5 shrink-0", !met && "opacity-30")} />
-                {rule.label}
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
+/** The backend's policy as pills that fill in while the user types. */
+function PasswordRules({ value }: { value: string }) {
+  return (
+    <ul className="mt-0.5 flex flex-wrap gap-1.5">
+      {PASSWORD_RULES.map((rule) => {
+        const met = rule.test(value)
+        return (
+          <li
+            key={rule.id}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-caption transition-colors",
+              met
+                ? "border-primary/40 bg-success-surface font-medium text-primary-text"
+                : "border-border bg-card text-muted-foreground",
+            )}
+          >
+            {met ? (
+              <Check className="size-3 shrink-0" />
+            ) : (
+              <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-foreground-disabled" />
+            )}
+            {rule.label}
+          </li>
+        )
+      })}
+    </ul>
   )
 }

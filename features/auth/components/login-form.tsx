@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
+import { Mail } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -9,11 +9,10 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { emailSchema } from "../model/password"
+import { AuthField } from "./auth-field"
 import { AuthShell } from "./auth-shell"
+import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
 
 const schema = z.object({
@@ -117,26 +116,25 @@ export function LoginForm() {
           ¿Aún no tienes cuenta?{" "}
           <Link
             href="/register"
-            className="font-medium text-foreground underline underline-offset-4"
+            className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
           >
             Crea una
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Correo electrónico</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="tu@gimnasio.com"
-            autoComplete="email"
-            disabled={submitting}
-            {...register("email")}
-          />
-          {errors.email && <p className="text-body text-error-text">{errors.email.message}</p>}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-5" noValidate>
+        <AuthField
+          id="email"
+          label="Correo electrónico"
+          icon={Mail}
+          type="email"
+          placeholder="tu@gimnasio.com"
+          autoComplete="email"
+          disabled={submitting}
+          error={errors.email?.message}
+          {...register("email")}
+        />
 
         <Controller
           control={control}
@@ -150,23 +148,21 @@ export function LoginForm() {
               error={errors.password?.message}
               disabled={submitting}
               autoComplete="current-password"
+              action={
+                <Link
+                  href="/forgot-password"
+                  className="text-caption font-medium text-muted-foreground underline underline-offset-4 hover:text-primary-text"
+                >
+                  ¿Has olvidado tu contraseña?
+                </Link>
+              }
             />
           )}
         />
 
-        <div className="-mt-1 flex justify-end">
-          <Link
-            href="/forgot-password"
-            className="text-body text-muted-foreground underline underline-offset-4 hover:text-foreground"
-          >
-            ¿Has olvidado tu contraseña?
-          </Link>
-        </div>
-
-        <Button type="submit" size="lg" className="mt-2 w-full" disabled={submitting}>
-          {submitting && <Loader2 className="size-4 animate-spin" />}
-          {submitting ? "Iniciando sesión…" : "Iniciar sesión"}
-        </Button>
+        <AuthSubmitButton pending={submitting} pendingLabel="Iniciando sesión…">
+          Iniciar sesión
+        </AuthSubmitButton>
       </form>
     </AuthShell>
   )

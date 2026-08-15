@@ -10,6 +10,8 @@ interface OtpInputProps {
   onChange: (value: string) => void
   /** Fired when the last digit lands, so the form can submit itself. */
   onComplete?: (value: string) => void
+  /** Lands on the first box, so a `<label htmlFor>` has something to point at. */
+  id?: string
   disabled?: boolean
   invalid?: boolean
   autoFocus?: boolean
@@ -28,6 +30,7 @@ export function OtpInput({
   value,
   onChange,
   onComplete,
+  id,
   disabled,
   invalid,
   autoFocus,
@@ -100,32 +103,43 @@ export function OtpInput({
   }
 
   return (
-    <div className="flex gap-2" role="group" aria-label="Código de verificación">
-      {digits.map((digit, index) => (
-        <input
-          key={index}
-          ref={(element) => {
-            refs.current[index] = element
-          }}
-          type="text"
-          inputMode="numeric"
-          autoComplete={index === 0 ? "one-time-code" : "off"}
-          maxLength={OTP_LENGTH}
-          value={digit.trim()}
-          disabled={disabled}
-          aria-label={`Dígito ${index + 1}`}
-          onChange={(event) => handleDigit(index, event.target.value)}
-          onKeyDown={(event) => handleKeyDown(index, event)}
-          onPaste={handlePaste}
-          onFocus={(event) => event.target.select()}
-          className={cn(
-            "h-14 w-full min-w-0 rounded-lg border bg-transparent text-center font-mono text-subtitle transition-colors",
-            "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            invalid ? "border-destructive" : "border-input",
-          )}
-        />
-      ))}
+    <div className="flex gap-1.5 sm:gap-2" role="group" aria-label="Código de verificación">
+      {digits.map((digit, index) => {
+        const filled = digit.trim() !== ""
+        return (
+          <input
+            key={index}
+            id={index === 0 ? id : undefined}
+            ref={(element) => {
+              refs.current[index] = element
+            }}
+            type="text"
+            inputMode="numeric"
+            autoComplete={index === 0 ? "one-time-code" : "off"}
+            maxLength={OTP_LENGTH}
+            value={digit.trim()}
+            disabled={disabled}
+            aria-label={`Dígito ${index + 1}`}
+            aria-invalid={invalid || undefined}
+            onChange={(event) => handleDigit(index, event.target.value)}
+            onKeyDown={(event) => handleKeyDown(index, event)}
+            onPaste={handlePaste}
+            onFocus={(event) => event.target.select()}
+            className={cn(
+              "h-14 w-full min-w-0 rounded-lg border text-center font-heading text-title font-semibold shadow-[0_1px_2px_rgba(8,19,36,0.04)] caret-primary-text transition-colors",
+              "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              // A filled box turns green so the user can see how far along the
+              // code is without counting boxes.
+              invalid
+                ? "border-destructive bg-error-surface/40 text-error-text"
+                : filled
+                  ? "border-primary/50 bg-success-surface/40 text-foreground"
+                  : "border-input bg-card text-foreground",
+            )}
+          />
+        )
+      })}
     </div>
   )
 }

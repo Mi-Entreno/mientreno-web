@@ -1,14 +1,12 @@
 "use client"
 
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Check, Mail } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/core/http/errors"
 import { OTP_LENGTH } from "../dto/auth.dto"
@@ -18,7 +16,9 @@ import {
   useVerifyResetCode,
 } from "../hooks/use-auth-actions"
 import { passwordSchema } from "../model/password"
+import { AuthField, AuthFieldFrame } from "./auth-field"
 import { AuthShell } from "./auth-shell"
+import { AuthSubmitButton } from "./auth-submit-button"
 import { OtpInput } from "./otp-input"
 import { PasswordField } from "./password-field"
 
@@ -127,30 +127,49 @@ export function ForgotPasswordForm() {
       title="Recupera tu contraseña"
       description="Te enviaremos un código para que puedas elegir una nueva."
       footer={
-        <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+        <Link
+          href="/login"
+          className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
+        >
           Volver a iniciar sesión
         </Link>
       }
     >
-      <ol className="mt-6 flex items-center gap-2" aria-label="Progreso">
-        {STEPS.map((item, index) => (
-          <li key={item.id} className="flex flex-1 flex-col gap-1.5">
-            <div
-              className={cn(
-                "h-1 rounded-full transition-colors",
-                index <= currentIndex ? "bg-primary" : "bg-border",
-              )}
-            />
-            <span
-              className={cn(
-                "text-caption",
-                index <= currentIndex ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {item.label}
-            </span>
-          </li>
-        ))}
+      <ol className="mt-8 flex items-start gap-2" aria-label="Progreso">
+        {STEPS.map((item, index) => {
+          const done = index < currentIndex
+          const reached = index <= currentIndex
+          return (
+            <li key={item.id} className="flex flex-1 flex-col gap-2">
+              <div
+                className={cn(
+                  "h-1.5 rounded-full transition-colors",
+                  reached ? "bg-primary" : "bg-border",
+                )}
+              />
+              <span
+                className={cn(
+                  "flex items-center gap-1.5 text-caption",
+                  reached ? "font-medium text-foreground" : "text-muted-foreground",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded-full border text-caption leading-none font-semibold transition-colors",
+                    done
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : index === currentIndex
+                        ? "border-primary text-primary-text"
+                        : "border-border text-muted-foreground",
+                  )}
+                >
+                  {done ? <Check className="size-3" /> : index + 1}
+                </span>
+                {item.label}
+              </span>
+            </li>
+          )
+        })}
       </ol>
 
       <form
@@ -160,42 +179,40 @@ export function ForgotPasswordForm() {
           else if (step === "verify") submitVerify()
           else submitConfirm()
         }}
-        className="mt-6 flex flex-col gap-5"
+        className="mt-7 flex flex-col gap-5"
         noValidate
       >
         {step === "request" && (
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="fp-email">Correo electrónico</Label>
-            <Input
-              id="fp-email"
-              type="email"
-              autoComplete="email"
-              placeholder="tu@gimnasio.com"
-              value={email}
-              disabled={isPending}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-            {errors.email && <p className="text-body text-error-text">{errors.email}</p>}
-          </div>
+          <AuthField
+            id="fp-email"
+            label="Correo electrónico"
+            icon={Mail}
+            type="email"
+            autoComplete="email"
+            placeholder="tu@gimnasio.com"
+            value={email}
+            disabled={isPending}
+            error={errors.email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
         )}
 
         {step === "verify" && (
-          <div className="flex flex-col gap-2">
-            <Label>Código recibido</Label>
-            <p className="text-body text-muted-foreground">
-              Lo hemos enviado a <span className="font-medium text-foreground">{email}</span>.
-            </p>
-            <div className="mt-1">
-              <OtpInput
-                value={code}
-                onChange={setCode}
-                onComplete={submitVerify}
-                disabled={isPending}
-                invalid={verify.isError}
-                autoFocus
-              />
-            </div>
-          </div>
+          <AuthFieldFrame
+            id="fp-code"
+            label="Código recibido"
+            hint={`Lo hemos enviado a ${email}.`}
+          >
+            <OtpInput
+              id="fp-code"
+              value={code}
+              onChange={setCode}
+              onComplete={submitVerify}
+              disabled={isPending}
+              invalid={verify.isError}
+              autoFocus
+            />
+          </AuthFieldFrame>
         )}
 
         {step === "confirm" && (
@@ -220,17 +237,14 @@ export function ForgotPasswordForm() {
           </>
         )}
 
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={isPending || (step === "verify" && code.length !== OTP_LENGTH)}
+        <AuthSubmitButton
+          pending={isPending}
+          disabled={step === "verify" && code.length !== OTP_LENGTH}
         >
-          {isPending && <Loader2 className="size-4 animate-spin" />}
           {step === "request" && "Enviar código"}
           {step === "verify" && "Comprobar código"}
           {step === "confirm" && "Guardar contraseña"}
-        </Button>
+        </AuthSubmitButton>
 
         {step !== "request" && (
           <Button
@@ -242,7 +256,7 @@ export function ForgotPasswordForm() {
               setErrors({})
               setStep(step === "confirm" ? "verify" : "request")
             }}
-            className="self-start"
+            className="self-start text-muted-foreground"
           >
             <ArrowLeft className="size-4" />
             Atrás

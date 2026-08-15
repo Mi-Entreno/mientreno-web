@@ -1,7 +1,6 @@
 "use client"
 
-import { Apple, CheckCircle2, CreditCard, Loader2, ThumbsDown, Users, XCircle } from "lucide-react"
-import Image from "next/image"
+import { Apple, CheckCircle2, CreditCard, Dumbbell, Loader2, ThumbsDown, Users, XCircle } from "lucide-react"
 import { useState } from "react"
 
 import { UserAvatar } from "@/components/shared/user-avatar"
@@ -11,6 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/core/http/errors"
+import type { AuthBrandCopy } from "@/features/auth/components/auth-brand-panel"
+import { AuthShell } from "@/features/auth/components/auth-shell"
 import {
   billingLabel,
   billingSuffix,
@@ -24,6 +25,27 @@ import {
 import { describeStatus, isEnrolled, type PlanInvitation } from "../model/plan-invitation.model"
 
 const MAX_REASON_LENGTH = 300
+
+/**
+ * The visitor here is a student, not a trainer, so the branded panel sells the
+ * thing they are actually being offered rather than the dashboard.
+ */
+const STUDENT_BRAND: AuthBrandCopy = {
+  headline: (
+    <>
+      Tu plan te está
+      <br />
+      <span className="text-brand-green">esperando.</span>
+    </>
+  ),
+  copy: "Revisa la propuesta de tu entrenador y respóndele en un minuto.",
+  features: [
+    { icon: Dumbbell, label: "Entrenamientos guiados semana a semana" },
+    { icon: Apple, label: "Pauta de nutrición si tu plan la incluye" },
+    { icon: Users, label: "Seguimiento directo de tu entrenador" },
+  ],
+  note: "© 2026 JJTECH",
+}
 
 /**
  * The student's half of the flow, opened from the link in their notification.
@@ -44,71 +66,61 @@ export function InvitationResponseScreen({ token }: { token: string }) {
   const [reason, setReason] = useState("")
 
   return (
-    <div className="w-full max-w-app">
-      <div className="mb-8 flex items-center gap-4">
-        <Image
-          src="/logo.png"
-          alt="Mi Entreno"
-          width={410}
-          height={241}
-          priority
-          className="h-16 w-auto"
-        />
-        <span className="border-l border-border pl-4 text-body text-muted-foreground">
-          Invitación de tu entrenador
-        </span>
-      </div>
+    <AuthShell
+      brand={STUDENT_BRAND}
+      footer={
+        <>
+          ¿Eres entrenador? Entra en el panel desde{" "}
+          <a
+            href="/login"
+            className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
+          >
+            mientreno.app/login
+          </a>
+          .
+        </>
+      }
+    >
+      {invitation.isLoading && (
+        <div className="flex flex-col gap-4">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
+      )}
 
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
-        {invitation.isLoading && (
-          <div className="flex flex-col gap-4">
-            <Skeleton className="h-16 w-full rounded-xl" />
-            <Skeleton className="h-32 w-full rounded-xl" />
-          </div>
-        )}
+      {invitation.isError && <LoadError error={invitation.error} />}
 
-        {invitation.isError && <LoadError error={invitation.error} />}
-
-        {invitation.data && (
-          <>
-            {accept.isSuccess ? (
-              <Accepted
-                enrolled={accept.data.subscriptionStatus === "ACTIVE"}
-                checkoutUrl={accept.data.checkoutUrl}
-                trainerName={invitation.data.trainer.name}
-              />
-            ) : reject.isSuccess ? (
-              <Rejected trainerName={invitation.data.trainer.name} />
-            ) : invitation.data.status !== "PENDING" ? (
-              <AlreadyAnswered invitation={invitation.data} />
-            ) : (
-              <Offer
-                invitation={invitation.data}
-                busy={accept.isPending || reject.isPending}
-                accepting={accept.isPending}
-                rejecting={rejecting}
-                rejectPending={reject.isPending}
-                reason={reason}
-                error={accept.error ?? reject.error}
-                onReasonChange={setReason}
-                onStartReject={() => setRejecting(true)}
-                onCancelReject={() => setRejecting(false)}
-                onAccept={() => accept.mutate()}
-                onConfirmReject={() => reject.mutate(reason)}
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      <p className="mt-6 text-center text-body text-muted-foreground text-pretty">
-        ¿Eres entrenador? Entra en el panel desde{" "}
-        <a href="/login" className="font-medium underline underline-offset-4">
-          mientreno.app/login
-        </a>
-        .
-      </p>
-    </div>
+      {invitation.data && (
+        <>
+          {accept.isSuccess ? (
+            <Accepted
+              enrolled={accept.data.subscriptionStatus === "ACTIVE"}
+              checkoutUrl={accept.data.checkoutUrl}
+              trainerName={invitation.data.trainer.name}
+            />
+          ) : reject.isSuccess ? (
+            <Rejected trainerName={invitation.data.trainer.name} />
+          ) : invitation.data.status !== "PENDING" ? (
+            <AlreadyAnswered invitation={invitation.data} />
+          ) : (
+            <Offer
+              invitation={invitation.data}
+              busy={accept.isPending || reject.isPending}
+              accepting={accept.isPending}
+              rejecting={rejecting}
+              rejectPending={reject.isPending}
+              reason={reason}
+              error={accept.error ?? reject.error}
+              onReasonChange={setReason}
+              onStartReject={() => setRejecting(true)}
+              onCancelReject={() => setRejecting(false)}
+              onAccept={() => accept.mutate()}
+              onConfirmReject={() => reject.mutate(reason)}
+            />
+          )}
+        </>
+      )}
+    </AuthShell>
   )
 }
 
@@ -179,7 +191,7 @@ function Offer({
         </blockquote>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border p-5">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-5 shadow-[0_1px_2px_rgba(8,19,36,0.04)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="font-heading text-body-lg font-semibold tracking-tight">{plan.name}</p>
           <Badge variant="secondary">{billingLabel(plan.billingPeriod)}</Badge>
@@ -229,6 +241,7 @@ function Offer({
               disabled={rejectPending}
               maxLength={MAX_REASON_LENGTH}
               placeholder="Prefiero esperar al mes que viene…"
+              className="bg-card"
               onChange={(event) => onReasonChange(event.target.value)}
             />
           </div>

@@ -1,19 +1,18 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
+import { Mail, Phone } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { ApiError } from "@/core/http/errors"
 import { useRegister } from "../hooks/use-auth-actions"
 import { registerSchema, type RegisterFormValues } from "../model/password"
+import { AuthField } from "./auth-field"
 import { AuthShell } from "./auth-shell"
+import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
 
 /**
@@ -88,38 +87,39 @@ export function RegisterForm() {
       footer={
         <>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="font-medium text-foreground underline underline-offset-4">
+          <Link
+            href="/login"
+            className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
+          >
             Inicia sesión
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 flex flex-col gap-4" noValidate>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Correo electrónico</Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@gimnasio.com"
-            disabled={register.isPending}
-            {...field("email")}
-          />
-          {errors.email && <p className="text-body text-error-text">{errors.email.message}</p>}
-        </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-col gap-5" noValidate>
+        <AuthField
+          id="email"
+          label="Correo electrónico"
+          icon={Mail}
+          type="email"
+          autoComplete="email"
+          placeholder="tu@gimnasio.com"
+          disabled={register.isPending}
+          error={errors.email?.message}
+          {...field("email")}
+        />
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="phone">Teléfono (opcional)</Label>
-          <Input
-            id="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="+34600111222"
-            disabled={register.isPending}
-            {...field("phone")}
-          />
-          {errors.phone && <p className="text-body text-error-text">{errors.phone.message}</p>}
-        </div>
+        <AuthField
+          id="phone"
+          label="Teléfono (opcional)"
+          icon={Phone}
+          type="tel"
+          autoComplete="tel"
+          placeholder="+34600111222"
+          disabled={register.isPending}
+          error={errors.phone?.message}
+          {...field("phone")}
+        />
 
         <Controller
           control={control}
@@ -152,10 +152,9 @@ export function RegisterForm() {
           )}
         />
 
-        <Button type="submit" size="lg" className="mt-2 w-full" disabled={register.isPending}>
-          {register.isPending && <Loader2 className="size-4 animate-spin" />}
-          {register.isPending ? "Creando cuenta…" : "Crear cuenta"}
-        </Button>
+        <AuthSubmitButton pending={register.isPending} pendingLabel="Creando cuenta…">
+          Crear cuenta
+        </AuthSubmitButton>
       </form>
     </AuthShell>
   )
