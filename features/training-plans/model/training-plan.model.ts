@@ -1,9 +1,18 @@
 import type { WeightUnit } from "../dto/training-plan.dto"
 
+/** Target for one set. What the student should do, not what they did. */
+export interface PlannedSet {
+  setNumber: number
+  reps: number | null
+  weightValue: number | null
+  weightUnit: WeightUnit | null
+}
+
 export interface PlanExercise {
   id: number
   order: number
   name: string
+  /** Flat summary from the backend; `plannedSets` carries the real targets. */
   sets: number | null
   reps: number | null
   weightValue: number | null
@@ -15,6 +24,7 @@ export interface PlanExercise {
   catalogExerciseId: number | null
   muscleGroup: string | null
   equipment: string | null
+  plannedSets: PlannedSet[]
 }
 
 export interface PlanDay {
@@ -47,6 +57,13 @@ export interface StudentPlanSummary {
 // Numeric fields are strings so an empty input stays empty rather than
 // collapsing to 0 — 0 sets and "unspecified" are different things.
 
+/** One set row in the editor. Strings for the same reason as the fields below. */
+export interface EditorSet {
+  key: string
+  reps: string
+  weightValue: string
+}
+
 export interface EditorExercise {
   /** Stable local key; exercise ids do not survive a save (days are rebuilt). */
   key: string
@@ -54,9 +71,11 @@ export interface EditorExercise {
   name: string
   muscleGroup: string | null
   equipment: string | null
-  sets: string
-  reps: string
-  weightValue: string
+  /**
+   * Per-set targets. `sets.length` is the set count — there is no separate
+   * numeric field, so the two can never disagree.
+   */
+  sets: EditorSet[]
   weightUnit: WeightUnit | ""
   restSeconds: string
   durationSeconds: string
@@ -93,6 +112,28 @@ export function nextKey(prefix: string): string {
   return `${prefix}-${keySeed}`
 }
 
+export function emptySet(): EditorSet {
+  return { key: nextKey("set"), reps: "", weightValue: "" }
+}
+
+/**
+ * Resizes the set list to `count`, keeping what is already filled in.
+ *
+ * Going 4 -> 3 must not wipe the first three, and going back up copies the last
+ * row, which is what a trainer usually wants: same load, one more set.
+ */
+export function resizeSets(sets: EditorSet[], count: number): EditorSet[] {
+  if (count <= sets.length) return sets.slice(0, count)
+
+  const template = sets[sets.length - 1]
+  return [
+    ...sets,
+    ...Array.from({ length: count - sets.length }, () =>
+      template ? { ...template, key: nextKey("set") } : emptySet(),
+    ),
+  ]
+}
+
 export function emptyExercise(): EditorExercise {
   return {
     key: nextKey("ex"),
@@ -100,9 +141,7 @@ export function emptyExercise(): EditorExercise {
     name: "",
     muscleGroup: null,
     equipment: null,
-    sets: "",
-    reps: "",
-    weightValue: "",
+    sets: [emptySet()],
     weightUnit: "",
     restSeconds: "",
     durationSeconds: "",

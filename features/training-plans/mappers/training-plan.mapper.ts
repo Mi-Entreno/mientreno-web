@@ -17,11 +17,37 @@ import {
   type EditorPlan,
   type PlanDay,
   type PlanExercise,
+  type PlannedSet,
   type StudentPlanSummary,
   type TrainingPlan,
 } from "../model/training-plan.model"
 
 // ── Response -> model ────────────────────────────────────────────────────────
+
+/**
+ * Per-set targets. The backend always sends `plannedSets`, but a response from
+ * an older deployment may not: expanding the flat summary into N identical sets
+ * is exactly what that plan meant, so callers never see a missing field.
+ */
+function toPlannedSets(dto: ExerciseResponseDTO): PlannedSet[] {
+  if (dto.plannedSets?.length) {
+    return [...dto.plannedSets]
+      .sort((a, b) => a.setNumber - b.setNumber)
+      .map((set, index) => ({
+        setNumber: set.setNumber || index + 1,
+        reps: set.targetReps,
+        weightValue: set.targetWeightValue,
+        weightUnit: set.targetWeightUnit,
+      }))
+  }
+
+  return Array.from({ length: Math.max(dto.sets ?? 0, 0) }, (_, index) => ({
+    setNumber: index + 1,
+    reps: dto.reps,
+    weightValue: dto.weightValue,
+    weightUnit: dto.weightUnit,
+  }))
+}
 
 export function toPlanExercise(dto: ExerciseResponseDTO): PlanExercise {
   return {
@@ -40,6 +66,7 @@ export function toPlanExercise(dto: ExerciseResponseDTO): PlanExercise {
     // Present only when the exercise is linked to a catalogue entry.
     muscleGroup: dto.muscleGroup,
     equipment: dto.equipment,
+    plannedSets: toPlannedSets(dto),
   }
 }
 
@@ -88,10 +115,14 @@ function toEditorExercise(exercise: PlanExercise): EditorExercise {
     name: exercise.name,
     muscleGroup: exercise.muscleGroup,
     equipment: exercise.equipment,
-    sets: exercise.sets === null ? "" : String(exercise.sets),
-    reps: exercise.reps === null ? "" : String(exercise.reps),
-    weightValue: exercise.weightValue === null ? "" : String(exercise.weightValue),
-    weightUnit: exercise.weightUnit ?? "",
+    sets: exercise.plannedSets.map((set) => ({
+      key: nextKey("set"),
+      reps: set.reps === null ? "" : String(set.reps),
+      weightValue: set.weightValue === null ? "" : String(set.weightValue),
+    })),
+    // The unit is per exercise in the editor: mixing kg and lb across sets of
+    // the same movement is not a real use case and would only add a trap.
+    weightUnit: exercise.weightUnit ?? exercise.plannedSets[0]?.weightUnit ?? "",
     restSeconds: exercise.restSeconds === null ? "" : String(exercise.restSeconds),
     durationSeconds: exercise.durationSeconds === null ? "" : String(exercise.durationSeconds),
     trainerNotes: exercise.trainerNotes ?? "",
@@ -131,20 +162,32 @@ function emptyToNull(value: string): string | null {
 }
 
 function toExerciseRequest(exercise: EditorExercise, index: number): ExerciseRequestDTO {
+  const weightUnit = exercise.weightUnit === "" ? null : exercise.weightUnit
+  const [firstSet] = exercise.sets
+
   return {
     // Derived from position, so reordering in the UI is what the backend sees.
     order: index + 1,
     name: emptyToNull(exercise.name),
     catalogExerciseId: exercise.catalogExerciseId,
-    sets: toNumberOrNull(exercise.sets),
-    reps: toNumberOrNull(exercise.reps),
-    weightValue: toNumberOrNull(exercise.weightValue),
-    weightUnit: exercise.weightUnit === "" ? null : exercise.weightUnit,
+    // Flat summary kept in sync with the sets below: it is what any consumer
+    // still on the old contract reads, so it cannot go stale.
+    sets: exercise.sets.length,
+    reps: firstSet ? toNumberOrNull(firstSet.reps) : null,
+    weightValue: firstSet ? toNumberOrNull(firstSet.weightValue) : null,
+    weightUnit,
     restSeconds: toNumberOrNull(exercise.restSeconds),
     durationSeconds: toNumberOrNull(exercise.durationSeconds),
     // Round-tripped untouched so an edit never unlinks a video.
     mediaUrl: exercise.mediaUrl,
     trainerNotes: emptyToNull(exercise.trainerNotes),
+    plannedSets: exercise.sets.map((set, setIndex) => ({
+      setNumber: setIndex + 1,
+      targetReps: toNumberOrNull(set.reps),
+      targetWeightValue: toNumberOrNull(set.weightValue),
+      targetWeightUnit: weightUnit,
+      restSeconds: null,
+    })),
   }
 }
 

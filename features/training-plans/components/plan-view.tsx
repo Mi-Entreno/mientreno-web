@@ -127,22 +127,49 @@ function ExerciseView({
   )
 }
 
+/**
+ * Reps across the sets: "4 × 10" when every set matches, "10/10/8/6" when they
+ * do not. Collapsing to the first set would hide exactly the progression that
+ * per-set targets exist to express.
+ */
+function describeReps(exercise: PlanExercise): string | null {
+  const sets = exercise.plannedSets
+  if (sets.length === 0) {
+    return exercise.reps !== null ? `${exercise.reps} reps` : null
+  }
+
+  const reps = sets.map((set) => set.reps)
+  if (reps.some((value) => value === null)) return `${sets.length} series`
+
+  return reps.every((value) => value === reps[0]) ? `${sets.length} × ${reps[0]}` : reps.join("/")
+}
+
+/** Single load when the sets agree, a range when they do not. */
+function describeWeight(exercise: PlanExercise): string | null {
+  if (exercise.weightUnit === "BODYWEIGHT") return "Peso corporal"
+
+  const suffix = exercise.weightUnit === "LB" ? " lb" : " kg"
+  const weights = exercise.plannedSets
+    .map((set) => set.weightValue)
+    .filter((value): value is number => value !== null)
+
+  if (weights.length === 0) {
+    return exercise.weightValue !== null ? `${exercise.weightValue}${suffix}` : null
+  }
+
+  const min = Math.min(...weights)
+  const max = Math.max(...weights)
+  return min === max ? `${min}${suffix}` : `${min}-${max}${suffix}`
+}
+
 function buildSpecs(exercise: PlanExercise): string[] {
   const specs: string[] = []
 
-  if (exercise.sets !== null && exercise.reps !== null) {
-    specs.push(`${exercise.sets} × ${exercise.reps}`)
-  } else if (exercise.sets !== null) {
-    specs.push(`${exercise.sets} series`)
-  } else if (exercise.reps !== null) {
-    specs.push(`${exercise.reps} reps`)
-  }
+  const reps = describeReps(exercise)
+  if (reps) specs.push(reps)
 
-  if (exercise.weightUnit === "BODYWEIGHT") {
-    specs.push("Peso corporal")
-  } else if (exercise.weightValue !== null) {
-    specs.push(`${exercise.weightValue}${exercise.weightUnit === "LB" ? " lb" : " kg"}`)
-  }
+  const weight = describeWeight(exercise)
+  if (weight) specs.push(weight)
 
   if (exercise.durationSeconds !== null) specs.push(`${exercise.durationSeconds}s`)
   if (exercise.restSeconds !== null) specs.push(`descanso ${exercise.restSeconds}s`)
