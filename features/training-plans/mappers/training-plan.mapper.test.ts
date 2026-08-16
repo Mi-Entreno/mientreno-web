@@ -35,6 +35,13 @@ const RESPONSE: TrainingPlanResponseDTO = {
           catalogExerciseId: 77,
           muscleGroup: "Quadriceps",
           equipment: "Machine",
+          // Deliberately out of order, and with a different target per set.
+          plannedSets: [
+            { id: 3, setNumber: 3, targetReps: 8, targetWeightValue: 110, targetWeightUnit: "KG", restSeconds: null },
+            { id: 1, setNumber: 1, targetReps: 10, targetWeightValue: 120, targetWeightUnit: "KG", restSeconds: null },
+            { id: 2, setNumber: 2, targetReps: 10, targetWeightValue: 120, targetWeightUnit: "KG", restSeconds: null },
+            { id: 4, setNumber: 4, targetReps: 6, targetWeightValue: 100, targetWeightUnit: "KG", restSeconds: null },
+          ],
         },
         {
           id: 30,
@@ -51,6 +58,14 @@ const RESPONSE: TrainingPlanResponseDTO = {
           catalogExerciseId: null,
           muscleGroup: null,
           equipment: null,
+          plannedSets: [1, 2, 3, 4, 5].map((setNumber) => ({
+            id: setNumber,
+            setNumber,
+            targetReps: 5,
+            targetWeightValue: null,
+            targetWeightUnit: "BODYWEIGHT" as const,
+            restSeconds: null,
+          })),
         },
       ],
     },
@@ -101,7 +116,7 @@ describe("toEditorPlan", () => {
     const editor = toEditorPlan(toTrainingPlan(RESPONSE))
     const bodyweight = editor.days[1].exercises[0]
 
-    expect(bodyweight.weightValue).toBe("")
+    expect(bodyweight.sets.every((set) => set.weightValue === "")).toBe(true)
     expect(bodyweight.restSeconds).toBe("")
     expect(bodyweight.weightUnit).toBe("BODYWEIGHT")
   })
@@ -122,8 +137,16 @@ describe("toPlanBody", () => {
         label: "Torso",
         restDay: false,
         exercises: [
-          { ...emptyExercise(), name: "Press banca", sets: "4", reps: "8", weightValue: "60,5", weightUnit: "KG" },
-          { ...emptyExercise(), catalogExerciseId: 12, name: "Remo", sets: "", reps: "" },
+          {
+            ...emptyExercise(),
+            name: "Press banca",
+            weightUnit: "KG",
+            sets: [
+              { key: nextKey("set"), reps: "8", weightValue: "60,5" },
+              { key: nextKey("set"), reps: "6", weightValue: "65" },
+            ],
+          },
+          { ...emptyExercise(), catalogExerciseId: 12, name: "Remo", sets: [{ key: nextKey("set"), reps: "", weightValue: "" }] },
         ],
       },
       {
@@ -157,14 +180,33 @@ describe("toPlanBody", () => {
 
   it("accepts a comma decimal separator for the weight", () => {
     expect(toPlanBody(plan).days[0].exercises[0].weightValue).toBe(60.5)
+    expect(toPlanBody(plan).days[0].exercises[0].plannedSets?.[0].targetWeightValue).toBe(60.5)
+  })
+
+  it("sends one plannedSet per row, numbered by position", () => {
+    const exercise = toPlanBody(plan).days[0].exercises[0]
+
+    expect(exercise.plannedSets).toEqual([
+      { setNumber: 1, targetReps: 8, targetWeightValue: 60.5, targetWeightUnit: "KG", restSeconds: null },
+      { setNumber: 2, targetReps: 6, targetWeightValue: 65, targetWeightUnit: "KG", restSeconds: null },
+    ])
+  })
+
+  it("keeps the flat summary in sync with the sets", () => {
+    // It is what any consumer still on the old contract reads.
+    const exercise = toPlanBody(plan).days[0].exercises[0]
+
+    expect(exercise.sets).toBe(2)
+    expect(exercise.reps).toBe(8)
+    expect(exercise.weightValue).toBe(60.5)
   })
 
   it("nulls unset numbers rather than sending zero or NaN", () => {
     const exercise = toPlanBody(plan).days[0].exercises[1]
 
-    expect(exercise.sets).toBeNull()
     expect(exercise.reps).toBeNull()
     expect(exercise.weightUnit).toBeNull()
+    expect(exercise.plannedSets?.[0].targetReps).toBeNull()
   })
 
   it("keeps the catalogue link so the backend can snapshot the title", () => {

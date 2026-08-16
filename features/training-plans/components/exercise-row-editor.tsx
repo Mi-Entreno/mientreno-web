@@ -8,7 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { WEIGHT_UNITS, type EditorExercise, type WeightUnit } from "../model/training-plan.model"
+import { WEIGHT_UNITS, resizeSets, type EditorExercise, type WeightUnit } from "../model/training-plan.model"
+
+/** Upper bound for the set count input; beyond this it is a data-entry slip. */
+const MAX_SETS = 12
 
 interface ExerciseRowEditorProps {
   exercise: EditorExercise
@@ -117,20 +120,19 @@ export function ExerciseRowEditor({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <NumberField
           id={`${exercise.key}-sets`}
           label="Series"
-          value={exercise.sets}
+          value={String(exercise.sets.length)}
           disabled={disabled}
-          onChange={(sets) => onChange({ sets })}
-        />
-        <NumberField
-          id={`${exercise.key}-reps`}
-          label="Repeticiones"
-          value={exercise.reps}
-          disabled={disabled}
-          onChange={(reps) => onChange({ reps })}
+          onChange={(value) => {
+            const count = Number(value)
+            // While the field is empty or out of range the rows are left alone:
+            // the trainer is still typing.
+            if (!value || !Number.isInteger(count) || count < 1 || count > MAX_SETS) return
+            onChange({ sets: resizeSets(exercise.sets, count) })
+          }}
         />
         <NumberField
           id={`${exercise.key}-rest`}
@@ -148,44 +150,97 @@ export function ExerciseRowEditor({
         />
 
         <div className="flex flex-col gap-2">
-          <Label htmlFor={`${exercise.key}-weight`}>Peso</Label>
-          <div className="flex gap-1.5">
-            <Input
-              id={`${exercise.key}-weight`}
-              inputMode="decimal"
-              value={exercise.weightValue}
-              // BODYWEIGHT has no number to go with it.
-              disabled={disabled || exercise.weightUnit === "BODYWEIGHT"}
-              onChange={(event) => onChange({ weightValue: event.target.value })}
-            />
-            <select
-              aria-label="Unidad de peso"
-              value={exercise.weightUnit}
+          <Label htmlFor={`${exercise.key}-unit`}>Unidad</Label>
+          <select
+            id={`${exercise.key}-unit`}
+            aria-label="Unidad de peso"
+            value={exercise.weightUnit}
+            disabled={disabled}
+            onChange={(event) => {
+              const weightUnit = event.target.value as WeightUnit | ""
+              onChange({
+                weightUnit,
+                // BODYWEIGHT has no number to go with it, in any set.
+                ...(weightUnit === "BODYWEIGHT"
+                  ? { sets: exercise.sets.map((set) => ({ ...set, weightValue: "" })) }
+                  : {}),
+              })
+            }}
+            className={cn(
+              "h-9 shrink-0 rounded-lg border border-input bg-transparent px-2 text-body",
+              "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+            )}
+          >
+            {/* Only KG, LB and BODYWEIGHT exist upstream; anything else is a
+                400 from `WeightUnit.valueOf`. */}
+            <option value="">—</option>
+            {WEIGHT_UNITS.map((unit) => (
+              <option key={unit.value} value={unit.value}>
+                {unit.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Per-set targets. Reps and load can differ between sets, so each one
+          gets its own row rather than a single value applied to all. */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <Label>Objetivo por serie</Label>
+          {exercise.sets.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               disabled={disabled}
-              onChange={(event) => {
-                const weightUnit = event.target.value as WeightUnit | ""
+              onClick={() => {
+                const [first] = exercise.sets
+                if (!first) return
                 onChange({
-                  weightUnit,
-                  ...(weightUnit === "BODYWEIGHT" ? { weightValue: "" } : {}),
+                  sets: exercise.sets.map((set) => ({ ...set, reps: first.reps, weightValue: first.weightValue })),
                 })
               }}
-              className={cn(
-                "h-9 shrink-0 rounded-lg border border-input bg-transparent px-2 text-body",
-                "focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-              )}
             >
-              {/* Only KG, LB and BODYWEIGHT exist upstream; anything else is a
-                  400 from `WeightUnit.valueOf`. */}
-              <option value="">—</option>
-              {WEIGHT_UNITS.map((unit) => (
-                <option key={unit.value} value={unit.value}>
-                  {unit.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              Copiar la 1.ª a todas
+            </Button>
+          )}
         </div>
+
+        {exercise.sets.map((set, index) => (
+          <div key={set.key} className="flex items-center gap-2">
+            <span className="w-16 shrink-0 text-body-sm text-muted-foreground">Serie {index + 1}</span>
+            <Input
+              aria-label={`Repeticiones de la serie ${index + 1}`}
+              inputMode="numeric"
+              placeholder="Reps"
+              value={set.reps}
+              disabled={disabled}
+              onChange={(event) =>
+                onChange({
+                  sets: exercise.sets.map((current, position) =>
+                    position === index ? { ...current, reps: event.target.value } : current,
+                  ),
+                })
+              }
+            />
+            <Input
+              aria-label={`Peso de la serie ${index + 1}`}
+              inputMode="decimal"
+              placeholder="Peso"
+              value={set.weightValue}
+              disabled={disabled || exercise.weightUnit === "BODYWEIGHT"}
+              onChange={(event) =>
+                onChange({
+                  sets: exercise.sets.map((current, position) =>
+                    position === index ? { ...current, weightValue: event.target.value } : current,
+                  ),
+                })
+              }
+            />
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-col gap-2">
