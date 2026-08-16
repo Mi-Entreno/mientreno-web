@@ -3,11 +3,32 @@
 /** `WeightUnit.java`. `buildDays` upper-cases then `valueOf`s — anything else is a 400. */
 export type WeightUnit = "KG" | "LB" | "BODYWEIGHT"
 
+/**
+ * `PlannedSetResponse`. One row of `exercise_sets`: the target for set N.
+ *
+ * Always populated when the exercise has sets — a plan stored under the old
+ * flat model is expanded server-side into N identical entries.
+ */
+export interface PlannedSetResponseDTO {
+  id: number | null
+  setNumber: number
+  targetReps: number | null
+  /** `BigDecimal` upstream, JSON number here. */
+  targetWeightValue: number | null
+  targetWeightUnit: WeightUnit | null
+  restSeconds: number | null
+}
+
 export interface ExerciseResponseDTO {
   id: number
   /** Named `order` in the DTO; the entity column is `exerciseOrder`. */
   order: number
   name: string
+  /**
+   * Flat summary kept for backwards compatibility: set count plus the first
+   * set's values. `plannedSets` is the source of truth — read that unless you
+   * only need a headline number.
+   */
   sets: number | null
   reps: number | null
   /** `BigDecimal` upstream, JSON number here. */
@@ -22,6 +43,8 @@ export interface ExerciseResponseDTO {
   /** Read from the linked catalogue entry, never stored on the exercise. */
   muscleGroup: string | null
   equipment: string | null
+  /** Per-set targets, ordered by `setNumber`. */
+  plannedSets: PlannedSetResponseDTO[]
 }
 
 export interface TrainingDayResponseDTO {
@@ -53,10 +76,25 @@ export interface TrainingPlanResponseDTO {
  *  - An unknown `catalogExerciseId` is a 404, not a silent null.
  *  - `weightValue` is a `Double` here but a `BigDecimal` in the response.
  */
+export interface PlannedSetRequestDTO {
+  /** Optional: omitted, the backend numbers by list position. */
+  setNumber: number | null
+  targetReps: number | null
+  targetWeightValue: number | null
+  targetWeightUnit: WeightUnit | null
+  restSeconds: number | null
+}
+
 export interface ExerciseRequestDTO {
   order: number
   name: string | null
   catalogExerciseId: number | null
+  /**
+   * Flat summary. Still sent in sync with `plannedSets`: the backend would
+   * recompute it anyway, but sending it keeps the request self-consistent.
+   * When `plannedSets` is null or empty the backend falls back to expanding
+   * these across all sets, which is how the old contract behaved.
+   */
   sets: number | null
   reps: number | null
   weightValue: number | null
@@ -65,6 +103,8 @@ export interface ExerciseRequestDTO {
   durationSeconds: number | null
   mediaUrl: string | null
   trainerNotes: string | null
+  /** Per-set targets; wins over the flat fields when present. */
+  plannedSets: PlannedSetRequestDTO[] | null
 }
 
 /**
