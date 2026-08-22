@@ -45,7 +45,7 @@ export function PlansScreen() {
         </p>
         <Button onClick={openCreate} className="sm:shrink-0">
           <Plus className="size-4" />
-          Nuevo plan
+          Crear plan
         </Button>
       </div>
 
@@ -68,10 +68,8 @@ export function PlansScreen() {
       {plans && plans.length === 0 && (
         <EmptyState
           icon={CreditCard}
-          title="Aún no tienes planes de suscripción"
-          description="Crea tu primer plan para que los alumnos puedan suscribirse a tus servicios."
-          actionLabel="Crear plan"
-          onAction={openCreate}
+          title="Todavía no tenés planes de suscripción"
+          description="Creá tu primer plan con el botón de arriba para que tus alumnos puedan suscribirse."
         />
       )}
 

@@ -29,7 +29,6 @@ import {
   type InvitationStatus,
   type PlanInvitation,
 } from "../model/plan-invitation.model"
-import { InviteStudentSheet } from "./invite-student-sheet"
 import { InvitationStatusBadge } from "./invitation-status-badge"
 
 /** `null` (the "all" filter) has no place in a tab value, so it travels as this. */
@@ -41,20 +40,30 @@ function toStatus(value: string): InvitationStatus | null {
 
 export function InvitationsScreen() {
   const [tab, setTab] = useState<string>("PENDING")
-  const [inviteOpen, setInviteOpen] = useState(false)
 
   const counts = useInvitationCounts()
 
   return (
     <div className="flex flex-col gap-6">
+      {/*
+        No "enviar plan" button here.
+
+        Inviting used to be offered from this screen and from "Mis alumnos",
+        which made two sections look like they did the same job. This one is a
+        queue: what has been sent, what is still waiting, what was answered.
+        Sending starts where the roster is.
+      */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-body text-muted-foreground text-pretty">
-          Ofrece tus planes a alumnos concretos y sigue el estado de cada propuesta.
+          El estado de cada propuesta que enviaste.
         </p>
-        <Button onClick={() => setInviteOpen(true)} className="sm:shrink-0">
-          <Send className="size-4" />
-          Enviar plan
-        </Button>
+        <Link
+          href="/dashboard/students"
+          className="flex w-fit shrink-0 items-center gap-1.5 text-body font-medium text-primary-text underline-offset-4 hover:underline"
+        >
+          Ir a mis alumnos
+          <ArrowRight className="size-3.5" />
+        </Link>
       </div>
 
       <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
@@ -90,22 +99,14 @@ export function InvitationsScreen() {
           exactly one query in flight.
         */}
         <TabsContent value={tab} className="pt-4">
-          <InvitationList status={toStatus(tab)} onInvite={() => setInviteOpen(true)} />
+          <InvitationList status={toStatus(tab)} />
         </TabsContent>
       </Tabs>
-
-      <InviteStudentSheet open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }
 
-function InvitationList({
-  status,
-  onInvite,
-}: {
-  status: InvitationStatus | null
-  onInvite: () => void
-}) {
+function InvitationList({ status }: { status: InvitationStatus | null }) {
   const list = useSentInvitations(status)
   const cancel = useCancelInvitation()
   const resend = useResendInvitation()
@@ -131,10 +132,8 @@ function InvitationList({
     return (
       <EmptyState
         icon={Send}
-        title={status === null ? "Aún no has enviado invitaciones" : "No hay invitaciones aquí"}
-        description="Busca un alumno, elige uno de tus planes y envíale la propuesta. Aquí verás si la acepta o la rechaza."
-        actionLabel="Enviar plan"
-        onAction={onInvite}
+        title={status === null ? "Todavía no enviaste invitaciones" : "No hay invitaciones acá"}
+        description="Las invitaciones se envían desde Mis alumnos. Acá vas a ver si cada una se acepta o se rechaza."
       />
     )
   }

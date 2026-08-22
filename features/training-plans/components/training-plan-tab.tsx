@@ -1,6 +1,6 @@
 "use client"
 
-import { Dumbbell, History, Pencil, Plus, Trash2 } from "lucide-react"
+import { Dumbbell, History, Pencil, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
@@ -124,37 +124,32 @@ export function TrainingPlanTab({ subscriptionId }: { subscriptionId: number }) 
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:shrink-0">
-          {viewing && (
-            <Button
-              variant="outline"
-              onClick={() =>
-                setSession({
-                  draft: toEditorPlan(viewing),
-                  planId: viewing.id,
-                  version: viewing.version,
-                })
-              }
-            >
-              <Pencil className="size-4" />
-              Editar
-            </Button>
-          )}
+        {/*
+          One primary action, not two.
+
+          This header used to offer "Editar" and "Nueva versión" side by side,
+          and the editor behind them offered "Guardar cambios en vN" and
+          "Publicar nueva versión" — four buttons for two outcomes, with nothing
+          on screen explaining the difference between a plan, a routine and a
+          version. Editing already reaches both endings, so the choice belongs
+          where its consequences are visible: inside the editor, next to the
+          draft it applies to.
+        */}
+        {viewing && (
           <Button
+            className="sm:shrink-0"
             onClick={() =>
               setSession({
-                // Seeded from the version on screen: a new block usually starts
-                // from the last one rather than from nothing.
-                draft: viewing ? toEditorPlan(viewing) : emptyPlan(),
-                planId: null,
-                version: null,
+                draft: toEditorPlan(viewing),
+                planId: viewing.id,
+                version: viewing.version,
               })
             }
           >
-            <Plus className="size-4" />
-            Nueva versión
+            <Pencil className="size-4" />
+            Editar plan
           </Button>
-        </div>
+        )}
       </div>
 
       {versions.length > 1 && (

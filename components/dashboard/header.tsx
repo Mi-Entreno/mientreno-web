@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Send, Settings, User, Wallet } from "lucide-react"
+import { LogOut, Settings, User, Wallet } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
@@ -71,11 +71,8 @@ export function DashboardHeader() {
               <User className="size-4" />
               Perfil
             </DropdownMenuItem>
-            {/* Below `md` the bottom nav has no room for these two. */}
-            <DropdownMenuItem onClick={() => router.push("/dashboard/invitations")}>
-              <Send className="size-4" />
-              Invitaciones
-            </DropdownMenuItem>
+            {/* Below `md` the bottom nav has no room for this one, and
+                invitations are reached from "Mis alumnos" instead. */}
             <DropdownMenuItem onClick={() => router.push("/dashboard/payments")}>
               <Wallet className="size-4" />
               Cobros
