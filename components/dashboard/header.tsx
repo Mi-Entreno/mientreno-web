@@ -21,7 +21,6 @@ const TITLES: Record<string, string> = {
   "/dashboard/profile": "Mi perfil",
   "/dashboard/settings": "Ajustes",
   "/dashboard/notifications": "Notificaciones",
-  "/dashboard/profile/preview": "Vista pública",
   "/dashboard/plans": "Planes de suscripción",
   "/dashboard/students": "Mis alumnos",
   "/dashboard/invitations": "Invitaciones",
