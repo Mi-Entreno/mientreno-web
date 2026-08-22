@@ -2,13 +2,13 @@
 
 import { Check, Loader2, Search, UserRoundSearch } from "lucide-react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ApiError } from "@/core/http/errors"
 import { cn } from "@/lib/utils"
 import { useStudentSearch } from "../hooks/use-student-search"
 import {
@@ -130,21 +130,12 @@ export function StudentSearchPanel({
 
 /**
  * A 404 here is not "no results" — it is the endpoint itself missing, which is
- * exactly the state this feature ships in until the backend adds it. Saying so
- * beats "no se ha encontrado el recurso", which reads as a broken search.
+ * the state this feature ships in until the backend adds it. `userMessage`
+ * turns that into "todavía no está disponible" rather than "no encontramos
+ * nada", which would read as a search that works and found no one.
  */
 function SearchError({ error }: { error: unknown }) {
-  const isMissingEndpoint = error instanceof ApiError && error.status === 404
-
-  return (
-    <p className="rounded-lg border border-error/40 bg-error-surface p-3 text-body text-error-text text-pretty">
-      {isMissingEndpoint
-        ? "La búsqueda de alumnos aún no está disponible en el servidor (GET /api/users/students/search). Está especificada en BACKEND_REQUIREMENTS.md §3.1."
-        : error instanceof ApiError
-          ? error.message
-          : "No se ha podido buscar alumnos."}
-    </p>
-  )
+  return <ErrorState error={error} context="load" inline />
 }
 
 function CandidateRow({

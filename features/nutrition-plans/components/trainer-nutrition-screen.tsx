@@ -3,6 +3,7 @@
 import { ArrowRight, Salad, Users } from "lucide-react"
 import Link from "next/link"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +14,7 @@ import { sumMealMacros, type StudentNutritionSummary } from "../model/nutrition-
 
 /** Consolidated view from `GET /api/nutrition-plans/trainer/students`. */
 export function TrainerNutritionScreen() {
-  const { data, isLoading, isError } = useTrainerStudentNutrition()
+  const { data, isLoading, isError, error, refetch } = useTrainerStudentNutrition()
 
   if (isLoading) {
     return (
@@ -28,7 +29,7 @@ export function TrainerNutritionScreen() {
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se han podido cargar los planes.</p>
+    return <ErrorState error={error} onRetry={() => refetch()} />
   }
 
   const rows = data ?? []

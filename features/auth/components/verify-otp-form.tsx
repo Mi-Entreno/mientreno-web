@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { OTP_EXPIRY_MINUTES, OTP_LENGTH } from "../dto/auth.dto"
 import { useResendOtp, useVerifyOtp } from "../hooks/use-auth-actions"
 import { useResendCooldown } from "../hooks/use-resend-cooldown"
@@ -50,7 +51,7 @@ export function VerifyOtpForm() {
         onError: (error) => {
           setCode("")
           toast.error(
-            error instanceof ApiError ? error.message : "No se ha podido verificar el código",
+            specificMessage(error) ?? "No pudimos verificar el código. Volvé a intentarlo.",
           )
         },
       },
@@ -83,7 +84,7 @@ export function VerifyOtpForm() {
           return
         }
         toast.error(
-          error instanceof ApiError ? error.message : "No se ha podido reenviar el código",
+          specificMessage(error) ?? "No pudimos reenviar el código. Volvé a intentarlo.",
         )
       },
     })

@@ -78,6 +78,8 @@ export function FoodPicker({ open, onOpenChange, onPick }: FoodPickerProps) {
               totalItems={search.totalItems}
               isLoading={search.isLoading}
               isError={search.isError}
+              error={search.error}
+              onRetry={() => search.refetch()}
               hasNextPage={search.hasNextPage}
               isFetchingNextPage={search.isFetchingNextPage}
               onLoadMore={() => search.fetchNextPage()}

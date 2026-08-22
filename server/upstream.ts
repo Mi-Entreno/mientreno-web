@@ -291,7 +291,7 @@ export async function proxyToUpstream(
     upstream = await fetch(resolved.url, init)
   } catch {
     return NextResponse.json(
-      { message: "No se ha podido conectar con el servidor", status: 502 },
+      { message: "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.", status: 502 },
       { status: 502 },
     )
   }
@@ -335,7 +335,7 @@ async function readResult(response: Response): Promise<UpstreamResult> {
 const UNREACHABLE: UpstreamResult = {
   ok: false,
   status: 502,
-  data: { message: "No se ha podido conectar con el servidor" },
+  data: { message: "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos." },
 }
 
 /** 500, not 502: nothing was attempted, and the fix is local. */

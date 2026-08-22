@@ -1,8 +1,9 @@
 "use client"
 
-import { History, Info, Pencil, Plus, Salad, Trash2 } from "lucide-react"
+import { History, Info, Pencil, Salad, Trash2 } from "lucide-react"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
@@ -65,7 +66,7 @@ export function NutritionPlanTab({
   }
 
   if (current.isError) {
-    return <p className="text-body text-error-text">No se ha podido cargar el plan nutricional.</p>
+    return <ErrorState error={current.error} onRetry={() => current.refetch()} />
   }
 
   const nutritionWarning = !planIncludesNutrition && (
@@ -151,35 +152,32 @@ export function NutritionPlanTab({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:shrink-0">
-          {viewing && (
-            <Button
-              variant="outline"
-              onClick={() =>
-                setSession({
-                  draft: toEditorNutritionPlan(viewing),
-                  planId: viewing.id,
-                  version: viewing.version,
-                })
-              }
-            >
-              <Pencil className="size-4" />
-              Editar
-            </Button>
-          )}
+        {/*
+          One primary action, not two.
+
+          This header used to offer "Editar" and "Nueva versión" side by side,
+          and the editor behind them offered "Guardar cambios en vN" and
+          "Publicar nueva versión" — four buttons for two outcomes, with nothing
+          on screen explaining the difference between a plan, a routine and a
+          version. Editing already reaches both endings, so the choice belongs
+          where its consequences are visible: inside the editor, next to the
+          draft it applies to.
+        */}
+        {viewing && (
           <Button
+            className="sm:shrink-0"
             onClick={() =>
               setSession({
-                draft: viewing ? toEditorNutritionPlan(viewing) : emptyNutritionPlan(),
-                planId: null,
-                version: null,
+                draft: toEditorNutritionPlan(viewing),
+                planId: viewing.id,
+                version: viewing.version,
               })
             }
           >
-            <Plus className="size-4" />
-            Nueva versión
+            <Pencil className="size-4" />
+            Editar plan
           </Button>
-        </div>
+        )}
       </div>
 
       {versions.length > 1 && (

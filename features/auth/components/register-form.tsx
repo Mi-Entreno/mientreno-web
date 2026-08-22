@@ -43,17 +43,17 @@ export function RegisterForm() {
       {
         onSuccess: (result) => {
           if (result.verificationCodeSent) {
-            toast.success("Cuenta creada. Te hemos enviado un código de verificación.")
+            toast.success("Cuenta creada. Te enviamos un código de verificación.")
           } else {
             // Registration succeeded but the code did not go out; the OTP screen
             // exposes a resend button for exactly this.
-            toast.warning("Cuenta creada, pero no hemos podido enviar el código. Pídelo de nuevo.")
+            toast.warning("Cuenta creada, pero no pudimos enviarte el código. Pedilo de nuevo.")
           }
           router.push(`/verify-otp?email=${encodeURIComponent(result.email)}`)
         },
         onError: (error) => {
           if (!(error instanceof ApiError)) {
-            toast.error("No se ha podido conectar con el servidor")
+            toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
             return
           }
 

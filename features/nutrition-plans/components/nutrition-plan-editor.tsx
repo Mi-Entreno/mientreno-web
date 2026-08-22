@@ -215,7 +215,8 @@ export function NutritionPlanEditor({
           <Button type="submit" disabled={isPending}>
             {isPending && <Loader2 className="size-4 animate-spin" />}
             <Upload className="size-4" />
-            Publicar nueva versión
+            {/* The first plan is not a "new version" of anything. */}
+            {editingPlanId === null ? "Publicar plan" : "Publicar nueva versión"}
           </Button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { OTP_LENGTH } from "../dto/auth.dto"
 import {
   useConfirmPasswordReset,
@@ -54,7 +55,7 @@ export function ForgotPasswordForm() {
   const confirm = useConfirmPasswordReset()
 
   function fail(error: unknown, fallback: string) {
-    toast.error(error instanceof ApiError ? error.message : fallback)
+    toast.error(specificMessage(error) ?? fallback)
   }
 
   function submitRequest() {

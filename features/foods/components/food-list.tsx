@@ -2,6 +2,7 @@
 
 import { Apple, Loader2, Plus, SearchX } from "lucide-react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +15,8 @@ interface FoodListProps {
   totalItems: number
   isLoading: boolean
   isError: boolean
+  error?: unknown
+  onRetry?: () => void
   hasNextPage: boolean
   isFetchingNextPage: boolean
   onLoadMore: () => void
@@ -27,6 +30,8 @@ export function FoodList({
   totalItems,
   isLoading,
   isError,
+  error,
+  onRetry,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
@@ -47,7 +52,7 @@ export function FoodList({
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se ha podido cargar el catálogo.</p>
+    return <ErrorState error={error} onRetry={onRetry} inline />
   }
 
   if (foods.length === 0) {
