@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
-import { ImageUploadField } from "@/components/shared/image-upload-field"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,6 +47,8 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
     birthDate: profile.birthDate,
     gender: profile.gender,
     country: profile.country,
+    // Not editable here: the single photo field lives on the professional
+    // profile. Echoed back so saving these fields does not wipe it.
     avatarPath: profile.avatarPath ?? "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -156,14 +157,6 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
           onChange={(gender) => patch({ gender })}
         />
       </div>
-
-      <ImageUploadField
-        id="pd-avatar"
-        label="Foto de perfil"
-        value={values.avatarPath}
-        disabled={update.isPending}
-        onChange={(avatarPath) => patch({ avatarPath })}
-      />
 
       <div className="flex justify-end">
         <Button type="submit" disabled={update.isPending}>
