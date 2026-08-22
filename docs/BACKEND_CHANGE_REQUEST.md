@@ -8,6 +8,72 @@
 4. [Un vídeo demasiado grande devuelve 500](#petición-4--un-vídeo-demasiado-grande-devuelve-500) (fase 8)
 5. [El entrenador no puede listar las sesiones de sus alumnos](#petición-5--el-entrenador-no-puede-listar-las-sesiones-de-sus-alumnos) (fase 9)
 6. [Cinco tipos de notificación no se emiten nunca](#petición-6--cinco-tipos-de-notificación-no-se-emiten-nunca) (fase 10)
+7. [No hay dónde subir una foto de perfil](#petición-7--no-hay-dónde-subir-una-foto-de-perfil) (segunda ronda de pruebas)
+
+---
+
+# Petición 7 — No hay dónde subir una foto de perfil
+
+El backend almacena y **sirve** archivos: `LocalFileStorageService` los guarda y
+`FileController` los expone en `/api/files/**`. Pero el único punto de **entrada**
+multipart de toda la API es:
+
+```java
+POST /api/exercises/{id}/videos    // @RequestParam("file") MultipartFile
+```
+
+que está atado a un ejercicio y no sirve para un avatar.
+
+Mientras tanto, los dos campos que guardan la foto de una persona son columnas
+`String` sueltas:
+
+| Entidad | Campo | Endpoint que lo escribe |
+|---|---|---|
+| `UserDetail` | `pathProfilePicture` | `PUT /api/user-detail` |
+| `Trainer` | `profileImageUrl` | `PUT /api/trainer/profile` |
+
+Es decir: la API acepta *la URL de una foto*, pero no acepta *la foto*. La única
+forma de rellenar esos campos era que el entrenador alojara la imagen por su
+cuenta y pegara el enlace — algo que prácticamente nadie puede hacer desde el
+móvil, que es desde donde se registran.
+
+## Cambio propuesto
+
+Un endpoint genérico de subida, copiando el patrón del de vídeos:
+
+```java
+@Operation(summary = "Sube un archivo",
+           description = "Almacena el archivo y devuelve la URL con la que servirlo.")
+@PostMapping(value = "/api/files", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public FileUploadResponseDTO upload(@RequestParam("file") MultipartFile file) {
+    return new FileUploadResponseDTO(storageService.store(file));
+}
+```
+
+Con validación de tipo y tamaño en el servicio, como `validateVideoFile`, y
+devolviendo la misma forma de URL que ya produce `LocalFileStorageService`
+(`${baseUrl}/api/files/${key}`), que el frontend ya sabe enrutar.
+
+Un `POST /api/user-detail/photo` específico también valdría; genérico es más
+útil, porque las certificaciones (`certificateUrl`) tienen exactamente el mismo
+problema.
+
+## Qué hace el frontend mientras tanto
+
+`components/shared/image-upload-field.tsx` es un selector de archivo completo:
+arrastrar y soltar, cámara en el móvil (`capture="user"`), vista previa local
+inmediata, validación de tipo y tamaño antes de enviar
+(`core/media/image.ts`, con tests) y barra de progreso por XHR.
+
+Sube contra `POST /api/uploads/avatar`, una route handler nuestra que valida de
+nuevo del lado del servidor y reenvía el multipart al endpoint de arriba. **Todo
+el acoplamiento con el backend está en una constante**, `UPSTREAM_UPLOAD_PATH`,
+así que el día que exista el endpoint no hay nada que cambiar salvo confirmar la
+ruta.
+
+Si el backend responde 404 o 405, la route handler devuelve un 501 y la interfaz
+dice "La subida de fotos todavía no está disponible" — sin nombrar la ruta ni
+inventar que ha funcionado.
 
 ---
 

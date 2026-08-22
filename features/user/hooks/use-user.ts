@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
 import { userRepository } from "../api/user.repository"
 import type { UserProfileFormValues } from "../mappers/user.mapper"
@@ -29,7 +29,7 @@ export function useUpdateUserProfile() {
       toast.success("Datos personales actualizados")
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se han podido guardar los cambios")
+      toast.error(specificMessage(error) ?? "No pudimos guardar los cambios. Volvé a intentarlo.")
     },
   })
 }
@@ -52,7 +52,7 @@ export function useUpdatePreferences() {
       toast.success("Preferencias guardadas")
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se han podido guardar las preferencias")
+      toast.error(specificMessage(error) ?? "No pudimos guardar tus preferencias. Volvé a intentarlo.")
     },
   })
 }

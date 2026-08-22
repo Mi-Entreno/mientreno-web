@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
-import { ImageUrlField } from "@/components/shared/image-url-field"
+import { ImageUploadField } from "@/components/shared/image-upload-field"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -206,7 +206,7 @@ export function TrainerProfileForm({
           </p>
         </div>
 
-        <ImageUrlField
+        <ImageUploadField
           id="avatar"
           label="Foto de perfil"
           value={values.avatarPath}

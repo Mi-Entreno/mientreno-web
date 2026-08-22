@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
-import { ImageUrlField } from "@/components/shared/image-url-field"
+import { ErrorState } from "@/components/dashboard/error-state"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -22,7 +22,7 @@ import type { UserProfile } from "../model/user.model"
  * splits them the same way.
  */
 export function PersonalDataForm() {
-  const { data, isLoading, isError } = useUserProfile()
+  const { data, isLoading, isError, error, refetch } = useUserProfile()
 
   if (isLoading) {
     return <Skeleton className="h-72 w-full rounded-xl" />
@@ -30,7 +30,7 @@ export function PersonalDataForm() {
 
   if (isError || !data) {
     return (
-      <p className="text-body text-error-text">No se han podido cargar tus datos personales.</p>
+      <ErrorState error={error} onRetry={() => refetch()} inline />
     )
   }
 
@@ -47,6 +47,8 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
     birthDate: profile.birthDate,
     gender: profile.gender,
     country: profile.country,
+    // Not editable here: the single photo field lives on the professional
+    // profile. Echoed back so saving these fields does not wipe it.
     avatarPath: profile.avatarPath ?? "",
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -155,14 +157,6 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
           onChange={(gender) => patch({ gender })}
         />
       </div>
-
-      <ImageUrlField
-        id="pd-avatar"
-        label="Foto de perfil"
-        value={values.avatarPath}
-        disabled={update.isPending}
-        onChange={(avatarPath) => patch({ avatarPath })}
-      />
 
       <div className="flex justify-end">
         <Button type="submit" disabled={update.isPending}>

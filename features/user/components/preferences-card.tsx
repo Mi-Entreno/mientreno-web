@@ -2,6 +2,7 @@
 
 import { Loader2 } from "lucide-react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { OptionGroup, type Option } from "@/components/shared/option-group"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useUpdatePreferences, useUserPreferences } from "../hooks/use-user"
@@ -32,7 +33,7 @@ const MODES: readonly Option<OnboardingMode>[] = [
 ]
 
 export function PreferencesCard() {
-  const { data, isLoading, isError } = useUserPreferences()
+  const { data, isLoading, isError, error, refetch } = useUserPreferences()
   const update = useUpdatePreferences()
 
   if (isLoading) {
@@ -40,7 +41,7 @@ export function PreferencesCard() {
   }
 
   if (isError || !data) {
-    return <p className="text-body text-error-text">No se han podido cargar tus preferencias.</p>
+    return <ErrorState error={error} onRetry={() => refetch()} inline />
   }
 
   return (

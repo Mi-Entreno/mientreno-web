@@ -61,13 +61,13 @@ describe("normalizeError", () => {
   it("falls back to Spanish copy when the body carries no message", () => {
     expect(normalizeError(404, undefined)).toMatchObject({
       kind: "business",
-      message: "No se ha encontrado el recurso",
+      message: "No encontramos lo que buscabas",
     })
   })
 
   it("ignores a blank upstream message", () => {
     expect(normalizeError(500, { message: "   " })).toMatchObject({
-      message: "Error interno del servidor",
+      message: "Estamos teniendo un pequeño inconveniente",
     })
   })
 })
@@ -103,7 +103,7 @@ describe("readErrorBody", () => {
     const body = await readErrorBody(new Response("<html>404</html>", { status: 404 }))
 
     expect(new ApiError(normalizeError(404, body)).message).toBe(
-      "No se ha encontrado el recurso",
+      "No encontramos lo que buscabas",
     )
   })
 

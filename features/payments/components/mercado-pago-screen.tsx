@@ -13,9 +13,9 @@ import {
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
+import { ErrorState } from "@/components/dashboard/error-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ApiError } from "@/core/http/errors"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
@@ -62,7 +62,9 @@ export function MercadoPagoScreen() {
 
         {connection.isLoading && <Skeleton className="h-44 w-full rounded-2xl" />}
 
-        {connection.isError && <ConnectionError error={connection.error} />}
+        {connection.isError && (
+          <ConnectionError error={connection.error} onRetry={() => connection.refetch()} />
+        )}
 
         {connection.data && (
           <ConnectionCard
@@ -93,18 +95,8 @@ export function MercadoPagoScreen() {
   )
 }
 
-function ConnectionError({ error }: { error: unknown }) {
-  const missingEndpoint = error instanceof ApiError && error.status === 404
-
-  return (
-    <p className="rounded-lg border border-error/40 bg-error-surface p-3 text-body text-error-text text-pretty">
-      {missingEndpoint
-        ? "La integración con Mercado Pago aún no está disponible en el servidor (GET /api/payments/mercadopago/connection). Está especificada en BACKEND_REQUIREMENTS.md §5."
-        : error instanceof ApiError
-          ? error.message
-          : "No se ha podido consultar el estado de tu cuenta de Mercado Pago."}
-    </p>
-  )
+function ConnectionError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  return <ErrorState error={error} context="load" onRetry={onRetry} inline />
 }
 
 const TONE_RING: Record<string, string> = {

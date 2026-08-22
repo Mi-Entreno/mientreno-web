@@ -38,6 +38,8 @@ export function useFoodSearch(params: FoodSearchParams) {
     totalItems: query.data?.pages[0]?.totalItems ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,

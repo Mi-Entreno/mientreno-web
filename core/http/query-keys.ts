@@ -80,13 +80,6 @@ export const qk = {
     unreadCount: ["notifications", "unread-count"] as const,
   },
 
-  trainers: {
-    all: ["trainers"] as const,
-    detail: (id: number) => ["trainers", "detail", id] as const,
-    reviews: (id: number) => ["trainers", "reviews", id] as const,
-    reviewDistribution: (id: number) => ["trainers", "reviews", id, "distribution"] as const,
-  },
-
   /** Candidate students the trainer can invite — not the roster. */
   studentSearch: {
     all: ["student-search"] as const,

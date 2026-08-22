@@ -28,8 +28,14 @@ export interface AppNotification {
 /** Page size for the list; `@PageableDefault(size = 20)` upstream. */
 export const NOTIFICATIONS_PAGE_SIZE = 20
 
-/** How often the badge re-checks. There are no websockets upstream. */
-export const UNREAD_POLL_MS = 1000_000
+/**
+ * How often the badge re-checks. There are no websockets upstream.
+ *
+ * Was `1000_000` — sixteen minutes — while the comment beside it claimed one
+ * minute, so the badge and the list disagreed for a quarter of an hour at a
+ * time and a fresh notification looked like it had arrived twice.
+ */
+export const UNREAD_POLL_MS = 60_000
 
 export type NotificationTone = "info" | "success" | "warning" | "danger"
 

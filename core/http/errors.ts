@@ -54,14 +54,21 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Wording of last resort, for a response whose body carried no message.
+ *
+ * These are already user-facing: `core/http/user-message.ts` overrides the
+ * server-side ones anyway, but an `ApiError` can be read directly and must not
+ * hand a technical string to whoever does.
+ */
 const FALLBACK: Record<number, string> = {
-  400: "La solicitud no es válida",
-  401: "Tu sesión ha expirado",
-  403: "No tienes permiso para realizar esta acción",
-  404: "No se ha encontrado el recurso",
-  409: "La operación entra en conflicto con el estado actual",
-  429: "Has realizado demasiados intentos. Inténtalo de nuevo más tarde",
-  500: "Error interno del servidor",
+  400: "Revisá los datos e intentá nuevamente",
+  401: "Tu sesión expiró",
+  403: "No tenés permiso para hacer esto",
+  404: "No encontramos lo que buscabas",
+  409: "Esto ya no se puede hacer: algo cambió mientras tanto",
+  429: "Probaste demasiadas veces. Esperá un momento e intentá de nuevo",
+  500: "Estamos teniendo un pequeño inconveniente",
 }
 
 export function messageOf(error: NormalizedError): string {
@@ -105,7 +112,7 @@ export function normalizeError(status: number, body: unknown): NormalizedError {
       ? body.message
       : null
 
-  const message = upstreamMessage ?? FALLBACK[status] ?? `La solicitud ha fallado (${status})`
+  const message = upstreamMessage ?? FALLBACK[status] ?? "Algo salió mal. Por favor, intentá nuevamente"
 
   if (status === 401 || status === 403) {
     return { kind: "auth", status, message }
@@ -127,8 +134,8 @@ export function networkError(cause?: unknown): NormalizedError {
     kind: "network",
     message:
       cause instanceof Error && cause.name === "AbortError"
-        ? "La solicitud se ha cancelado"
-        : "No se ha podido conectar con el servidor",
+        ? "La solicitud se canceló"
+        : "No pudimos conectarnos. Revisá tu conexión e intentá de nuevo",
   }
 }
 

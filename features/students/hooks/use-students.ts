@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
 import { studentsRepository } from "../api/students.repository"
 import { pausedStore } from "../model/paused-store"
@@ -67,6 +67,7 @@ export function useStudents() {
     students,
     isLoading: roster.isLoading,
     isError: roster.isError,
+    error: roster.error,
     refetch: roster.refetch,
     trackPaused: (subscriptionId: number) => pausedStore.remember(subscriptionId),
     untrackPaused: (subscriptionId: number) => pausedStore.forget(subscriptionId),
@@ -131,7 +132,7 @@ export function useSubscriptionStatus({ onPaused, onResumed }: StatusMutationOpt
     },
 
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se ha podido cambiar el estado")
+      toast.error(specificMessage(error) ?? "No pudimos cambiar el estado. Volvé a intentarlo.")
     },
   })
 }

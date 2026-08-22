@@ -4,6 +4,7 @@ import { Apple, CreditCard, Pencil, Plus, Send, Trash2, Users, Wallet } from "lu
 import Link from "next/link"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +19,7 @@ import { billingLabel, billingSuffix, type SubscriptionPlan } from "../model/sub
 import { PlanFormSheet } from "./plan-form-sheet"
 
 export function PlansScreen() {
-  const { data: plans, isLoading, isError } = useMyPlans()
+  const { data: plans, isLoading, isError, error, refetch } = useMyPlans()
   const deactivate = useDeactivatePlan()
 
   const [editing, setEditing] = useState<SubscriptionPlan | null>(null)
@@ -44,7 +45,7 @@ export function PlansScreen() {
         </p>
         <Button onClick={openCreate} className="sm:shrink-0">
           <Plus className="size-4" />
-          Nuevo plan
+          Crear plan
         </Button>
       </div>
 
@@ -61,16 +62,14 @@ export function PlansScreen() {
       )}
 
       {isError && (
-        <p className="text-body text-error-text">No se han podido cargar tus planes.</p>
+        <ErrorState error={error} onRetry={() => refetch()} />
       )}
 
       {plans && plans.length === 0 && (
         <EmptyState
           icon={CreditCard}
-          title="Aún no tienes planes de suscripción"
-          description="Crea tu primer plan para que los alumnos puedan suscribirse a tus servicios."
-          actionLabel="Crear plan"
-          onAction={openCreate}
+          title="Todavía no tenés planes de suscripción"
+          description="Creá tu primer plan con el botón de arriba para que tus alumnos puedan suscribirse."
         />
       )}
 

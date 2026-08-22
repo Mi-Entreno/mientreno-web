@@ -1,44 +1,59 @@
 "use client"
 
-import { AlertTriangle, Pause, Play, Send, Users } from "lucide-react"
+import { AlertTriangle, Pause, Play, Search, Send, Users } from "lucide-react"
 import Link from "next/link"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { ErrorState } from "@/components/dashboard/error-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { InviteStudentSheet } from "@/features/plan-invitations/components/invite-student-sheet"
+import { useInvitationCounts } from "@/features/plan-invitations/hooks/use-plan-invitations"
 import { formatDate } from "@/lib/format"
 import { useState } from "react"
 import { useStudentPrefetch, useStudents, useSubscriptionStatus } from "../hooks/use-students"
 import { canPause, canResume, type StudentSubscription } from "../model/student.model"
 
 export function StudentsScreen() {
-  const { students, isLoading, isError, trackPaused, untrackPaused } = useStudents()
+  const { students, isLoading, isError, error, refetch, trackPaused, untrackPaused } = useStudents()
   const prefetch = useStudentPrefetch()
   const [pendingPause, setPendingPause] = useState<StudentSubscription | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
+  const [term, setTerm] = useState("")
 
   const status = useSubscriptionStatus({
     onPaused: trackPaused,
     onResumed: untrackPaused,
   })
 
+  // Turns a mute link into one that says whether anything is waiting.
+  const pendingInvitations = useInvitationCounts()?.pending ?? 0
+
   /**
-   * The invite action lives above every branch on purpose.
+   * The one place in the app that starts an invitation.
    *
-   * "Aún no tienes alumnos" is exactly the state in which a trainer most needs
-   * to send an invitation, and it used to be an early return with no way out.
+   * It sits above every branch because "todavía no tenés alumnos" is exactly
+   * the state in which a trainer most needs to send one, and the empty state
+   * below deliberately does not repeat the button: two identical calls to
+   * action, both on screen at once, was the confusion this screen shipped with.
    */
   const header = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <Link
         href="/dashboard/invitations"
-        className="text-body text-muted-foreground underline-offset-4 hover:underline"
+        className="flex w-fit items-center gap-2 text-body text-muted-foreground underline-offset-4 hover:underline"
       >
-        Ver invitaciones enviadas
+        Invitaciones enviadas
+        {pendingInvitations > 0 && (
+          <span className="rounded-full bg-secondary px-2 text-caption font-semibold text-foreground">
+            {pendingInvitations} pendiente{pendingInvitations === 1 ? "" : "s"}
+          </span>
+        )}
       </Link>
       <Button onClick={() => setInviteOpen(true)} className="sm:shrink-0">
         <Send className="size-4" />
@@ -69,7 +84,7 @@ export function StudentsScreen() {
     return (
       <div className="flex flex-col gap-4">
         {header}
-        <p className="text-body text-error-text">No se han podido cargar tus alumnos.</p>
+        <ErrorState error={error} onRetry={refetch} />
         {inviteSheet}
       </div>
     )
@@ -81,10 +96,8 @@ export function StudentsScreen() {
         {header}
         <EmptyState
           icon={Users}
-          title="Aún no tienes alumnos"
-          description="Invita a un alumno a uno de tus planes, o espera a que alguien se suscriba desde el directorio."
-          actionLabel="Invitar alumno"
-          onAction={() => setInviteOpen(true)}
+          title="Todavía no tenés alumnos"
+          description="Invitá a alguien a uno de tus planes con el botón de arriba, o esperá a que se suscriban desde el directorio."
         />
         {inviteSheet}
       </div>
@@ -92,6 +105,23 @@ export function StudentsScreen() {
   }
 
   const hasPaused = students.some((student) => student.status === "PAUSED")
+
+  /**
+   * Filtered in memory rather than through the API.
+   *
+   * `GET /api/subscriptions/students` returns the trainer's whole roster in one
+   * page, so a request per keystroke would buy nothing and cost a spinner. The
+   * search box that *does* hit the network is the one inside the invite wizard,
+   * which looks for people who are not students yet.
+   */
+  const query = term.trim().toLowerCase()
+  const visible = query
+    ? students.filter(
+        (student) =>
+          student.studentName.toLowerCase().includes(query) ||
+          (student.plan?.name ?? "").toLowerCase().includes(query),
+      )
+    : students
 
   return (
     <div className="flex flex-col gap-4">
@@ -101,16 +131,40 @@ export function StudentsScreen() {
         <p className="flex items-start gap-2 rounded-lg border border-warning bg-warning-surface p-3 text-body text-warning-text">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {/* getActiveByTrainer filters to ACTIVE, so paused subscriptions are
-              only visible because this browser remembers them. */}
+              only visible because this browser remembers them. The user does
+              not need to know that — only that this list is the safe place to
+              resume them from. */}
           <span className="text-pretty">
-            Las suscripciones pausadas solo se listan en este navegador hasta que el backend las
-            incluya. Reanúdalas desde aquí para no perderlas de vista.
+            Tenés suscripciones pausadas. Reanudalas desde acá para no perderlas de vista.
           </span>
         </p>
       )}
 
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="student-search" className="sr-only">
+          Buscar alumno
+        </Label>
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            id="student-search"
+            type="search"
+            value={term}
+            placeholder="Buscar por nombre o plan"
+            className="pl-9"
+            onChange={(event) => setTerm(event.target.value)}
+          />
+        </div>
+      </div>
+
+      {visible.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border p-4 text-body text-muted-foreground">
+          Ningún alumno coincide con “{term.trim()}”.
+        </p>
+      )}
+
       <ul className="flex flex-col gap-3">
-        {students.map((student) => (
+        {visible.map((student) => (
           <li
             key={student.subscriptionId}
             className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"

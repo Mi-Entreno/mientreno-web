@@ -3,6 +3,7 @@
 import { LineChart, TrendingDown, TrendingUp } from "lucide-react"
 import { useMemo, useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -37,7 +38,7 @@ import { ProgressDetailSheet } from "./progress-detail-sheet"
  * chart only shows on hover.
  */
 export function ProgressTab({ subscriptionId }: { subscriptionId: number }) {
-  const { data, isLoading, isError } = useProgressHistory(subscriptionId)
+  const { data, isLoading, isError, error, refetch } = useProgressHistory(subscriptionId)
   const [measureKey, setMeasureKey] = useState<MeasureKey>("weightKg")
   const [detailId, setDetailId] = useState<number | null>(null)
 
@@ -52,7 +53,7 @@ export function ProgressTab({ subscriptionId }: { subscriptionId: number }) {
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se ha podido cargar el progreso.</p>
+    return <ErrorState error={error} onRetry={() => refetch()} />
   }
 
   if (entries.length === 0) {

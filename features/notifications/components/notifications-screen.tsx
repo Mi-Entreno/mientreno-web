@@ -2,6 +2,7 @@
 
 import { Bell, CheckCheck, Loader2 } from "lucide-react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -48,7 +49,7 @@ export function NotificationsScreen() {
       )}
 
       {list.isError && (
-        <p className="text-body text-error-text">No se han podido cargar las notificaciones.</p>
+        <ErrorState error={list.error} onRetry={() => list.refetch()} />
       )}
 
       {!list.isLoading && !list.isError && list.notifications.length === 0 && (

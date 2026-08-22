@@ -4,6 +4,7 @@ import { ArrowLeft, Pause, Play } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,7 @@ const TABS = ["summary", "training", "nutrition", "progress"] as const
  * nutrition and progress here, so each tab loads on demand instead.
  */
 export function StudentDetailScreen({ subscriptionId }: { subscriptionId: number }) {
-  const { data, isLoading, isError } = useSubscriptionDetail(subscriptionId)
+  const { data, isLoading, isError, error, refetch } = useSubscriptionDetail(subscriptionId)
   const { trackPaused, untrackPaused } = useStudents()
   const status = useSubscriptionStatus({ onPaused: trackPaused, onResumed: untrackPaused })
 
@@ -59,9 +60,7 @@ export function StudentDetailScreen({ subscriptionId }: { subscriptionId: number
     return (
       <div className="flex flex-col gap-4">
         <BackLink />
-        <p className="text-body text-error-text">
-          No se ha podido cargar esta suscripción. Puede que ya no exista o que no tengas acceso.
-        </p>
+        <ErrorState error={error} onRetry={() => refetch()} />
       </div>
     )
   }

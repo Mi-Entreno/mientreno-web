@@ -3,6 +3,7 @@
 import { Loader2, Plus } from "lucide-react"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,7 @@ interface FoodDetailSheetProps {
 }
 
 export function FoodDetailSheet({ foodId, onOpenChange, onPick }: FoodDetailSheetProps) {
-  const { data, isLoading, isError } = useFood(foodId)
+  const { data, isLoading, isError, error, refetch } = useFood(foodId)
   const [quantity, setQuantity] = useState("100")
   const [unit, setUnit] = useState("g")
 
@@ -82,7 +83,7 @@ export function FoodDetailSheet({ foodId, onOpenChange, onPick }: FoodDetailShee
             </p>
           )}
 
-          {isError && <p className="text-body text-error-text">No se ha podido cargar el alimento.</p>}
+          {isError && <ErrorState error={error} onRetry={() => refetch()} inline />}
 
           {data && (
             <>

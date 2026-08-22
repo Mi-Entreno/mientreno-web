@@ -3,6 +3,7 @@
 import { Apple, Check, CreditCard, Users } from "lucide-react"
 import Link from "next/link"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useMyPlans } from "@/features/subscription-plans/hooks/use-subscription-plans"
@@ -26,7 +27,7 @@ interface PlanPickerProps {
  * warmed that cache already, so this step renders instantly in the common path.
  */
 export function PlanPicker({ selectedId, onSelect }: PlanPickerProps) {
-  const { data: plans, isLoading, isError } = useMyPlans()
+  const { data: plans, isLoading, isError, error, refetch } = useMyPlans()
 
   if (isLoading) {
     return (
@@ -41,7 +42,7 @@ export function PlanPicker({ selectedId, onSelect }: PlanPickerProps) {
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se han podido cargar tus planes.</p>
+    return <ErrorState error={error} onRetry={() => refetch()} inline />
   }
 
   if (!plans || plans.length === 0) {

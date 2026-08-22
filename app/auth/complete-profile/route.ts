@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   if (!claims) {
     return NextResponse.json(
-      { message: "El servidor ha devuelto una sesión inesperada" },
+      { message: "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos." },
       { status: 502 },
     )
   }

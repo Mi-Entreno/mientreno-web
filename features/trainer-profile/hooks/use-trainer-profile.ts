@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
+import { userRepository } from "@/features/user/api/user.repository"
 import { trainerProfileRepository } from "../api/trainer-profile.repository"
 import type {
   CompleteProfileIdentityValues,
@@ -25,15 +26,53 @@ export function useUpdateTrainerProfile() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (values: TrainerProfileFormValues) => trainerProfileRepository.update(values),
+    mutationFn: async (values: TrainerProfileFormValues) => {
+      const profile = await trainerProfileRepository.update(values)
+      await mirrorAvatarToAccount(values.avatarPath)
+      return profile
+    },
     onSuccess: (profile) => {
       queryClient.setQueryData(qk.trainerProfile, profile)
+      queryClient.invalidateQueries({ queryKey: qk.userDetail })
       toast.success("Perfil actualizado")
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se ha podido guardar el perfil")
+      toast.error(specificMessage(error) ?? "No pudimos guardar tu perfil. Volvé a intentarlo.")
     },
   })
+}
+
+/**
+ * Keeps the account's photo in step with the professional one.
+ *
+ * The backend stores a trainer's photo twice — `Trainer.profileImageUrl` and
+ * `UserDetail.pathProfilePicture` — behind two different endpoints, and the
+ * dashboard used to offer a separate uploader for each. Two photos of the same
+ * person that silently drift apart is not a feature, so there is now one field,
+ * on the professional profile, and this write carries it across.
+ *
+ * Deliberately best-effort: `profileImageUrl` is the one every surface reads
+ * (sidebar, header, directory, invitation link), and it has already been saved
+ * by the time this runs. Failing the whole mutation over the secondary copy
+ * would tell the trainer nothing was saved when in fact the part that matters
+ * was.
+ */
+async function mirrorAvatarToAccount(avatarPath: string): Promise<void> {
+  try {
+    const account = await userRepository.getProfile()
+    if ((account.avatarPath ?? "") === avatarPath) return
+
+    await userRepository.updateProfile({
+      firstName: account.firstName,
+      lastName: account.lastName,
+      birthDate: account.birthDate,
+      gender: account.gender,
+      country: account.country,
+      avatarPath,
+    })
+  } catch {
+    // Nothing to tell the user: the canonical field saved.
+  }
 }
 
 /**
@@ -64,7 +103,7 @@ export function useCompleteTrainerProfile() {
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : "No se ha podido completar el perfil",
+        specificMessage(error) ?? "No pudimos crear tu perfil. Volvé a intentarlo.",
       )
     },
   })

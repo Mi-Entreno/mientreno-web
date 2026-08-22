@@ -6,6 +6,7 @@ import { useMemo } from "react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PersonalDataForm } from "@/features/user/components/personal-data-form"
 import { useUserProfile } from "@/features/user/hooks/use-user"
 import {
   useCompleteTrainerProfile,
@@ -104,7 +105,43 @@ export function TrainerProfileScreen() {
         profile.data && <ProfileStats profile={profile.data} />
       )}
 
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+      {/*
+        Personal data used to live on /dashboard/settings, which meant a trainer
+        edited "who I am" in one place and "what students see" in another —
+        including two separate photo fields for the same person. Editing is all
+        here now; settings keeps configuration and shortcuts.
+
+        Hidden while creating, because `POST /complete` asks for the identity
+        fields itself and the account form would be a second, conflicting copy.
+      */}
+      {!isCreating && (
+        <section className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-heading text-subtitle font-semibold tracking-tight">
+              Datos personales
+            </h2>
+            <p className="mt-1 text-body text-muted-foreground">
+              Tu nombre y tus datos de contacto. El correo y el teléfono no se cambian desde acá.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+            <PersonalDataForm />
+          </div>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-4">
+        {!isCreating && (
+          <div>
+            <h2 className="font-heading text-subtitle font-semibold tracking-tight">
+              Perfil profesional
+            </h2>
+            <p className="mt-1 text-body text-muted-foreground">
+              Tu foto, tu presentación y tus credenciales: esto es lo que ven tus alumnos.
+            </p>
+          </div>
+        )}
+        <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
         <TrainerProfileForm
           // Remounts when the mode flips, so the form reseeds from the new data.
           key={isCreating ? "complete" : "edit"}
@@ -121,7 +158,8 @@ export function TrainerProfileScreen() {
             }
           }}
         />
-      </div>
+        </div>
+      </section>
     </div>
   )
 }
