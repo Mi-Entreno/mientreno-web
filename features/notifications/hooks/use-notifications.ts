@@ -4,7 +4,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useMemo } from "react"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { nextPageParam } from "@/core/http/pagination"
 import { qk } from "@/core/http/query-keys"
 import { notificationsRepository } from "../api/notifications.repository"
@@ -49,6 +49,8 @@ export function useNotifications() {
     totalItems: query.data?.pages[0]?.totalItems ?? 0,
     isLoading: query.isLoading,
     isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
@@ -97,7 +99,7 @@ export function useMarkNotificationRead() {
       for (const [key, value] of context?.previous ?? []) {
         queryClient.setQueryData(key, value)
       }
-      toast.error(error instanceof ApiError ? error.message : "No se ha podido marcar como leída")
+      toast.error(specificMessage(error) ?? "No pudimos marcarla como leída.")
     },
 
     // Reconcile with the server either way — the optimistic count is a guess.
@@ -119,6 +121,6 @@ export function useMarkAllNotificationsRead() {
       toast.success("Todas marcadas como leídas")
     },
     onError: (error) =>
-      toast.error(error instanceof ApiError ? error.message : "No se han podido marcar"),
+      toast.error(specificMessage(error) ?? "No pudimos marcarlas como leídas."),
   })
 }

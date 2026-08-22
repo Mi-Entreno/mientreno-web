@@ -2,6 +2,7 @@
 
 import { Loader2, Star } from "lucide-react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { Badge } from "@/components/ui/badge"
 import {
   Sheet,
@@ -32,7 +33,7 @@ export function WorkoutSessionSheet({
   sessionId: number | null
   onOpenChange: (open: boolean) => void
 }) {
-  const { data, isLoading, isError } = useWorkoutSession(sessionId)
+  const { data, isLoading, isError, error, refetch } = useWorkoutSession(sessionId)
 
   const groups = data ? groupSetsByExercise(data.sets) : []
   const volume = data ? totalVolume(data.sets) : null
@@ -58,9 +59,7 @@ export function WorkoutSessionSheet({
           )}
 
           {isError && (
-            <p className="text-body text-error-text">
-              No se ha podido cargar la sesión. Puede que no exista o que no sea de un alumno tuyo.
-            </p>
+            <ErrorState error={error} onRetry={() => refetch()} inline />
           )}
 
           {data && (

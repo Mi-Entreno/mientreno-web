@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
 import { trainerProfileRepository } from "../api/trainer-profile.repository"
 import type {
@@ -31,7 +31,7 @@ export function useUpdateTrainerProfile() {
       toast.success("Perfil actualizado")
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se ha podido guardar el perfil")
+      toast.error(specificMessage(error) ?? "No pudimos guardar tu perfil. Volvé a intentarlo.")
     },
   })
 }
@@ -64,7 +64,7 @@ export function useCompleteTrainerProfile() {
     },
     onError: (error) => {
       toast.error(
-        error instanceof ApiError ? error.message : "No se ha podido completar el perfil",
+        specificMessage(error) ?? "No pudimos crear tu perfil. Volvé a intentarlo.",
       )
     },
   })

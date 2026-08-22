@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
+import { specificMessage } from "@/core/http/user-message"
 import { accountRepository } from "../api/account.repository"
 
 export function useDeleteAccount() {
@@ -21,7 +21,7 @@ export function useDeleteAccount() {
       router.refresh()
     },
     onError: (error) => {
-      toast.error(error instanceof ApiError ? error.message : "No se ha podido eliminar la cuenta")
+      toast.error(specificMessage(error) ?? "No pudimos eliminar tu cuenta. Volvé a intentarlo.")
     },
   })
 }

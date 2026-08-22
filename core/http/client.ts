@@ -100,7 +100,7 @@ async function request<T>(path: string, options: RequestOptions, base: string): 
     throw new ApiError({
       kind: "unknown",
       status: response.status,
-      message: "La respuesta del servidor no es válida",
+      message: "Algo salió mal. Por favor, intentá nuevamente",
     })
   }
 }

@@ -4,6 +4,7 @@ import { Apple, CreditCard, Pencil, Plus, Send, Trash2, Users, Wallet } from "lu
 import Link from "next/link"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +19,7 @@ import { billingLabel, billingSuffix, type SubscriptionPlan } from "../model/sub
 import { PlanFormSheet } from "./plan-form-sheet"
 
 export function PlansScreen() {
-  const { data: plans, isLoading, isError } = useMyPlans()
+  const { data: plans, isLoading, isError, error, refetch } = useMyPlans()
   const deactivate = useDeactivatePlan()
 
   const [editing, setEditing] = useState<SubscriptionPlan | null>(null)
@@ -61,7 +62,7 @@ export function PlansScreen() {
       )}
 
       {isError && (
-        <p className="text-body text-error-text">No se han podido cargar tus planes.</p>
+        <ErrorState error={error} onRetry={() => refetch()} />
       )}
 
       {plans && plans.length === 0 && (

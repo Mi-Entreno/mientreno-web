@@ -3,6 +3,7 @@
 import { Dumbbell, History, Pencil, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
@@ -55,7 +56,7 @@ export function TrainingPlanTab({ subscriptionId }: { subscriptionId: number }) 
   }
 
   if (current.isError) {
-    return <p className="text-body text-error-text">No se ha podido cargar el plan.</p>
+    return <ErrorState error={current.error} onRetry={() => current.refetch()} />
   }
 
   // ── Editing ───────────────────────────────────────────────────────────────

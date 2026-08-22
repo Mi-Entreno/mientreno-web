@@ -53,7 +53,7 @@ export function RegisterForm() {
         },
         onError: (error) => {
           if (!(error instanceof ApiError)) {
-            toast.error("No se ha podido conectar con el servidor")
+            toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
             return
           }
 

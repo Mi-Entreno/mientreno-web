@@ -3,6 +3,7 @@
 import { ArrowRight, Dumbbell, Users } from "lucide-react"
 import Link from "next/link"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +22,7 @@ import type { StudentPlanSummary } from "../model/training-plan.model"
  * most useful thing on screen is who has no plan yet.
  */
 export function TrainerPlansScreen() {
-  const { data, isLoading, isError } = useTrainerStudentPlans()
+  const { data, isLoading, isError, error, refetch } = useTrainerStudentPlans()
 
   if (isLoading) {
     return (
@@ -36,7 +37,7 @@ export function TrainerPlansScreen() {
   }
 
   if (isError) {
-    return <p className="text-body text-error-text">No se han podido cargar los planes.</p>
+    return <ErrorState error={error} onRetry={() => refetch()} />
   }
 
   const rows = data ?? []

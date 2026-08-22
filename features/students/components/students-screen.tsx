@@ -5,6 +5,7 @@ import Link from "next/link"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { ErrorState } from "@/components/dashboard/error-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,7 @@ import { useStudentPrefetch, useStudents, useSubscriptionStatus } from "../hooks
 import { canPause, canResume, type StudentSubscription } from "../model/student.model"
 
 export function StudentsScreen() {
-  const { students, isLoading, isError, trackPaused, untrackPaused } = useStudents()
+  const { students, isLoading, isError, error, refetch, trackPaused, untrackPaused } = useStudents()
   const prefetch = useStudentPrefetch()
   const [pendingPause, setPendingPause] = useState<StudentSubscription | null>(null)
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -69,7 +70,7 @@ export function StudentsScreen() {
     return (
       <div className="flex flex-col gap-4">
         {header}
-        <p className="text-body text-error-text">No se han podido cargar tus alumnos.</p>
+        <ErrorState error={error} onRetry={refetch} />
         {inviteSheet}
       </div>
     )
@@ -101,10 +102,11 @@ export function StudentsScreen() {
         <p className="flex items-start gap-2 rounded-lg border border-warning bg-warning-surface p-3 text-body text-warning-text">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           {/* getActiveByTrainer filters to ACTIVE, so paused subscriptions are
-              only visible because this browser remembers them. */}
+              only visible because this browser remembers them. The user does
+              not need to know that — only that this list is the safe place to
+              resume them from. */}
           <span className="text-pretty">
-            Las suscripciones pausadas solo se listan en este navegador hasta que el backend las
-            incluya. Reanúdalas desde aquí para no perderlas de vista.
+            Tenés suscripciones pausadas. Reanudalas desde acá para no perderlas de vista.
           </span>
         </p>
       )}

@@ -4,6 +4,7 @@ import { Bell, CheckCheck, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -85,7 +86,7 @@ function NotificationPanel({ onNavigate }: { onNavigate: () => void }) {
         )}
 
         {list.isError && (
-          <p className="text-body text-error-text">No se han podido cargar.</p>
+          <ErrorState error={list.error} onRetry={() => list.refetch()} inline />
         )}
 
         {!list.isLoading && latest.length === 0 && (

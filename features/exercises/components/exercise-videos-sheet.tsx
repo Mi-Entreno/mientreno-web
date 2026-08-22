@@ -3,6 +3,7 @@
 import { Film, Loader2, Trash2 } from "lucide-react"
 import { useState } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -66,7 +67,7 @@ export function ExerciseVideosSheet({ exerciseId, onOpenChange }: ExerciseVideos
           )}
 
           {detail.isError && (
-            <p className="text-body text-error-text">No se ha podido cargar el ejercicio.</p>
+            <ErrorState error={detail.error} onRetry={() => detail.refetch()} inline />
           )}
 
           {detail.data && (

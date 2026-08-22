@@ -3,6 +3,7 @@
 import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
+import { ErrorState } from "@/components/dashboard/error-state"
 import { ImageUrlField } from "@/components/shared/image-url-field"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
 import { Button } from "@/components/ui/button"
@@ -22,7 +23,7 @@ import type { UserProfile } from "../model/user.model"
  * splits them the same way.
  */
 export function PersonalDataForm() {
-  const { data, isLoading, isError } = useUserProfile()
+  const { data, isLoading, isError, error, refetch } = useUserProfile()
 
   if (isLoading) {
     return <Skeleton className="h-72 w-full rounded-xl" />
@@ -30,7 +31,7 @@ export function PersonalDataForm() {
 
   if (isError || !data) {
     return (
-      <p className="text-body text-error-text">No se han podido cargar tus datos personales.</p>
+      <ErrorState error={error} onRetry={() => refetch()} inline />
     )
   }
 

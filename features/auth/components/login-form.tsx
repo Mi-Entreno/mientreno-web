@@ -101,7 +101,7 @@ export function LoginForm() {
       router.push(from && from.startsWith("/dashboard") ? from : "/dashboard")
       router.refresh()
     } catch {
-      toast.error("No se pudo conectar con el servidor")
+      toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
     } finally {
       setSubmitting(false)
     }

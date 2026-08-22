@@ -48,7 +48,7 @@ async function handler(req: NextRequest, ctx: { params: Promise<{ path: string[]
     })
   } catch {
     return NextResponse.json(
-      { message: "No se ha podido conectar con el servidor", status: 502 },
+      { message: "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.", status: 502 },
       { status: 502 },
     )
   }

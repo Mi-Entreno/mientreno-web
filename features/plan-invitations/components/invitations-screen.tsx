@@ -6,11 +6,11 @@ import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { ErrorState } from "@/components/dashboard/error-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ApiError } from "@/core/http/errors"
 import { billingSuffix } from "@/features/subscription-plans/model/subscription-plan.model"
 import { formatCurrency, formatDate } from "@/lib/format"
 import {
@@ -124,17 +124,7 @@ function InvitationList({
   }
 
   if (list.isError) {
-    const missingEndpoint = list.error instanceof ApiError && list.error.status === 404
-
-    return (
-      <p className="rounded-lg border border-error/40 bg-error-surface p-3 text-body text-error-text text-pretty">
-        {missingEndpoint
-          ? "Las invitaciones aún no están disponibles en el servidor (GET /api/plan-invitations/sent). Están especificadas en BACKEND_REQUIREMENTS.md §3.3."
-          : list.error instanceof ApiError
-            ? list.error.message
-            : "No se han podido cargar las invitaciones."}
-      </p>
-    )
+    return <ErrorState error={list.error} onRetry={() => list.refetch()} />
   }
 
   if (list.invitations.length === 0) {

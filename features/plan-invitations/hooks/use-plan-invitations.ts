@@ -4,14 +4,20 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tansta
 import { useMemo } from "react"
 import { toast } from "sonner"
 
-import { ApiError } from "@/core/http/errors"
 import { nextPageParam } from "@/core/http/pagination"
 import { qk } from "@/core/http/query-keys"
+import { specificMessage } from "@/core/http/user-message"
 import { planInvitationsRepository } from "../api/plan-invitations.repository"
 import type { InvitationStatus, PlanInvitation } from "../model/plan-invitation.model"
 
+/**
+ * Every mutation in this file reports through here, so the wording of a
+ * failure is decided in one place — `core/http/user-message.ts` — instead of
+ * forwarding whatever the backend happened to say. `fallback` names the action
+ * that failed, and is used only when the error carries nothing displayable.
+ */
 function errorMessage(error: unknown, fallback: string): string {
-  return error instanceof ApiError ? error.message : fallback
+  return specificMessage(error) ?? fallback
 }
 
 /** Invitations this trainer has sent, optionally narrowed to one status. */
@@ -35,6 +41,7 @@ export function useSentInvitations(status: InvitationStatus | null) {
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
+    refetch: query.refetch,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
     fetchNextPage: query.fetchNextPage,
