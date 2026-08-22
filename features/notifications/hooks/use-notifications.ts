@@ -39,8 +39,17 @@ export function useNotifications() {
     staleTime: 30_000,
   })
 
+  /**
+   * Flattened and deduplicated by id.
+   *
+   * The backend paginates by offset, so any notification written between two
+   * page fetches shifts every later row down and makes the same `id` come back
+   * on two pages. Rendered straight, that shows the trainer the same
+   * notification twice and warns about duplicate React keys. Keeping the first
+   * occurrence preserves the newest-first order the API returns.
+   */
   const notifications = useMemo<AppNotification[]>(
-    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    () => dedupeById(query.data?.pages.flatMap((page) => page.items) ?? []),
     [query.data],
   )
 
@@ -123,4 +132,18 @@ export function useMarkAllNotificationsRead() {
     onError: (error) =>
       toast.error(specificMessage(error) ?? "No pudimos marcarlas como leídas."),
   })
+}
+
+/** Keeps the first occurrence of each id, preserving order. */
+function dedupeById(items: AppNotification[]): AppNotification[] {
+  const seen = new Set<number>()
+  const unique: AppNotification[] = []
+
+  for (const item of items) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    unique.push(item)
+  }
+
+  return unique
 }

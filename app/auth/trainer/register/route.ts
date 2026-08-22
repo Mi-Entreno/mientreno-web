@@ -22,6 +22,9 @@ import { postJson } from "@/server/upstream"
  * the account genuinely was created, and the verification screen offers a
  * resend button anyway.
  *
+ * The chain is safe once the backend is fixed: the resend cooldown rejects the
+ * second send, so nobody gets two emails. See `codeAlreadySent` below.
+ *
  * **The proper fix is upstream** — `registerTrainer` should send the code the
  * way `registerStudent` does. Remove this chaining once it does.
  */
@@ -46,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   if (!registration.ok) {
     return NextResponse.json(
-      registration.data ?? { message: "No se ha podido completar el registro" },
+      registration.data ?? { message: "No pudimos crear tu cuenta. Volvé a intentarlo." },
       { status: registration.status },
     )
   }
@@ -55,7 +58,25 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     email: body.email.trim(),
-    /** False when the first code could not be sent; the UI offers a retry. */
-    verificationCodeSent: otp.ok,
+    /** False only when no code exists to verify with; the UI offers a retry. */
+    verificationCodeSent: otp.ok || codeAlreadySent(otp.status),
   })
+}
+
+/**
+ * A 429 here means a code went out moments ago, not that sending failed.
+ *
+ * `EmailVerificationService.sendVerificationCode` refuses a resend inside
+ * `email-verification.resend-cooldown-seconds`. So the day the backend starts
+ * sending the code from `registerTrainer` — the proper fix this handler works
+ * around — the chained call above will be rejected by that cooldown, which is
+ * exactly what stops the trainer from receiving two emails.
+ *
+ * Reading that rejection as a failure was wrong twice over: it warned "no
+ * hemos podido enviar el código" to someone who had just received one, and it
+ * pushed them toward the resend button, which is the one action guaranteed to
+ * fail for the next minute.
+ */
+function codeAlreadySent(status: number): boolean {
+  return status === 429
 }
