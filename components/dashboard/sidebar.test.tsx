@@ -94,8 +94,34 @@ describe("Sidebar profile", () => {
     )
   })
 
-  it("falls back while the profile has not loaded", () => {
-    profile.mockReturnValue({ data: undefined })
+  it("shows the name from the session token before the profile query lands", () => {
+    profile.mockReturnValue({ data: undefined, isLoading: true })
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Sidebar initialName="Alex" />
+      </QueryClientProvider>,
+    )
+
+    // A real name on the first paint, never the word "Entrenador".
+    expect(screen.getByText("Alex")).toBeInTheDocument()
+    expect(screen.queryByText("Entrenador")).not.toBeInTheDocument()
+    expect(container.querySelector('[data-slot="skeleton"]')).toBeNull()
+  })
+
+  it("waits with a skeleton when the token carries no name", () => {
+    profile.mockReturnValue({ data: undefined, isLoading: true })
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <Sidebar />
+      </QueryClientProvider>,
+    )
+
+    expect(screen.queryByText("Entrenador")).not.toBeInTheDocument()
+    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull()
+  })
+
+  it("falls back once the profile has loaded with no name at all", () => {
+    profile.mockReturnValue({ data: undefined, isLoading: false })
     renderSidebar()
 
     expect(screen.getByRole("link", { name: /Entrenador/ })).toBeInTheDocument()

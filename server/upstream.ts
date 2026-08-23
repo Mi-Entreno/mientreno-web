@@ -193,7 +193,9 @@ function refreshOnce(refreshToken: string): Promise<StoredSession | null> {
  *
  * Refresh is proactive (driven by the `exp` claim) rather than reactive
  * (driven by a 401) so a request is never spent discovering that the token
- * died. Access tokens last 30 minutes upstream; refresh tokens last 30 days.
+ * died. Access tokens last 30 minutes upstream; refresh tokens last 30 days,
+ * though the session cookie expires first — see `SESSION_MAX_AGE_SECONDS`. The
+ * `writeSession` below is what slides that window forward on every rotation.
  */
 export async function ensureFreshSession(): Promise<Session | null> {
   const stored = await readStoredSession()

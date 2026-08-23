@@ -15,9 +15,10 @@ export interface NavItem {
 }
 
 /**
- * Main navigation. "Mi perfil", "Ajustes" and "Cobros" are reached from the
- * sidebar's profile card and footer instead, to keep this list short (§6.7 of
- * the integration plan).
+ * Main navigation, kept short on purpose. "Mi perfil" is reached from the
+ * sidebar's profile card, "Ajustes" from its footer, and "Cobros" from inside
+ * Ajustes — plus a direct link from the screens where charging actually comes
+ * up.
  *
  * "Invitaciones" earns a slot here because it is a queue: something is waiting
  * for an answer, and a trainer needs to see the pending ones without hunting
