@@ -1,9 +1,10 @@
 "use client"
 
-import { LogOut, Pencil, Settings, Wallet } from "lucide-react"
+import { LogOut, Pencil, Settings } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useLogout } from "@/features/auth/hooks/use-auth-actions"
 import { useTrainerProfile } from "@/features/trainer-profile/hooks/use-trainer-profile"
 import { cn } from "@/lib/utils"
@@ -14,12 +15,12 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href)
 }
 
-export function Sidebar() {
+export function Sidebar({ initialName }: { initialName?: string | null }) {
   const pathname = usePathname()
 
   return (
     <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar bg-linear-to-b from-sidebar-accent/70 via-sidebar to-sidebar md:flex">
-      <SidebarProfile />
+      <SidebarProfile initialName={initialName} />
 
       <nav className="flex flex-1 flex-col gap-1.5 p-3" aria-label="Primary">
         <p className="px-3 pb-1 font-heading text-caption font-semibold tracking-[0.2em] text-sidebar-foreground/40 uppercase">
@@ -35,9 +36,19 @@ export function Sidebar() {
   )
 }
 
-/** The trainer's own card: photo, name, and a shortcut into the profile form. */
-function SidebarProfile() {
-  const { data: profile } = useTrainerProfile()
+/**
+ * The trainer's own card: photo, name, and a shortcut into the profile form.
+ *
+ * `initialName` is the `firstName` claim out of the session cookie, so the
+ * first paint already shows a real name. Only when the token carries none does
+ * this fall back to a skeleton — never to a placeholder word, which is what
+ * made a reload flash "Entrenador" and then swap.
+ */
+function SidebarProfile({ initialName }: { initialName?: string | null }) {
+  const { data: profile, isLoading } = useTrainerProfile()
+
+  const name = profile?.fullName ?? initialName ?? null
+  const unknownYet = name === null && isLoading
 
   return (
     <Link
@@ -48,16 +59,20 @@ function SidebarProfile() {
       {/* `avatarUrl` is already routed through the authenticated media proxy
           by the mapper, so locally-stored files load. */}
       <UserAvatar
-        name={profile?.fullName}
+        name={name}
         src={profile?.avatarUrl}
         className="size-20 ring-2 ring-primary/50 ring-offset-4 ring-offset-sidebar transition-all duration-300 ease-out group-hover:scale-105 group-hover:ring-primary motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         fallbackClassName="bg-sidebar-accent font-heading text-title font-semibold text-primary"
       />
 
       <div className="flex w-full items-center justify-center gap-1.5">
-        <p className="truncate font-heading text-subtitle font-semibold tracking-tight text-sidebar-foreground">
-          {profile?.fullName ?? "Entrenador"}
-        </p>
+        {unknownYet ? (
+          <Skeleton className="h-5 w-28 bg-sidebar-accent" />
+        ) : (
+          <p className="truncate font-heading text-subtitle font-semibold tracking-tight text-sidebar-foreground">
+            {name ?? "Entrenador"}
+          </p>
+        )}
         <Pencil className="size-3.5 shrink-0 text-sidebar-foreground/40 transition-colors duration-300 group-hover:text-primary motion-reduce:transition-none" />
       </div>
     </Link>
@@ -120,23 +135,19 @@ const FOOTER_ROW =
 
 /**
  * Account actions, kept out of the main nav (see `nav-items`). "Ajustes" lives
- * here because the sidebar's profile card already covers "Mi perfil", and
- * "Cobros" because linking Mercado Pago is a once-a-year errand, not a daily
- * destination — the screens that need it link to it directly.
+ * here because the sidebar's profile card already covers "Mi perfil".
+ *
+ * "Cobros" used to sit here too, and then also appeared as a card inside
+ * Ajustes — the same destination reachable twice from the same corner of the
+ * screen. It now lives in Ajustes only. The screens that actually need it (the
+ * plans banner, the invite wizard) still deep-link straight to it, which is
+ * where a trainer is when the question "¿cómo cobro?" comes up.
  */
 function SidebarFooter() {
   const logout = useLogout()
 
   return (
     <div className="flex flex-col gap-1 border-t border-sidebar-border p-3">
-      <Link
-        href="/dashboard/payments"
-        className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}
-      >
-        <Wallet className="size-5" />
-        Cobros
-      </Link>
-
       <Link
         href="/dashboard/settings"
         className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}

@@ -1,9 +1,10 @@
 "use client"
 
-import { LogOut, Settings, User, Wallet } from "lucide-react"
+import { LogOut, Settings, User } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,12 +38,17 @@ function titleFor(pathname: string) {
   return TITLES[pathname] ?? "Inicio"
 }
 
-export function DashboardHeader() {
+export function DashboardHeader({ initialName }: { initialName?: string | null }) {
   const router = useRouter()
   const pathname = usePathname()
   const title = titleFor(pathname)
-  const { data: profile } = useTrainerProfile()
+  const { data: profile, isLoading } = useTrainerProfile()
   const logout = useLogout()
+
+  // Seeded from the session token's `firstName` claim, so the first paint
+  // shows a real name instead of flashing a placeholder. See the layout.
+  const name = profile?.fullName ?? initialName ?? null
+  const unknownYet = name === null && isLoading
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
@@ -59,10 +65,14 @@ export function DashboardHeader() {
           >
             {/* `avatarUrl` is already routed through the authenticated media
                 proxy by the mapper, so locally-stored files load. */}
-            <UserAvatar name={profile?.fullName} src={profile?.avatarUrl} className="size-8" />
-            <span className="hidden text-body font-medium sm:inline">
-              {profile?.fullName ?? "Entrenador"}
-            </span>
+            <UserAvatar name={name} src={profile?.avatarUrl} className="size-8" />
+            {unknownYet ? (
+              <Skeleton className="hidden h-4 w-24 sm:inline-block" />
+            ) : (
+              <span className="hidden text-body font-medium sm:inline">
+                {name ?? "Entrenador"}
+              </span>
+            )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
@@ -71,12 +81,8 @@ export function DashboardHeader() {
               <User className="size-4" />
               Perfil
             </DropdownMenuItem>
-            {/* Below `md` the bottom nav has no room for this one, and
-                invitations are reached from "Mis alumnos" instead. */}
-            <DropdownMenuItem onClick={() => router.push("/dashboard/payments")}>
-              <Wallet className="size-4" />
-              Cobros
-            </DropdownMenuItem>
+            {/* Invitations are reached from "Mis alumnos" and cobros from
+                Ajustes, so neither is repeated here. */}
             <DropdownMenuItem onClick={() => router.push("/dashboard/settings")}>
               <Settings className="size-4" />
               Ajustes
