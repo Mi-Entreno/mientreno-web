@@ -39,16 +39,24 @@ export function Sidebar({ initialName }: { initialName?: string | null }) {
 /**
  * The trainer's own card: photo, name, and a shortcut into the profile form.
  *
- * `initialName` is the `firstName` claim out of the session cookie, so the
- * first paint already shows a real name. Only when the token carries none does
- * this fall back to a skeleton — never to a placeholder word, which is what
- * made a reload flash "Entrenador" and then swap.
+ * ## Nothing intermediate is ever painted
+ *
+ * Two earlier versions of this both showed the wrong thing first and corrected
+ * themselves a moment later: the word "Entrenador" swapping to a real name, and
+ * then the token's `firstName` swapping to the full name. Text changing under
+ * the reader is worse than text arriving late — the second version read like
+ * the app fixing a mistake.
+ *
+ * So while the profile is loading this renders a skeleton of the exact size the
+ * card will be, and the name appears once, already correct.
+ *
+ * `initialName` — the `firstName` claim from the session cookie — is a
+ * *fallback*, not a placeholder: it is used only after loading finishes without
+ * a profile, which is the trainer who has not completed onboarding yet. Even
+ * there it beats the hardcoded word, because it is their actual name.
  */
 function SidebarProfile({ initialName }: { initialName?: string | null }) {
   const { data: profile, isLoading } = useTrainerProfile()
-
-  const name = profile?.fullName ?? initialName ?? null
-  const unknownYet = name === null && isLoading
 
   return (
     <Link
@@ -56,25 +64,30 @@ function SidebarProfile({ initialName }: { initialName?: string | null }) {
       title="Editar perfil"
       className="group flex flex-col items-center gap-3 border-b border-sidebar-border px-6 pt-7 pb-6 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring/60 focus-visible:ring-inset"
     >
-      {/* `avatarUrl` is already routed through the authenticated media proxy
-          by the mapper, so locally-stored files load. */}
-      <UserAvatar
-        name={name}
-        src={profile?.avatarUrl}
-        className="size-20 ring-2 ring-primary/50 ring-offset-4 ring-offset-sidebar transition-all duration-300 ease-out group-hover:scale-105 group-hover:ring-primary motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-        fallbackClassName="bg-sidebar-accent font-heading text-title font-semibold text-primary"
-      />
-
-      <div className="flex w-full items-center justify-center gap-1.5">
-        {unknownYet ? (
+      {isLoading ? (
+        <>
+          <Skeleton className="size-20 rounded-full bg-sidebar-accent" />
           <Skeleton className="h-5 w-28 bg-sidebar-accent" />
-        ) : (
-          <p className="truncate font-heading text-subtitle font-semibold tracking-tight text-sidebar-foreground">
-            {name ?? "Entrenador"}
-          </p>
-        )}
-        <Pencil className="size-3.5 shrink-0 text-sidebar-foreground/40 transition-colors duration-300 group-hover:text-primary motion-reduce:transition-none" />
-      </div>
+        </>
+      ) : (
+        <>
+          {/* `avatarUrl` is already routed through the authenticated media
+              proxy by the mapper, so locally-stored files load. */}
+          <UserAvatar
+            name={profile?.fullName ?? initialName}
+            src={profile?.avatarUrl}
+            className="size-20 ring-2 ring-primary/50 ring-offset-4 ring-offset-sidebar transition-all duration-300 ease-out group-hover:scale-105 group-hover:ring-primary motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            fallbackClassName="bg-sidebar-accent font-heading text-title font-semibold text-primary"
+          />
+
+          <div className="flex w-full items-center justify-center gap-1.5">
+            <p className="truncate font-heading text-subtitle font-semibold tracking-tight text-sidebar-foreground">
+              {profile?.fullName ?? initialName ?? "Entrenador"}
+            </p>
+            <Pencil className="size-3.5 shrink-0 text-sidebar-foreground/40 transition-colors duration-300 group-hover:text-primary motion-reduce:transition-none" />
+          </div>
+        </>
+      )}
     </Link>
   )
 }

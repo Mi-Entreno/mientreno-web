@@ -45,10 +45,10 @@ export function DashboardHeader({ initialName }: { initialName?: string | null }
   const { data: profile, isLoading } = useTrainerProfile()
   const logout = useLogout()
 
-  // Seeded from the session token's `firstName` claim, so the first paint
-  // shows a real name instead of flashing a placeholder. See the layout.
-  const name = profile?.fullName ?? initialName ?? null
-  const unknownYet = name === null && isLoading
+  // `initialName` (the token's `firstName` claim) is a fallback for the trainer
+  // who has no profile yet, never a placeholder shown while loading — see the
+  // note on `SidebarProfile`.
+  const name = profile?.fullName ?? initialName ?? "Entrenador"
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur sm:px-6">
@@ -65,13 +65,16 @@ export function DashboardHeader({ initialName }: { initialName?: string | null }
           >
             {/* `avatarUrl` is already routed through the authenticated media
                 proxy by the mapper, so locally-stored files load. */}
-            <UserAvatar name={name} src={profile?.avatarUrl} className="size-8" />
-            {unknownYet ? (
-              <Skeleton className="hidden h-4 w-24 sm:inline-block" />
+            {isLoading ? (
+              <>
+                <Skeleton className="size-8 rounded-full" />
+                <Skeleton className="hidden h-4 w-24 sm:inline-block" />
+              </>
             ) : (
-              <span className="hidden text-body font-medium sm:inline">
-                {name ?? "Entrenador"}
-              </span>
+              <>
+                <UserAvatar name={name} src={profile?.avatarUrl} className="size-8" />
+                <span className="hidden text-body font-medium sm:inline">{name}</span>
+              </>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
