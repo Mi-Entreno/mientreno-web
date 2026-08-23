@@ -94,7 +94,14 @@ describe("Sidebar profile", () => {
     )
   })
 
-  it("shows the name from the session token before the profile query lands", () => {
+  /**
+   * The rule this locks in: no name is painted until it is the right one.
+   *
+   * Two earlier versions each showed a value and then replaced it — the word
+   * "Entrenador", and the token's first name ahead of the full one. Both read
+   * as the app correcting itself.
+   */
+  it("paints no name at all while the profile is loading", () => {
     profile.mockReturnValue({ data: undefined, isLoading: true })
     const { container } = render(
       <QueryClientProvider client={new QueryClient()}>
@@ -102,26 +109,32 @@ describe("Sidebar profile", () => {
       </QueryClientProvider>,
     )
 
-    // A real name on the first paint, never the word "Entrenador".
-    expect(screen.getByText("Alex")).toBeInTheDocument()
+    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull()
+    expect(screen.queryByText("Alex")).not.toBeInTheDocument()
     expect(screen.queryByText("Entrenador")).not.toBeInTheDocument()
+  })
+
+  it("shows the full name once, with no skeleton left behind", () => {
+    const { container } = renderSidebar()
+
+    expect(screen.getByText("Alex Ruiz")).toBeInTheDocument()
     expect(container.querySelector('[data-slot="skeleton"]')).toBeNull()
   })
 
-  it("waits with a skeleton when the token carries no name", () => {
-    profile.mockReturnValue({ data: undefined, isLoading: true })
-    const { container } = render(
+  it("uses the token's name for a trainer with no profile yet", () => {
+    profile.mockReturnValue({ data: null, isLoading: false })
+    render(
       <QueryClientProvider client={new QueryClient()}>
-        <Sidebar />
+        <Sidebar initialName="Alex" />
       </QueryClientProvider>,
     )
 
+    expect(screen.getByText("Alex")).toBeInTheDocument()
     expect(screen.queryByText("Entrenador")).not.toBeInTheDocument()
-    expect(container.querySelector('[data-slot="skeleton"]')).not.toBeNull()
   })
 
-  it("falls back once the profile has loaded with no name at all", () => {
-    profile.mockReturnValue({ data: undefined, isLoading: false })
+  it("falls back to a generic label only when nothing knows the name", () => {
+    profile.mockReturnValue({ data: null, isLoading: false })
     renderSidebar()
 
     expect(screen.getByRole("link", { name: /Entrenador/ })).toBeInTheDocument()
