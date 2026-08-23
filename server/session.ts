@@ -30,8 +30,25 @@ import { decodeAccessToken, type AccessTokenClaims } from "./jwt"
 
 export const SESSION_COOKIE = "trainer_session"
 
-/** Refresh tokens live 30 days upstream (`RefreshTokenService.EXPIRY_DAYS`). */
-export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+/**
+ * How long a session survives without being used.
+ *
+ * Deliberately shorter than the refresh token behind it, which lives 30 days
+ * upstream (`RefreshTokenService.EXPIRY_DAYS`). Matching that number meant a
+ * browser stayed signed in for a month, which is a long time for a panel that
+ * holds other people's health data and a linked payment account.
+ *
+ * It is an **idle** window, not a hard cap. `ensureFreshSession` rewrites the
+ * cookie every time it rotates the access token — which happens on the first
+ * API call after the 30-minute token expires, so on any visit a day or more
+ * apart. A trainer who opens the panel weekly is never signed out; one who
+ * disappears for eight days signs in again.
+ *
+ * The upstream refresh token is not revoked when this lapses: nobody holds it
+ * any more, and it expires on its own. Signing out explicitly *does* revoke it
+ * (`app/auth/logout/route.ts`).
+ */
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
 export interface StoredSession {
   accessToken: string

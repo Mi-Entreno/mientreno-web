@@ -55,8 +55,15 @@ describe("sessionCookieOptions", () => {
     expect(sessionCookieOptions(false)).toMatchObject({ secure: false, sameSite: "lax" })
   })
 
-  it("outlives the access token so refresh has something to work with", () => {
-    expect(sessionCookieOptions(true).maxAge).toBe(60 * 60 * 24 * 30)
+  it("is an idle window that outlives the access token but not the refresh one", () => {
+    const maxAge = sessionCookieOptions(true).maxAge
+
+    // Long enough that a 30-minute access token always has a refresh token
+    // waiting for it, short enough that an abandoned browser stops being a
+    // signed-in one well before the upstream refresh token expires.
+    expect(maxAge).toBe(60 * 60 * 24 * 7)
+    expect(maxAge).toBeGreaterThan(60 * 30)
+    expect(maxAge).toBeLessThan(60 * 60 * 24 * 30)
   })
 })
 
