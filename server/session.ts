@@ -103,19 +103,32 @@ export function hydrate(stored: StoredSession | null): Session | null {
 }
 
 /**
- * Cookie options that work both on a normal deployment and inside the
- * cross-origin preview iframe.
+ * Cookie options.
  *
- * In a cross-site iframe browsers only send `SameSite=None; Secure` cookies —
- * a `Lax` cookie is treated as third-party and dropped, so the route guard
- * would think the user is logged out. Over plain HTTP (local dev) `Secure`
- * cookies are rejected outright, so we fall back to `Lax` there.
+ * `SameSite=Lax` is the CSRF defence the browser gives for free: it withholds
+ * the cookie from cross-site POSTs, form submits included, without the app
+ * having to do anything.
+ *
+ * This used to be `None` on HTTPS, so the session would survive inside the v0
+ * cross-origin preview iframe — a `Lax` cookie is treated as third-party there
+ * and dropped, and the route guard then reads the user as logged out. That
+ * preview is no longer used, and `None` was an expensive way to keep it
+ * working: it switched off the browser's CSRF protection for a cookie that
+ * authenticates a BFF holding other people's health data and a linked payment
+ * account.
+ *
+ * `server/same-origin.ts` checks the request origin as a second layer. Keep
+ * both: this one stops the request from ever being sent, that one stops it from
+ * being honoured if a browser somewhere disagrees about what `Lax` means.
+ *
+ * `Secure` still tracks the scheme — over plain HTTP (local dev) browsers
+ * reject `Secure` cookies outright.
  */
 export function sessionCookieOptions(isHttps: boolean) {
   return {
     httpOnly: true,
     secure: isHttps,
-    sameSite: isHttps ? ("none" as const) : ("lax" as const),
+    sameSite: "lax" as const,
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
   }

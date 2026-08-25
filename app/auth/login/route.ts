@@ -37,6 +37,29 @@ export async function POST(req: NextRequest) {
   }
 
   const auth = data as AuthResponseDTO
+
+  // Verification is checked before the token is decoded, because an unverified
+  // account no longer comes with one.
+  //
+  // The backend used to issue a working JWT regardless of `accountVerified` and
+  // leave it to each client to decline it — which meant the token was real and
+  // anyone bypassing the UI had a usable session. It now withholds `jwt` and
+  // `refreshToken` for unverified accounts and still answers 200, so the shape
+  // both clients already branch on is unchanged.
+  //
+  // Decoding first would turn that null token into `!claims` and report a 502
+  // "inconveniente", hiding a perfectly ordinary state behind a server error
+  // and stranding the user with no way to reach the OTP screen.
+  if (!auth.accountVerified) {
+    await clearSession()
+    return NextResponse.json({
+      email: auth.email,
+      firstName: auth.firstName,
+      profileCompleted: false,
+      accountVerified: false,
+    })
+  }
+
   const claims = decodeAccessToken(auth.jwt)
 
   if (!claims) {

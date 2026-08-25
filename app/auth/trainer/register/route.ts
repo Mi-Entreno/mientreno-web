@@ -3,30 +3,23 @@ import { type NextRequest, NextResponse } from "next/server"
 import { postJson } from "@/server/upstream"
 
 /**
- * Trainer registration, plus the OTP send the backend forgets to do.
+ * Trainer registration.
  *
- * ## The gap this works around
+ * This handler used to chain a `POST /auth/register/resend-otp` after the
+ * registration call, because `UserDetailsServiceAuth.registerTrainer` saved the
+ * user and returned without ever emailing a verification code — unlike
+ * `registerStudent`, which sends one. Without the chained call a trainer could
+ * never verify through the happy path.
  *
- * `UserDetailsServiceAuth.registerStudent` calls
- * `emailVerificationService.sendVerificationCode(newUser)` before returning.
- * `registerTrainer` does not — it saves the user and returns
- * `AuthResponseDTO.noToken(...)` with nothing else.
+ * The backend now sends the code itself, so the workaround is gone. Keeping it
+ * would be actively wrong today: the second send lands inside
+ * `email-verification.resend-cooldown-seconds` and comes back 429, which is a
+ * round trip spent to be told the thing already happened.
  *
- * So a trainer registers, lands with `accountVerified: false`, and **no code is
- * ever emailed**. Left alone, the account can never be verified through the
- * happy path; the only source of a first code is
- * `POST /auth/register/resend-otp`.
- *
- * Chaining that call here keeps the workaround in one place and costs the
- * client a single round trip. A failure to send is reported rather than thrown:
- * the account genuinely was created, and the verification screen offers a
- * resend button anyway.
- *
- * The chain is safe once the backend is fixed: the resend cooldown rejects the
- * second send, so nobody gets two emails. See `codeAlreadySent` below.
- *
- * **The proper fix is upstream** — `registerTrainer` should send the code the
- * way `registerStudent` does. Remove this chaining once it does.
+ * `verificationCodeSent` stays in the response because the register form reads
+ * it to decide whether to promise an email. It now mirrors whether registration
+ * itself succeeded, which is the same thing: the backend sends the code inside
+ * that call, and a failure to send fails the registration.
  */
 export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as
@@ -54,29 +47,8 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const otp = await postJson("/auth/register/resend-otp", { email: body.email.trim() })
-
   return NextResponse.json({
     email: body.email.trim(),
-    /** False only when no code exists to verify with; the UI offers a retry. */
-    verificationCodeSent: otp.ok || codeAlreadySent(otp.status),
+    verificationCodeSent: true,
   })
-}
-
-/**
- * A 429 here means a code went out moments ago, not that sending failed.
- *
- * `EmailVerificationService.sendVerificationCode` refuses a resend inside
- * `email-verification.resend-cooldown-seconds`. So the day the backend starts
- * sending the code from `registerTrainer` — the proper fix this handler works
- * around — the chained call above will be rejected by that cooldown, which is
- * exactly what stops the trainer from receiving two emails.
- *
- * Reading that rejection as a failure was wrong twice over: it warned "no
- * hemos podido enviar el código" to someone who had just received one, and it
- * pushed them toward the resend button, which is the one action guaranteed to
- * fail for the next minute.
- */
-function codeAlreadySent(status: number): boolean {
-  return status === 429
 }

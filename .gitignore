@@ -7,7 +7,16 @@ __v0_jsx-dev-runtime.ts
 .vercel/
 
 # Environment variables
+#
+# `.env` estaba versionado y `.gitignore` solo cubria `.env*.local`. El archivo
+# tenia una URL publica, asi que no hubo filtracion — pero el archivo donde uno
+# pone secretos por convencion estaba rastreado, y la proxima variable que se
+# agregara ahi se commiteaba sin que nadie lo notara.
+#
+# Solo `.env.example` va al repositorio.
+.env
 .env*.local
+!.env.example
 
 # Common ignores
 node_modules
