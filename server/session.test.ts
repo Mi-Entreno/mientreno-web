@@ -49,10 +49,21 @@ describe("hydrate", () => {
 })
 
 describe("sessionCookieOptions", () => {
-  it("uses SameSite=None only over HTTPS", () => {
-    // Cross-site iframes drop Lax cookies; plain HTTP rejects Secure ones.
-    expect(sessionCookieOptions(true)).toMatchObject({ secure: true, sameSite: "none" })
+  it("stays SameSite=Lax on both schemes, so the browser withholds it cross-site", () => {
+    // Lax is the CSRF defence the browser applies on its own: it does not send
+    // the cookie on a cross-site POST or form submit.
+    //
+    // This was `None` over HTTPS so the session would survive inside the v0
+    // preview iframe, which drops Lax cookies as third-party. That preview is
+    // gone, and `None` bought it by switching off CSRF protection for the
+    // cookie that authenticates the whole panel.
+    expect(sessionCookieOptions(true)).toMatchObject({ secure: true, sameSite: "lax" })
     expect(sessionCookieOptions(false)).toMatchObject({ secure: false, sameSite: "lax" })
+  })
+
+  it("keeps the cookie unreachable from page scripts", () => {
+    expect(sessionCookieOptions(true).httpOnly).toBe(true)
+    expect(sessionCookieOptions(false).httpOnly).toBe(true)
   })
 
   it("is an idle window that outlives the access token but not the refresh one", () => {
