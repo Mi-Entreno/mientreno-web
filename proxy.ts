@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-import { isTrainer } from "@/server/jwt"
+import { homeFor, isAdmin, isBrand, isTrainer } from "@/server/jwt"
 import { isCrossSiteWrite } from "@/server/same-origin"
 import { SESSION_COOKIE, readSessionFromRequest } from "@/server/session"
 
@@ -19,6 +19,9 @@ import { SESSION_COOKIE, readSessionFromRequest } from "@/server/session"
  * merely-expired one is left for the refresh path to repair.
  */
 const PROFILE_PATH = "/dashboard/profile"
+const BRAND_HOME = "/comercio"
+const BRAND_PROFILE_PATH = "/comercio/perfil"
+const ADMIN_HOME = "/admin"
 
 function redirect(req: NextRequest, pathname: string, params?: Record<string, string>) {
   const url = req.nextUrl.clone()
@@ -51,10 +54,24 @@ export default function proxy(req: NextRequest) {
   }
 
   const session = readSessionFromRequest(req)
+  const home = homeFor(session?.claims ?? null)
+
+  // The landing is for people who have not signed in. Someone with a live
+  // session goes to their own panel instead of re-reading the pitch.
+  if (pathname === "/") {
+    return session && home ? redirect(req, home) : NextResponse.next()
+  }
 
   if (pathname.startsWith("/dashboard")) {
     if (!session) {
       return signOut(req, { from: pathname })
+    }
+
+    // A merchant here is not a broken session — it is someone in the wrong half
+    // of the product. Sending them to their own panel is what they wanted;
+    // signing them out would be punishing a typo.
+    if (isBrand(session.claims)) {
+      return redirect(req, BRAND_HOME)
     }
 
     // A student signing in here would otherwise reach the shell and watch every
@@ -78,7 +95,60 @@ export default function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Signed-in trainers have no business on these screens.
+  // The merchant panel. Mirrors the block above rather than sharing it: the two
+  // differ in their profile path and in which role is the intruder, and folding
+  // that into one parameterised branch made the redirect rules harder to read
+  // than the duplication they saved.
+  //
+  // `/comercio/login` and `/comercio/register` are excluded here and handled by
+  // SIGNED_OUT_ONLY below — guarding them would make signing in impossible.
+  if (pathname.startsWith(BRAND_HOME) && !SIGNED_OUT_ONLY.has(pathname)) {
+    if (!session) {
+      return signOut(req, { from: pathname })
+    }
+
+    if (isTrainer(session.claims)) {
+      return redirect(req, "/dashboard")
+    }
+
+    if (!isBrand(session.claims)) {
+      return signOut(req, { error: "role" })
+    }
+
+    if (!session.refreshToken && session.claims.expiresAt <= Date.now()) {
+      return signOut(req)
+    }
+
+    if (!session.claims.profileCompleted && !pathname.startsWith(BRAND_PROFILE_PATH)) {
+      return redirect(req, BRAND_PROFILE_PATH, { complete: "1" })
+    }
+
+    return NextResponse.next()
+  }
+
+  // Moderation. Guarded by role alone: there is no profile to complete, and no
+  // "wrong half" redirect either — an account without ROLE_ADMIN has no home
+  // here to be sent to, so it is signed out like any other intruder.
+  //
+  // Note this runs *after* the two panel blocks, so an admin who is also a
+  // trainer reaches /dashboard normally and /admin only when they ask for it.
+  if (pathname.startsWith(ADMIN_HOME)) {
+    if (!session) {
+      return signOut(req, { from: pathname })
+    }
+
+    if (!isAdmin(session.claims)) {
+      return signOut(req, { error: "role" })
+    }
+
+    if (!session.refreshToken && session.claims.expiresAt <= Date.now()) {
+      return signOut(req)
+    }
+
+    return NextResponse.next()
+  }
+
+  // Signed-in users have no business on these screens.
   //
   // `/verify-otp` is deliberately absent, though the reason has changed. The
   // backend used to issue tokens even when `accountVerified` was false, so an
@@ -87,14 +157,27 @@ export default function proxy(req: NextRequest) {
   // withholds the tokens, so those users reach `/verify-otp` with no session at
   // all — and a guard entry would be pointless rather than harmful. Leaving the
   // route out keeps it reachable either way.
-  if (SIGNED_OUT_ONLY.has(pathname) && session && isTrainer(session.claims)) {
-    return redirect(req, "/dashboard")
+  if (SIGNED_OUT_ONLY.has(pathname) && session && home) {
+    return redirect(req, home)
   }
 
   return NextResponse.next()
 }
 
-const SIGNED_OUT_ONLY = new Set(["/login", "/register", "/forgot-password"])
+/**
+ * Both audiences land on their own pair, but either door accepts either role:
+ * the redirect above sends whoever signs in to the panel that is actually
+ * theirs. The two pages differ in the pitch beside the form, not in what they
+ * accept — bouncing a merchant who clicked the trainer link would be punishing
+ * a guess about our own information architecture.
+ */
+const SIGNED_OUT_ONLY = new Set([
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/comercio/login",
+  "/comercio/register",
+])
 
 /**
  * `/api/:path*` and `/auth/:path*` are here for the CSRF check, not for the
@@ -108,7 +191,10 @@ const SIGNED_OUT_ONLY = new Set(["/login", "/register", "/forgot-password"])
  */
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
+    "/comercio/:path*",
+    "/admin/:path*",
     "/login",
     "/register",
     "/forgot-password",

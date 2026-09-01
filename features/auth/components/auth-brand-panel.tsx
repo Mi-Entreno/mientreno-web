@@ -1,4 +1,13 @@
-import { CreditCard, Dumbbell, Salad, Users, type LucideIcon } from "lucide-react"
+import {
+  CreditCard,
+  Dumbbell,
+  Gift,
+  PackageCheck,
+  Salad,
+  Store,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import type { ReactNode } from "react"
@@ -40,6 +49,25 @@ export const TRAINER_BRAND: AuthBrandCopy = {
     { icon: Salad, label: "Dietas y control de macros" },
     { icon: Users, label: "El progreso de cada alumno, al día" },
     { icon: CreditCard, label: "Cobros y suscripciones automáticos" },
+  ],
+  note: "© 2026 JJTECH",
+}
+
+/** El otro público: un comercio que aporta premios al catálogo de canjes. */
+export const MERCHANT_BRAND: AuthBrandCopy = {
+  headline: (
+    <>
+      Tus productos,
+      <br />
+      <span className="text-brand-green">su motivación.</span>
+    </>
+  ),
+  copy: "Sumá tus productos al catálogo de premios. Los alumnos los canjean con las mancuernas que ganan entrenando, y vos llegás a gente que ya está en movimiento.",
+  features: [
+    { icon: Store, label: "Cargá tus productos y su stock" },
+    { icon: Gift, label: "Los alumnos los canjean con mancuernas" },
+    { icon: PackageCheck, label: "Gestioná las entregas desde tu panel" },
+    { icon: Users, label: "Llegá a una audiencia que ya entrena" },
   ],
   note: "© 2026 JJTECH",
 }
@@ -116,7 +144,7 @@ export function AuthBrandPanel({ headline, copy, features, note }: AuthBrandCopy
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/login"
+          href="/"
           aria-label="Mi Entreno"
           className="inline-flex rounded-md outline-none focus-visible:ring-3 focus-visible:ring-brand-green/60"
         >

@@ -24,6 +24,30 @@ export const qk = {
     mine: ["subscription-plans", "mine"] as const,
   },
 
+  /**
+   * Merchant panel. Invalidating `qk.brand.all` reaches the profile, the
+   * products and the redemption inbox — which is what a status change needs,
+   * since approving or delivering moves more than one list.
+   */
+  brand: {
+    all: ["brand"] as const,
+    profile: ["brand", "profile"] as const,
+    products: (status?: string) => ["brand", "products", status ?? "all"] as const,
+    product: (id: number) => ["brand", "products", "detail", id] as const,
+    redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
+  },
+
+  /**
+   * Moderation. Its own namespace and not a corner of `brand`: approving a
+   * product invalidates the merchant's lists too, but the queue is read by a
+   * different person on a different screen.
+   */
+  admin: {
+    all: ["admin"] as const,
+    pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
+    brands: ["admin", "brands"] as const,
+  },
+
   students: {
     all: ["students"] as const,
     list: ["students", "list"] as const,

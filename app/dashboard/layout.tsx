@@ -1,6 +1,9 @@
+import type { Metadata } from "next"
+
 import { BottomNav } from "@/components/dashboard/bottom-nav"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Sidebar } from "@/components/dashboard/sidebar"
+import { isAdmin } from "@/server/jwt"
 import { readSession } from "@/server/session-store"
 
 /**
@@ -16,13 +19,20 @@ import { readSession } from "@/server/session-store"
  * upgrades this to the full name. A token without the claim falls back to a
  * skeleton rather than to a placeholder word.
  */
+export const metadata: Metadata = {
+  title: 'Mi Entreno — Panel del entrenador',
+}
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await readSession()
   const initialName = session?.claims.firstName ?? null
+  // El rol se lee acá y baja como prop: el sidebar es un componente cliente y
+  // no tiene acceso a la cookie.
+  const admin = isAdmin(session?.claims ?? null)
 
   return (
     <div className="flex min-h-svh">
-      <Sidebar initialName={initialName} />
+      <Sidebar initialName={initialName} isAdmin={admin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <DashboardHeader initialName={initialName} />
         <main className="flex-1 px-4 pb-24 pt-6 sm:px-6 md:pb-8 lg:px-8">{children}</main>

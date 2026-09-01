@@ -30,6 +30,14 @@ export function VerifyOtpForm() {
   const params = useSearchParams()
 
   const [email, setEmail] = useState(params.get("email") ?? "")
+
+  // Which login screen to return to. The registration form carries it in
+  // `?next` so a merchant does not land on the trainer door after verifying.
+  // Allowlisted rather than trusted: `next` comes from the URL bar, and a bare
+  // redirect to whatever it says is an open redirect.
+  const nextLogin = LOGIN_PATHS.has(params.get("next") ?? "")
+    ? (params.get("next") as string)
+    : "/login"
   const [code, setCode] = useState("")
 
   const verify = useVerifyOtp()
@@ -46,7 +54,7 @@ export function VerifyOtpForm() {
       {
         onSuccess: (result) => {
           toast.success(result?.message ?? "Cuenta verificada")
-          router.push(`/login?verified=1&email=${encodeURIComponent(email.trim())}`)
+          router.push(`${nextLogin}?verified=1&email=${encodeURIComponent(email.trim())}`)
         },
         onError: (error) => {
           setCode("")
@@ -80,7 +88,7 @@ export function VerifyOtpForm() {
         if (error instanceof ApiError && error.status === 409) {
           // "La cuenta ya está verificada" — nothing left to do here.
           toast.info(error.message)
-          router.push("/login")
+          router.push(nextLogin)
           return
         }
         toast.error(
@@ -165,3 +173,12 @@ export function VerifyOtpForm() {
     </AuthShell>
   )
 }
+
+/**
+ * The only destinations `?next` may name.
+ *
+ * A closed set and not a "starts with /" check: the second lets anyone craft a
+ * verification link that dumps the user anywhere in the app, and eventually
+ * off it.
+ */
+const LOGIN_PATHS = new Set(["/login", "/comercio/login"])

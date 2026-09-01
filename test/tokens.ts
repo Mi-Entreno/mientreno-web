@@ -50,3 +50,7 @@ export function makeToken(claims: TokenClaims = {}): string {
 }
 
 export const STUDENT_AUTHORITIES = "ROLE_STUDENT,READ"
+export const BRAND_AUTHORITIES = "ROLE_BRAND,READ,WRITE"
+/** ADMIN is granted on top of an account, so the realistic token carries both. */
+export const TRAINER_ADMIN_AUTHORITIES = "ROLE_TRAINER,ROLE_ADMIN,READ,WRITE"
+export const ADMIN_ONLY_AUTHORITIES = "ROLE_ADMIN,READ,WRITE"

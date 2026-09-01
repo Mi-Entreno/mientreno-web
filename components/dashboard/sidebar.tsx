@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Pencil, Settings } from "lucide-react"
+import { LogOut, Pencil, Settings, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserAvatar } from "@/components/shared/user-avatar"
@@ -8,14 +8,22 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useLogout } from "@/features/auth/hooks/use-auth-actions"
 import { useTrainerProfile } from "@/features/trainer-profile/hooks/use-trainer-profile"
 import { cn } from "@/lib/utils"
-import { navItems, type NavItem } from "./nav-items"
+import { navItems } from "./nav-items"
+import { SidebarLink } from "./sidebar-link"
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard"
   return pathname.startsWith(href)
 }
 
-export function Sidebar({ initialName }: { initialName?: string | null }) {
+export function Sidebar({
+  initialName,
+  isAdmin = false,
+}: {
+  initialName?: string | null
+  /** Del token, resuelto en el layout: el sidebar es cliente y no ve la sesión. */
+  isAdmin?: boolean
+}) {
   const pathname = usePathname()
 
   return (
@@ -31,7 +39,7 @@ export function Sidebar({ initialName }: { initialName?: string | null }) {
         ))}
       </nav>
 
-      <SidebarFooter />
+      <SidebarFooter isAdmin={isAdmin} />
     </aside>
   )
 }
@@ -92,56 +100,6 @@ function SidebarProfile({ initialName }: { initialName?: string | null }) {
   )
 }
 
-function SidebarLink({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon
-
-  return (
-    <Link
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "group relative flex items-center gap-3 rounded-xl py-2.5 pr-3 pl-6 text-body font-medium",
-        "transition-all duration-300 ease-out motion-reduce:transition-none",
-        active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/60 hover:translate-x-0.5 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground motion-reduce:hover:translate-x-0",
-      )}
-    >
-      {active && <DumbbellIndicator />}
-      <Icon
-        className={cn(
-          "size-5 transition-transform duration-300 ease-out group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100",
-          active && "text-primary",
-        )}
-      />
-      {item.label}
-    </Link>
-  )
-}
-
-/**
- * Active-item marker: a dumbbell stood on its end against the left edge of the
- * row, instead of the usual pill. It only renders inside the active link, so
- * navigating unmounts it from the old row and replays the enter animation on
- * the new one.
- */
-function DumbbellIndicator() {
-  return (
-    <svg
-      viewBox="0 0 14 44"
-      aria-hidden
-      className="absolute top-1/2 left-1.5 h-7 w-2.5 -translate-y-1/2 fill-primary drop-shadow-[0_0_5px_var(--primary)] duration-500 ease-out animate-in fade-in zoom-in-50 slide-in-from-left-2 motion-reduce:animate-none"
-    >
-      {/* Outer plate, inner plate, handle, and the same pair mirrored. */}
-      <rect x="0" y="4" width="14" height="6" rx="3" />
-      <rect x="2.5" y="10" width="9" height="4" rx="2" />
-      <rect x="5" y="14" width="4" height="16" rx="2" />
-      <rect x="2.5" y="30" width="9" height="4" rx="2" />
-      <rect x="0" y="34" width="14" height="6" rx="3" />
-    </svg>
-  )
-}
-
 /** Shared shape between the footer's link and its button. */
 const FOOTER_ROW =
   "group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-body font-medium text-sidebar-foreground/60 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-sidebar-ring/60 motion-reduce:transition-none"
@@ -156,11 +114,26 @@ const FOOTER_ROW =
  * plans banner, the invite wizard) still deep-link straight to it, which is
  * where a trainer is when the question "¿cómo cobro?" comes up.
  */
-function SidebarFooter() {
+function SidebarFooter({ isAdmin }: { isAdmin: boolean }) {
   const logout = useLogout()
 
   return (
     <div className="flex flex-col gap-1 border-t border-sidebar-border p-3">
+      {/* La zona de moderación es aparte y con su propia identidad visual, pero
+          hay que poder llegar: ROLE_ADMIN se concede sobre una cuenta que ya
+          existe, así que quien modera casi siempre entra por acá. Sólo aparece
+          si el token lo trae — no es un enlace que descubra nada a quien no
+          tiene el rol. */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}
+        >
+          <ShieldCheck className="size-5" />
+          Moderación
+        </Link>
+      )}
+
       <Link
         href="/dashboard/settings"
         className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}

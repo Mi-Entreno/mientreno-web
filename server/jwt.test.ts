@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { STUDENT_AUTHORITIES, makeToken } from "@/test/tokens"
-import { decodeAccessToken, isExpired, isTrainer } from "./jwt"
+import {
+  ADMIN_ONLY_AUTHORITIES,
+  BRAND_AUTHORITIES,
+  STUDENT_AUTHORITIES,
+  TRAINER_ADMIN_AUTHORITIES,
+  makeToken,
+} from "@/test/tokens"
+import { decodeAccessToken, homeFor, isAdmin, isBrand, isExpired, isTrainer } from "./jwt"
 
 describe("decodeAccessToken", () => {
   it("reads the claims the backend signs", () => {
@@ -82,5 +88,72 @@ describe("isExpired", () => {
 
   it("treats a missing token as expired", () => {
     expect(isExpired(null)).toBe(true)
+  })
+})
+
+describe("isBrand", () => {
+  it("recognises a merchant and rejects the other roles", () => {
+    expect(isBrand(decodeAccessToken(makeToken({ authorities: BRAND_AUTHORITIES })))).toBe(true)
+    expect(isBrand(decodeAccessToken(makeToken()))).toBe(false)
+    expect(isBrand(decodeAccessToken(makeToken({ authorities: STUDENT_AUTHORITIES })))).toBe(false)
+  })
+})
+
+describe("homeFor", () => {
+  it("sends a trainer to the trainer panel", () => {
+    expect(homeFor(decodeAccessToken(makeToken()))).toBe("/dashboard")
+  })
+
+  it("sends a merchant to the merchant panel", () => {
+    expect(homeFor(decodeAccessToken(makeToken({ authorities: BRAND_AUTHORITIES })))).toBe(
+      "/comercio",
+    )
+  })
+
+  it("gives a student no home at all", () => {
+    // Null and not a path: their place is the mobile app, and handing them any
+    // route here sends them somewhere whose guard bounces them straight back —
+    // which is a redirect loop, not an error message.
+    expect(homeFor(decodeAccessToken(makeToken({ authorities: STUDENT_AUTHORITIES })))).toBeNull()
+  })
+
+  it("gives an unreadable session no home", () => {
+    expect(homeFor(null)).toBeNull()
+    expect(homeFor(decodeAccessToken("not-a-jwt"))).toBeNull()
+  })
+
+  it("prefers the trainer panel when a token somehow carries both roles", () => {
+    // Not a state the backend produces — a user is one profile or the other —
+    // but the function has to be total, and silently returning null for it
+    // would sign out someone who is legitimately a trainer.
+    const both = decodeAccessToken(makeToken({ authorities: "ROLE_TRAINER,ROLE_BRAND" }))
+    expect(homeFor(both)).toBe("/dashboard")
+  })
+
+  it("keeps a trainer who also moderates in the trainer panel", () => {
+    // ROLE_ADMIN is granted on top of an existing account, so this is the
+    // common shape. Sending them to /admin on every sign-in would put a
+    // secondary duty in front of their actual job.
+    const trainerAdmin = decodeAccessToken(makeToken({ authorities: TRAINER_ADMIN_AUTHORITIES }))
+    expect(homeFor(trainerAdmin)).toBe("/dashboard")
+  })
+
+  it("sends an admin-only account to the moderation zone", () => {
+    // No other panel to live in, so this one is home.
+    const adminOnly = decodeAccessToken(makeToken({ authorities: ADMIN_ONLY_AUTHORITIES }))
+    expect(homeFor(adminOnly)).toBe("/admin")
+  })
+})
+
+describe("isAdmin", () => {
+  it("recognises the granted role alongside a profile role", () => {
+    expect(isAdmin(decodeAccessToken(makeToken({ authorities: TRAINER_ADMIN_AUTHORITIES })))).toBe(true)
+    expect(isAdmin(decodeAccessToken(makeToken({ authorities: ADMIN_ONLY_AUTHORITIES })))).toBe(true)
+  })
+
+  it("is false for everyone else", () => {
+    expect(isAdmin(decodeAccessToken(makeToken()))).toBe(false)
+    expect(isAdmin(decodeAccessToken(makeToken({ authorities: BRAND_AUTHORITIES })))).toBe(false)
+    expect(isAdmin(decodeAccessToken(makeToken({ authorities: STUDENT_AUTHORITIES })))).toBe(false)
   })
 })
