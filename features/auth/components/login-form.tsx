@@ -11,7 +11,13 @@ import { z } from "zod"
 
 import { emailSchema } from "../model/password"
 import { AuthField } from "./auth-field"
-import { BRAND_AUDIENCE, TRAINER_AUDIENCE, type AudienceCopy } from "../model/audience"
+import {
+  AUDIENCES,
+  BRAND_AUDIENCE,
+  TRAINER_AUDIENCE,
+  type AudienceCopy,
+  type AudienceId,
+} from "../model/audience"
 import { AuthShell } from "./auth-shell"
 import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
@@ -37,12 +43,19 @@ interface LoginResult {
 /**
  * Both audiences use this form; only the pitch and the links change.
  *
+ * Takes the audience **id** and not the copy object. The pages that render this
+ * are server components and `AudienceCopy` carries Lucide icons, which are
+ * functions: handing one across the server/client boundary fails the build with
+ * "Functions cannot be passed directly to Client Components". A string crosses
+ * fine and the lookup happens here, on the client, where the icons already live.
+ *
  * Where the user ends up is **not** decided here — it comes back in `home`,
  * derived from the JWT by the route handler. Deciding it client-side would put
  * a second opinion next to the guard's, and two opinions about "which panel is
  * yours" is how you get a redirect loop.
  */
-export function LoginForm({ audience = TRAINER_AUDIENCE }: { audience?: AudienceCopy }) {
+export function LoginForm({ audience: audienceId = "trainer" }: { audience?: AudienceId }) {
+  const audience = AUDIENCES[audienceId] ?? TRAINER_AUDIENCE
   const router = useRouter()
   const params = useSearchParams()
   const [submitting, setSubmitting] = useState(false)

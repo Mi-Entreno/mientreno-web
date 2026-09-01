@@ -11,7 +11,7 @@ import { ApiError } from "@/core/http/errors"
 import { useRegister } from "../hooks/use-auth-actions"
 import { registerSchema, type RegisterFormValues } from "../model/password"
 import { AuthField } from "./auth-field"
-import { TRAINER_AUDIENCE, type AudienceCopy } from "../model/audience"
+import { AUDIENCES, TRAINER_AUDIENCE, type AudienceId } from "../model/audience"
 import { AuthShell } from "./auth-shell"
 import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
@@ -22,8 +22,13 @@ import { PasswordField } from "./password-field"
  * Both endpoints answer `AuthResponseDTO.noToken(...)`: no JWT, no refresh
  * token. So this never logs the user in; it hands off to email verification and
  * then to the login screen of the audience they came from.
+ *
+ * Takes the audience **id** and not the copy object, for the same reason as
+ * {@link LoginForm}: the copy carries Lucide icons and the pages rendering this
+ * are server components.
  */
-export function RegisterForm({ audience = TRAINER_AUDIENCE }: { audience?: AudienceCopy }) {
+export function RegisterForm({ audience: audienceId = "trainer" }: { audience?: AudienceId }) {
+  const audience = AUDIENCES[audienceId] ?? TRAINER_AUDIENCE
   const router = useRouter()
   const register = useRegister()
 
