@@ -11,18 +11,24 @@ import { ApiError } from "@/core/http/errors"
 import { useRegister } from "../hooks/use-auth-actions"
 import { registerSchema, type RegisterFormValues } from "../model/password"
 import { AuthField } from "./auth-field"
+import { AUDIENCES, TRAINER_AUDIENCE, type AudienceId } from "../model/audience"
 import { AuthShell } from "./auth-shell"
 import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
 
 /**
- * Trainer registration — `POST /auth/trainer/register`.
+ * Registration for either audience — `POST /auth/{trainer,brand}/register`.
  *
- * The endpoint answers `AuthResponseDTO.noToken(...)`: no JWT, no refresh
- * token, and the message "Por favor iniciá sesión". So this never logs the user
- * in; it hands off to email verification and then to the login screen.
+ * Both endpoints answer `AuthResponseDTO.noToken(...)`: no JWT, no refresh
+ * token. So this never logs the user in; it hands off to email verification and
+ * then to the login screen of the audience they came from.
+ *
+ * Takes the audience **id** and not the copy object, for the same reason as
+ * {@link LoginForm}: the copy carries Lucide icons and the pages rendering this
+ * are server components.
  */
-export function RegisterForm() {
+export function RegisterForm({ audience: audienceId = "trainer" }: { audience?: AudienceId }) {
+  const audience = AUDIENCES[audienceId] ?? TRAINER_AUDIENCE
   const router = useRouter()
   const register = useRegister()
 
@@ -39,7 +45,12 @@ export function RegisterForm() {
 
   function onSubmit(values: RegisterFormValues) {
     register.mutate(
-      { email: values.email, password: values.password, phone: values.phone },
+      {
+        email: values.email,
+        password: values.password,
+        phone: values.phone,
+        endpoint: audience.registerEndpoint,
+      },
       {
         onSuccess: (result) => {
           if (result.verificationCodeSent) {
@@ -49,7 +60,11 @@ export function RegisterForm() {
             // exposes a resend button for exactly this.
             toast.warning("Cuenta creada, pero no pudimos enviarte el código. Pedilo de nuevo.")
           }
-          router.push(`/verify-otp?email=${encodeURIComponent(result.email)}`)
+          // `next` carries the login screen to return to after verifying, so a
+          // merchant does not land on the trainer door.
+          router.push(
+            `/verify-otp?email=${encodeURIComponent(result.email)}&next=${encodeURIComponent(audience.loginHref)}`,
+          )
         },
         onError: (error) => {
           if (!(error instanceof ApiError)) {
@@ -82,16 +97,17 @@ export function RegisterForm() {
 
   return (
     <AuthShell
-      title="Crea tu cuenta de entrenador"
-      description="Empieza a gestionar tus alumnos, planes y programas."
+      brand={audience.brand}
+      title={audience.registerTitle}
+      description={audience.registerDescription}
       footer={
         <>
-          ¿Ya tienes cuenta?{" "}
+          ¿Ya tenés cuenta?{" "}
           <Link
-            href="/login"
+            href={audience.loginHref}
             className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
           >
-            Inicia sesión
+            Iniciá sesión
           </Link>
         </>
       }

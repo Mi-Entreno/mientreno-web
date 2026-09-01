@@ -34,15 +34,25 @@ export interface RegisterInput {
   email: string
   password: string
   phone: string
+  /**
+   * BFF route that creates the account.
+   *
+   * Comes from `AudienceCopy.registerEndpoint`, which is a closed set of two
+   * literals — not something a form field can steer. The alternative was one
+   * handler taking a role parameter, which would mean deriving a backend path
+   * from client input.
+   */
+  endpoint?: string
 }
 
 export const authRepository = {
   /**
-   * Registers a trainer. Answers `AuthResponseDTO.noToken(...)` upstream — no
-   * session is created, so the user still has to verify and then sign in.
+   * Registers a trainer or a merchant. Answers `AuthResponseDTO.noToken(...)`
+   * upstream — no session is created, so the user still has to verify and then
+   * sign in.
    */
   register(input: RegisterInput): Promise<RegisterResult> {
-    return post<RegisterResult>("/auth/trainer/register", {
+    return post<RegisterResult>(input.endpoint ?? "/auth/trainer/register", {
       email: input.email.trim(),
       password: input.password,
       phone: input.phone.trim() || null,

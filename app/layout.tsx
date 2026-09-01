@@ -20,9 +20,13 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
+// El título es del producto y no del panel del entrenador: desde que hay
+// portada, la raíz la ve cualquiera. Cada panel declara el suyo en su propio
+// layout (`app/dashboard/layout.tsx`, `app/comercio/layout.tsx`).
 export const metadata: Metadata = {
-  title: 'Mi Entreno — Panel del entrenador',
-  description: 'Gestiona tus alumnos, planes de suscripción y programas de entrenamiento y nutrición.',
+  title: 'Mi Entreno',
+  description:
+    'Entrená con tu plan, sumá mancuernas por tu constancia y canjealas por productos reales. Panel para entrenadores y comercios.',
 }
 
 export const viewport: Viewport = {

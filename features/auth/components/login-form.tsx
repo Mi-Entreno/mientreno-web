@@ -11,6 +11,13 @@ import { z } from "zod"
 
 import { emailSchema } from "../model/password"
 import { AuthField } from "./auth-field"
+import {
+  AUDIENCES,
+  BRAND_AUDIENCE,
+  TRAINER_AUDIENCE,
+  type AudienceCopy,
+  type AudienceId,
+} from "../model/audience"
 import { AuthShell } from "./auth-shell"
 import { AuthSubmitButton } from "./auth-submit-button"
 import { PasswordField } from "./password-field"
@@ -22,16 +29,33 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-/** Shape returned by `app/api/auth/login/route.ts` — never includes tokens. */
+/** Shape returned by `app/auth/login/route.ts` — never includes tokens. */
 interface LoginResult {
   email: string
   firstName: string | null
   profileCompleted: boolean
   accountVerified: boolean
+  /** Panel this session belongs to, decided upstream by `homeFor`. */
+  home?: string | null
   message?: string
 }
 
-export function LoginForm() {
+/**
+ * Both audiences use this form; only the pitch and the links change.
+ *
+ * Takes the audience **id** and not the copy object. The pages that render this
+ * are server components and `AudienceCopy` carries Lucide icons, which are
+ * functions: handing one across the server/client boundary fails the build with
+ * "Functions cannot be passed directly to Client Components". A string crosses
+ * fine and the lookup happens here, on the client, where the icons already live.
+ *
+ * Where the user ends up is **not** decided here — it comes back in `home`,
+ * derived from the JWT by the route handler. Deciding it client-side would put
+ * a second opinion next to the guard's, and two opinions about "which panel is
+ * yours" is how you get a redirect loop.
+ */
+export function LoginForm({ audience: audienceId = "trainer" }: { audience?: AudienceId }) {
+  const audience = AUDIENCES[audienceId] ?? TRAINER_AUDIENCE
   const router = useRouter()
   const params = useSearchParams()
   const [submitting, setSubmitting] = useState(false)
@@ -40,9 +64,10 @@ export function LoginForm() {
   const justVerified = params.get("verified") === "1"
 
   useEffect(() => {
-    // The route guard redirects here with `?error=role` for a non-trainer.
+    // The guard redirects here with `?error=role` for an account that belongs
+    // to neither panel — in practice, a student's.
     if (guardError === "role") {
-      toast.error("Esta cuenta no es de entrenador. Usa la aplicación para alumnos.")
+      toast.error("Esta cuenta es de alumno. Usá la aplicación móvil para entrenar.")
     }
     if (justVerified) {
       toast.success("Cuenta verificada. Ya puedes iniciar sesión.")
@@ -77,19 +102,23 @@ export function LoginForm() {
         return
       }
 
-      // `loginUser` issues tokens regardless of verification, so an unverified
-      // trainer gets a valid session — but most flows expect a verified
-      // account, so finish that first.
+      // An unverified account comes back without tokens, so there is no session
+      // to use yet: finish verification first.
       if (!data.accountVerified) {
         toast.warning("Tu cuenta aún no está verificada")
         router.push(`/verify-otp?email=${encodeURIComponent(values.email)}`)
         return
       }
 
-      // Most of the API is unusable until the professional profile exists, and
-      // the route guard enforces the same rule server-side.
+      // The panel that owns this session, decided upstream. Falls back to the
+      // audience's own home only if the field is missing, which would mean an
+      // older BFF build.
+      const home = data.home ?? audience.homePrefix
+
+      // Most of the API is unusable until the profile exists, and the route
+      // guard enforces the same rule server-side.
       if (!data.profileCompleted) {
-        router.push("/dashboard/profile?complete=1")
+        router.push(`${profilePathFor(home, audience)}?complete=1`)
         router.refresh()
         return
       }
@@ -97,8 +126,11 @@ export function LoginForm() {
       toast.success(
         data.firstName ? `Bienvenido de nuevo, ${data.firstName}` : "Bienvenido de nuevo",
       )
+      // `?from` is only honoured when it points inside the panel this session
+      // actually owns: a merchant arriving with `from=/dashboard/students`
+      // would otherwise be sent somewhere the guard bounces them out of.
       const from = params.get("from")
-      router.push(from && from.startsWith("/dashboard") ? from : "/dashboard")
+      router.push(from && from.startsWith(home) ? from : home)
       router.refresh()
     } catch {
       toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
@@ -109,16 +141,17 @@ export function LoginForm() {
 
   return (
     <AuthShell
-      title="Inicia sesión en tu panel"
-      description="Gestiona tus alumnos, planes y programas en un solo lugar."
+      brand={audience.brand}
+      title={audience.loginTitle}
+      description={audience.loginDescription}
       footer={
         <>
-          ¿Aún no tienes cuenta?{" "}
+          ¿Aún no tenés cuenta?{" "}
           <Link
-            href="/register"
+            href={audience.registerHref}
             className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
           >
-            Crea una
+            Creá una
           </Link>
         </>
       }
@@ -166,4 +199,17 @@ export function LoginForm() {
       </form>
     </AuthShell>
   )
+}
+
+/**
+ * Onboarding path for the panel the session actually belongs to.
+ *
+ * Uses `home` and not the audience of the page: someone can sign in through the
+ * trainer door with a merchant account, and sending them to the trainer's
+ * profile form would strand them in a loop.
+ */
+function profilePathFor(home: string, audience: AudienceCopy): string {
+  if (home.startsWith(BRAND_AUDIENCE.homePrefix)) return BRAND_AUDIENCE.profilePath
+  if (home.startsWith(TRAINER_AUDIENCE.homePrefix)) return TRAINER_AUDIENCE.profilePath
+  return audience.profilePath
 }

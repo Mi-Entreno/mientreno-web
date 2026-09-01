@@ -32,6 +32,8 @@ export interface AccessTokenClaims {
 }
 
 export const TRAINER_ROLE = "ROLE_TRAINER"
+export const BRAND_ROLE = "ROLE_BRAND"
+export const ADMIN_ROLE = "ROLE_ADMIN"
 
 function decodeBase64Url(segment: string): string {
   const padded = segment.replace(/-/g, "+").replace(/_/g, "/")
@@ -82,6 +84,45 @@ export function hasRole(claims: AccessTokenClaims | null, role: string): boolean
 
 export function isTrainer(claims: AccessTokenClaims | null): boolean {
   return hasRole(claims, TRAINER_ROLE)
+}
+
+export function isBrand(claims: AccessTokenClaims | null): boolean {
+  return hasRole(claims, BRAND_ROLE)
+}
+
+/**
+ * Moderation and merchant administration.
+ *
+ * Unlike the other two, this is a *granted* role rather than a profile: the
+ * account is promoted with a SQL insert (see the backend README), so an admin is
+ * usually also a trainer. That is why `homeFor` does not treat it as a home of
+ * its own unless there is nothing else — `/admin` is a place they go, not the
+ * place they live.
+ */
+export function isAdmin(claims: AccessTokenClaims | null): boolean {
+  return hasRole(claims, ADMIN_ROLE)
+}
+
+/**
+ * Where this session belongs, or null when it belongs nowhere here.
+ *
+ * One function answers it and everything else consults it — the guard, the
+ * login route, the landing. Two places disagreeing about "which panel is
+ * yours" is how redirect loops are born, and this app has already paid for one
+ * (see the note in `proxy.ts`).
+ *
+ * A student gets `null` rather than a route: their place is the mobile app, and
+ * handing them any path here would send them somewhere whose own guard bounces
+ * them straight back.
+ */
+export function homeFor(claims: AccessTokenClaims | null): string | null {
+  if (isTrainer(claims)) return "/dashboard"
+  if (isBrand(claims)) return "/comercio"
+  // Last, not first: ROLE_ADMIN is granted on top of an existing account, so a
+  // trainer who also moderates still lands in the panel they actually work in.
+  // Only an account whose *sole* role is ADMIN calls /admin home.
+  if (isAdmin(claims)) return "/admin"
+  return null
 }
 
 /**

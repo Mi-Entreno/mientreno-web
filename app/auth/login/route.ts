@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-import { decodeAccessToken, isTrainer } from "@/server/jwt"
+import { decodeAccessToken, homeFor } from "@/server/jwt"
 import { clearSession, writeSession } from "@/server/session-store"
 import { postJson, type AuthResponseDTO } from "@/server/upstream"
 
@@ -69,12 +69,19 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // This dashboard is trainer-only. Without this check a STUDENT could sign in
-  // and reach the shell, with every subsequent API call failing with 403.
-  if (!isTrainer(claims)) {
+  // This panel serves trainers and merchants. `homeFor` is the single place
+  // that maps a role to a destination — the guard and the landing consult the
+  // same function, so there is no way for two of them to disagree about where
+  // a session belongs and bounce it back and forth.
+  //
+  // A null home means the account is a student's: their place is the mobile
+  // app, and letting them in would only get every request 403'd.
+  const home = homeFor(claims)
+
+  if (!home) {
     await clearSession()
     return NextResponse.json(
-      { message: "Esta cuenta no es de entrenador. Usa la aplicación para alumnos." },
+      { message: "Esta cuenta es de alumno. Usá la aplicación móvil para entrenar." },
       { status: 403 },
     )
   }
@@ -82,10 +89,13 @@ export async function POST(req: NextRequest) {
   await writeSession({ accessToken: auth.jwt, refreshToken: auth.refreshToken })
 
   // Tokens stay server-side; the client only gets what it needs to route.
+  // `home` travels in the response so the form does not have to re-derive the
+  // role it cannot see — the claims never reach the browser.
   return NextResponse.json({
     email: claims.email,
     firstName: claims.firstName,
     profileCompleted: claims.profileCompleted,
     accountVerified: auth.accountVerified,
+    home,
   })
 }
