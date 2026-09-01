@@ -37,6 +37,17 @@ export const qk = {
     redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
   },
 
+  /**
+   * Moderation. Its own namespace and not a corner of `brand`: approving a
+   * product invalidates the merchant's lists too, but the queue is read by a
+   * different person on a different screen.
+   */
+  admin: {
+    all: ["admin"] as const,
+    pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
+    brands: ["admin", "brands"] as const,
+  },
+
   students: {
     all: ["students"] as const,
     list: ["students", "list"] as const,

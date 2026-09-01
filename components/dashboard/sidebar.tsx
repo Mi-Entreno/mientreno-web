@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, Pencil, Settings } from "lucide-react"
+import { LogOut, Pencil, Settings, ShieldCheck } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserAvatar } from "@/components/shared/user-avatar"
@@ -16,7 +16,14 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href)
 }
 
-export function Sidebar({ initialName }: { initialName?: string | null }) {
+export function Sidebar({
+  initialName,
+  isAdmin = false,
+}: {
+  initialName?: string | null
+  /** Del token, resuelto en el layout: el sidebar es cliente y no ve la sesión. */
+  isAdmin?: boolean
+}) {
   const pathname = usePathname()
 
   return (
@@ -32,7 +39,7 @@ export function Sidebar({ initialName }: { initialName?: string | null }) {
         ))}
       </nav>
 
-      <SidebarFooter />
+      <SidebarFooter isAdmin={isAdmin} />
     </aside>
   )
 }
@@ -107,11 +114,26 @@ const FOOTER_ROW =
  * plans banner, the invite wizard) still deep-link straight to it, which is
  * where a trainer is when the question "¿cómo cobro?" comes up.
  */
-function SidebarFooter() {
+function SidebarFooter({ isAdmin }: { isAdmin: boolean }) {
   const logout = useLogout()
 
   return (
     <div className="flex flex-col gap-1 border-t border-sidebar-border p-3">
+      {/* La zona de moderación es aparte y con su propia identidad visual, pero
+          hay que poder llegar: ROLE_ADMIN se concede sobre una cuenta que ya
+          existe, así que quien modera casi siempre entra por acá. Sólo aparece
+          si el token lo trae — no es un enlace que descubra nada a quien no
+          tiene el rol. */}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}
+        >
+          <ShieldCheck className="size-5" />
+          Moderación
+        </Link>
+      )}
+
       <Link
         href="/dashboard/settings"
         className={cn(FOOTER_ROW, "hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground")}
