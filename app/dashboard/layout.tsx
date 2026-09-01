@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+
 import { BottomNav } from "@/components/dashboard/bottom-nav"
 import { DashboardHeader } from "@/components/dashboard/header"
 import { Sidebar } from "@/components/dashboard/sidebar"
@@ -16,6 +18,10 @@ import { readSession } from "@/server/session-store"
  * upgrades this to the full name. A token without the claim falls back to a
  * skeleton rather than to a placeholder word.
  */
+export const metadata: Metadata = {
+  title: 'Mi Entreno — Panel del entrenador',
+}
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await readSession()
   const initialName = session?.claims.firstName ?? null

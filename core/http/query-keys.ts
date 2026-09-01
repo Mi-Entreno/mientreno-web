@@ -24,6 +24,19 @@ export const qk = {
     mine: ["subscription-plans", "mine"] as const,
   },
 
+  /**
+   * Merchant panel. Invalidating `qk.brand.all` reaches the profile, the
+   * products and the redemption inbox — which is what a status change needs,
+   * since approving or delivering moves more than one list.
+   */
+  brand: {
+    all: ["brand"] as const,
+    profile: ["brand", "profile"] as const,
+    products: (status?: string) => ["brand", "products", status ?? "all"] as const,
+    product: (id: number) => ["brand", "products", "detail", id] as const,
+    redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
+  },
+
   students: {
     all: ["students"] as const,
     list: ["students", "list"] as const,
