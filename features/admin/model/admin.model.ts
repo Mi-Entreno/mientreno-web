@@ -5,7 +5,7 @@ export interface AdminProduct {
   name: string
   description: string | null
   imageUrl: string | null
-  costDumbbells: number
+  costReps: number
   stock: number
   active: boolean
   approvalStatus: ProductApprovalStatus
@@ -32,11 +32,11 @@ export interface AdminBrand {
  * What a moderator is actually deciding.
  *
  * Approving is not "is this product fine" but "is this price fine": a product
- * costing one dumbbell drains the economy in an afternoon, and that is the
+ * costing one rep drains the economy in an afternoon, and that is the
  * failure moderation exists to prevent. So the checklist leads with cost.
  */
 export const REVIEW_CHECKLIST = [
-  "El costo en mancuernas es razonable para lo que se entrega",
+  "El costo en repes es razonable para lo que se entrega",
   "La foto muestra el producto real",
   "El nombre y la descripción dicen lo mismo que la foto",
   "El comercio puede entregarlo en la dirección que cargó",
@@ -48,11 +48,11 @@ export function isPlatformProduct(product: AdminProduct): boolean {
 }
 
 /**
- * How many dumbbells this product takes out of circulation if it sells out.
+ * How many reps this product takes out of circulation if it sells out.
  *
- * The number nobody computes until the inventory is gone: a 25-dumbbell prize
- * with 40 units in stock is a thousand dumbbells of liability.
+ * The number nobody computes until the inventory is gone: a 25-rep prize
+ * with 40 units in stock is a thousand reps of liability.
  */
 export function maxExposure(product: AdminProduct): number {
-  return product.costDumbbells * Math.max(0, product.stock)
+  return product.costReps * Math.max(0, product.stock)
 }

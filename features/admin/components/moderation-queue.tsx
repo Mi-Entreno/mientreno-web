@@ -35,7 +35,7 @@ const FILTERS: { label: string; value: ProductApprovalStatus }[] = [
  * La cola de revisión.
  *
  * Lo que se decide acá no es "¿el producto está bien?" sino "¿el precio está
- * bien?": un premio a una mancuerna vacía la economía en una tarde. Por eso el
+ * bien?": un premio a una repe vacía la economía en una tarde. Por eso el
  * costo y la exposición máxima se muestran arriba de todo y el checklist
  * arranca por ahí.
  */
@@ -166,7 +166,7 @@ function ProductReviewCard({
           <div className="flex gap-1.5">
             <dt className="text-muted-foreground">Costo</dt>
             <dd className="font-semibold tabular-nums">
-              {product.costDumbbells} {product.costDumbbells === 1 ? "mancuerna" : "mancuernas"}
+              {product.costReps} {product.costReps === 1 ? "repe" : "repes"}
             </dd>
           </div>
           <div className="flex gap-1.5">
@@ -177,7 +177,7 @@ function ProductReviewCard({
             {/* El número que nadie calcula hasta que el inventario se agotó. */}
             <dt className="text-muted-foreground">Si se agota</dt>
             <dd className="tabular-nums">
-              −{exposure} {exposure === 1 ? "mancuerna" : "mancuernas"} en circulación
+              −{exposure} {exposure === 1 ? "repe" : "repes"} en circulación
             </dd>
           </div>
         </dl>

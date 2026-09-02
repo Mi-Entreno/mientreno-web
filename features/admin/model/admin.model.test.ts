@@ -8,7 +8,7 @@ const product = (overrides: Partial<AdminProduct> = {}): AdminProduct => ({
   name: "Botella",
   description: null,
   imageUrl: null,
-  costDumbbells: 3,
+  costReps: 3,
   stock: 10,
   active: true,
   approvalStatus: "PENDING_APPROVAL",
@@ -33,9 +33,9 @@ describe("isPlatformProduct", () => {
 
 describe("maxExposure", () => {
   it("multiplies cost by stock", () => {
-    // The number nobody computes until the inventory is gone: 25 dumbbells
-    // times 40 units is a thousand dumbbells of liability.
-    expect(maxExposure(product({ costDumbbells: 25, stock: 40 }))).toBe(1000)
+    // The number nobody computes until the inventory is gone: 25 reps
+    // times 40 units is a thousand reps of liability.
+    expect(maxExposure(product({ costReps: 25, stock: 40 }))).toBe(1000)
   })
 
   it("is zero with no stock", () => {
@@ -44,14 +44,14 @@ describe("maxExposure", () => {
 
   it("never goes negative on a corrupt stock value", () => {
     // The CHECK upstream makes this impossible, but a negative exposure shown
-    // to a moderator would read as if approving *created* dumbbells.
+    // to a moderator would read as if approving *created* reps.
     expect(maxExposure(product({ stock: -5 }))).toBe(0)
   })
 })
 
 describe("REVIEW_CHECKLIST", () => {
   it("leads with the cost", () => {
-    // What moderation exists to prevent is a one-dumbbell prize draining the
+    // What moderation exists to prevent is a one-rep prize draining the
     // economy — not a typo in the description.
     expect(REVIEW_CHECKLIST[0]).toContain("costo")
   })

@@ -28,7 +28,7 @@ export interface BrandProduct {
   name: string
   description: string | null
   imageUrl: string | null
-  costDumbbells: number
+  costReps: number
   stock: number
   active: boolean
   approvalStatus: ProductApprovalStatus
@@ -42,7 +42,7 @@ export interface Redemption {
   productName: string
   productImageUrl: string | null
   quantity: number
-  totalCostDumbbells: number
+  totalCostReps: number
   status: RedemptionStatus
   deliveryNotes: string | null
   cancelledReason: string | null

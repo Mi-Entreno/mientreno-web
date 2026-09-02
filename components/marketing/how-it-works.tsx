@@ -4,7 +4,7 @@ import { Dumbbell, Gift, Trophy } from "lucide-react"
  * El ciclo completo del producto, en tres pasos.
  *
  * <p>Está numerado porque es una secuencia real: sin entrenar no hay
- * mancuernas, y sin mancuernas no hay canje. El número dice algo verdadero
+ * repes, y sin repes no hay canje. El número dice algo verdadero
  * sobre el contenido, no lo decora.</p>
  */
 const STEPS = [
@@ -15,13 +15,13 @@ const STEPS = [
   },
   {
     icon: Trophy,
-    title: "Sumá mancuernas",
-    copy: "Los puntos se convierten solos en mancuernas, la moneda de la app. La constancia semanal suma un extra.",
+    title: "Sumá repes",
+    copy: "Los puntos se convierten solos en repes, la moneda de la app. La constancia semanal suma un extra.",
   },
   {
     icon: Gift,
     title: "Canjeá",
-    copy: "Elegí un producto del catálogo y retiralo en el comercio. Las mancuernas se descuentan al confirmar.",
+    copy: "Elegí un producto del catálogo y retiralo en el comercio. Las repes se descuentan al confirmar.",
   },
 ]
 

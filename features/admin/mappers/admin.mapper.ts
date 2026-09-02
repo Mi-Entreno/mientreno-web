@@ -9,7 +9,7 @@ export function toAdminProduct(dto: AdminProductDTO): AdminProduct {
     name: dto.name,
     description: dto.description,
     imageUrl: toMediaUrl(dto.imageUrl),
-    costDumbbells: dto.costDumbbells,
+    costReps: dto.costReps,
     stock: dto.stock,
     active: dto.active,
     approvalStatus: dto.approvalStatus,

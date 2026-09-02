@@ -26,7 +26,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Mi Entreno',
   description:
-    'Entrená con tu plan, sumá mancuernas por tu constancia y canjealas por productos reales. Panel para entrenadores y comercios.',
+    'Entrená con tu plan, sumá repes por tu constancia y canjealas por productos reales. Panel para entrenadores y comercios.',
 }
 
 export const viewport: Viewport = {

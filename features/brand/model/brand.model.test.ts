@@ -8,7 +8,7 @@ const product = (overrides: Partial<BrandProduct> = {}): BrandProduct => ({
   name: "Botella",
   description: null,
   imageUrl: null,
-  costDumbbells: 3,
+  costReps: 3,
   stock: 5,
   active: true,
   approvalStatus: "APPROVED",

@@ -62,10 +62,10 @@ export const MERCHANT_BRAND: AuthBrandCopy = {
       <span className="text-brand-green">su motivación.</span>
     </>
   ),
-  copy: "Sumá tus productos al catálogo de premios. Los alumnos los canjean con las mancuernas que ganan entrenando, y vos llegás a gente que ya está en movimiento.",
+  copy: "Sumá tus productos al catálogo de premios. Los alumnos los canjean con las repes que ganan entrenando, y vos llegás a gente que ya está en movimiento.",
   features: [
     { icon: Store, label: "Cargá tus productos y su stock" },
-    { icon: Gift, label: "Los alumnos los canjean con mancuernas" },
+    { icon: Gift, label: "Los alumnos los canjean con repes" },
     { icon: PackageCheck, label: "Gestioná las entregas desde tu panel" },
     { icon: Users, label: "Llegá a una audiencia que ya entrena" },
   ],

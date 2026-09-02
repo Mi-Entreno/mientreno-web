@@ -39,7 +39,7 @@ const AUDIENCES: Audience[] = [
     icon: Store,
     eyebrow: "Para comercios y marcas",
     title: "Sumá tus productos",
-    copy: "Cargá tus productos al catálogo de premios. Los alumnos los canjean con las mancuernas que ganaron entrenando, y vos llegás a gente que ya está en movimiento.",
+    copy: "Cargá tus productos al catálogo de premios. Los alumnos los canjean con las repes que ganaron entrenando, y vos llegás a gente que ya está en movimiento.",
     points: [
       { icon: Gift, label: "Tus productos en el catálogo de canjes" },
       { icon: PackageCheck, label: "Entregas y stock desde tu panel" },
@@ -68,7 +68,7 @@ export function AudienceCards() {
         </div>
 
         <p className="mt-7 text-body text-muted-foreground text-pretty">
-          ¿Sos alumno? Tu lugar es la app móvil: desde ahí entrenás, sumás mancuernas y canjeás
+          ¿Sos alumno? Tu lugar es la app móvil: desde ahí entrenás, sumás repes y canjeás
           tus premios.
         </p>
       </div>

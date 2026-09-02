@@ -128,7 +128,7 @@ export function useChangeRedemptionStatus() {
       brandRepository.changeRedemptionStatus(id, status, reason),
     (redemption) =>
       redemption.status === "CANCELLED"
-        ? "Canje cancelado. Le devolvimos las mancuernas al alumno."
+        ? "Canje cancelado. Le devolvimos las repes al alumno."
         : redemption.status === "READY"
           ? "Marcado como listo. Le avisamos al alumno."
           : "Canje entregado.",

@@ -98,8 +98,8 @@ export function BrandRedemptionsScreen() {
               <div className="min-w-40 flex-1">
                 <p className="font-medium">{redemption.productName}</p>
                 <p className="text-caption text-muted-foreground tabular-nums">
-                  {formatDate(redemption.createdAt)} · {redemption.totalCostDumbbells}{" "}
-                  {redemption.totalCostDumbbells === 1 ? "mancuerna" : "mancuernas"}
+                  {formatDate(redemption.createdAt)} · {redemption.totalCostReps}{" "}
+                  {redemption.totalCostReps === 1 ? "repe" : "repes"}
                 </p>
                 {/* La nota de entrega es lo único que el alumno escribe: talle,
                     color, cuándo pasa. Va visible y no detrás de un detalle. */}
@@ -198,8 +198,8 @@ function CancelDialog({
         <DialogHeader>
           <DialogTitle>Cancelar canje</DialogTitle>
           <DialogDescription>
-            Le devolvemos {redemption?.totalCostDumbbells ?? 0}{" "}
-            {redemption?.totalCostDumbbells === 1 ? "mancuerna" : "mancuernas"} al alumno y el stock
+            Le devolvemos {redemption?.totalCostReps ?? 0}{" "}
+            {redemption?.totalCostReps === 1 ? "repe" : "repes"} al alumno y el stock
             vuelve a tu producto. El motivo le llega a él.
           </DialogDescription>
         </DialogHeader>

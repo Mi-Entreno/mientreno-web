@@ -176,7 +176,7 @@ function ProductRow({ product, onEdit }: { product: BrandProduct; onEdit: () => 
         </StatusPill>
       </TableCell>
 
-      <TableCell className="text-right tabular-nums">{product.costDumbbells}</TableCell>
+      <TableCell className="text-right tabular-nums">{product.costReps}</TableCell>
 
       <TableCell className="text-right">
         <div className="flex items-center justify-end gap-1">

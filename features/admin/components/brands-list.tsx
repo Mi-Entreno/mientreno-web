@@ -118,7 +118,7 @@ export function BrandsList() {
             <DialogTitle>Suspender {suspending?.displayName}</DialogTitle>
             <DialogDescription>
               Todos sus productos desaparecen del catálogo y no va a poder cargar más ni entrar a su
-              panel. <strong>Los canjes ya hechos siguen en pie</strong>: alguien pagó mancuernas por
+              panel. <strong>Los canjes ya hechos siguen en pie</strong>: alguien pagó repes por
               ellos y hay que entregarlos o cancelarlos con motivo.
             </DialogDescription>
           </DialogHeader>

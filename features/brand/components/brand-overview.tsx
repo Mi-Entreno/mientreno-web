@@ -98,7 +98,7 @@ export function BrandOverview() {
         </CardHeader>
         <CardContent className="text-body text-muted-foreground">
           <ol className="flex list-decimal flex-col gap-1.5 pl-4">
-            <li>Cargás un producto con su foto, su costo en mancuernas y su stock.</li>
+            <li>Cargás un producto con su foto, su costo en repes y su stock.</li>
             <li>Lo enviás a revisión. Cuando lo aprobamos, aparece en el catálogo de los alumnos.</li>
             <li>Un alumno lo canjea y el canje te llega acá. Lo marcás listo y después entregado.</li>
           </ol>

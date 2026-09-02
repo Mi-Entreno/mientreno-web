@@ -24,10 +24,10 @@ import type { BrandProduct } from "../model/brand.model"
 const schema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(150, "Máximo 150 caracteres"),
   description: z.string().trim().max(2000, "Máximo 2000 caracteres").optional(),
-  costDumbbells: z.coerce
-    .number({ message: "Indicá el costo en mancuernas" })
+  costReps: z.coerce
+    .number({ message: "Indicá el costo en repes" })
     .int("Tiene que ser un número entero")
-    .min(1, "El costo mínimo es 1 mancuerna"),
+    .min(1, "El costo mínimo es 1 repe"),
   stock: z.coerce
     .number({ message: "Indicá el stock" })
     .int("Tiene que ser un número entero")
@@ -64,7 +64,7 @@ export function ProductFormDialog({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "", costDumbbells: 1, stock: 0 },
+    defaultValues: { name: "", description: "", costReps: 1, stock: 0 },
   })
 
   useEffect(() => {
@@ -74,10 +74,10 @@ export function ProductFormDialog({
         ? {
             name: product.name,
             description: product.description ?? "",
-            costDumbbells: product.costDumbbells,
+            costReps: product.costReps,
             stock: product.stock,
           }
-        : { name: "", description: "", costDumbbells: 1, stock: 0 },
+        : { name: "", description: "", costReps: 1, stock: 0 },
     )
   }, [open, product, reset])
 
@@ -88,7 +88,7 @@ export function ProductFormDialog({
     const input = {
       name: parsed.name,
       description: parsed.description || undefined,
-      costDumbbells: parsed.costDumbbells,
+      costReps: parsed.costReps,
       // En la edición el stock lo maneja el ajuste por delta; se reenvía el
       // actual para no cambiarlo desde acá.
       stock: isEditing ? product.stock : parsed.stock,
@@ -133,17 +133,17 @@ export function ProductFormDialog({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="product-cost">Costo en mancuernas</Label>
+              <Label htmlFor="product-cost">Costo en repes</Label>
               <Input
                 id="product-cost"
                 type="number"
                 min={1}
                 step={1}
                 disabled={pending}
-                {...register("costDumbbells")}
+                {...register("costReps")}
               />
-              {errors.costDumbbells && (
-                <p className="text-caption text-error-text">{errors.costDumbbells.message}</p>
+              {errors.costReps && (
+                <p className="text-caption text-error-text">{errors.costReps.message}</p>
               )}
             </div>
 

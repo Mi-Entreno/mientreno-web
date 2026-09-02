@@ -11,7 +11,7 @@ export interface AdminProductDTO {
   name: string
   description: string | null
   imageUrl: string | null
-  costDumbbells: number
+  costReps: number
   stock: number
   active: boolean
   sortOrder: number

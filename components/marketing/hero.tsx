@@ -87,7 +87,7 @@ export function MarketingHero() {
         </h1>
         <p className="mt-5 max-w-xl text-body-lg text-white/75 text-pretty">
           Mi Entreno conecta a los alumnos con su entrenador y premia la constancia: cada
-          entrenamiento suma puntos que se convierten en mancuernas, y las mancuernas se
+          entrenamiento suma puntos que se convierten en repes, y las repes se
           canjean por productos reales.
         </p>
 
