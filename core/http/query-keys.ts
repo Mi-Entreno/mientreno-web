@@ -35,19 +35,20 @@ export const qk = {
     products: (status?: string) => ["brand", "products", status ?? "all"] as const,
     product: (id: number) => ["brand", "products", "detail", id] as const,
     redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
-    challenges: (status?: string) => ["brand", "challenges", status ?? "all"] as const,
-    challenge: (id: number) => ["brand", "challenges", "detail", id] as const,
   },
 
   /**
-   * Moderation. Its own namespace and not a corner of `brand`: approving a
-   * product invalidates the merchant's lists too, but the queue is read by a
-   * different person on a different screen.
+   * Zona de administración. Namespace propio y no un rincón de `brand`: aprobar un
+   * producto invalida también las listas del comercio, pero esto lo lee otra persona
+   * en otra pantalla.
+   *
+   * Los desafíos viven acá y no en `brand` desde la V52: los carga el admin.
    */
   admin: {
     all: ["admin"] as const,
     pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
-    pendingChallenges: (status?: string) => ["admin", "challenges", status ?? "PENDING_APPROVAL"] as const,
+    challenges: (status?: string) => ["admin", "challenges", status ?? "all"] as const,
+    challenge: (id: number) => ["admin", "challenges", "detail", id] as const,
     brands: ["admin", "brands"] as const,
   },
 

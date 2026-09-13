@@ -1,6 +1,6 @@
 "use client"
 
-import { Pause, Play, Plus, Send, Trophy } from "lucide-react"
+import { Pause, Play, Plus, Trophy, Undo2, Upload } from "lucide-react"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
@@ -15,44 +15,53 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { StatusPill } from "@/features/brand/components/status-pill"
 
-import type { ProductApprovalStatus } from "../dto/brand.dto"
 import {
-  useBrandChallenges,
+  usePublishChallenge,
   useSetChallengeActive,
-  useSubmitChallenge,
-} from "../hooks/use-brand"
-import { APPROVAL_LABELS, APPROVAL_TONES } from "../model/brand.model"
+  useUnpublishChallenge,
+  useAdminChallenges,
+} from "../hooks/use-admin"
+import type { AdminChallenge } from "../model/admin.model"
+import { maxMintedReps } from "../model/admin.model"
 import {
+  CHALLENGE_STATUS_LABELS,
+  CHALLENGE_STATUS_TONES,
   describeMode,
   describeRequirement,
   notLiveReason,
-  type BrandChallenge,
 } from "../model/challenge.model"
 import { ChallengeFormDialog } from "./challenge-form-dialog"
-import { StatusPill } from "./status-pill"
 
-const FILTERS: { label: string; value: ProductApprovalStatus | undefined }[] = [
-  { label: "Todas", value: undefined },
+/**
+ * Dos filtros y no cinco.
+ *
+ * Un desafío que carga el admin sólo puede estar en borrador o publicado: no hay
+ * revisión, así que no hay "en revisión" ni "rechazado" que filtrar. El tipo los
+ * sigue admitiendo porque se comparte con los productos del comercio, que sí pasan
+ * por las cuatro.
+ */
+const FILTERS: { label: string; value: AdminChallenge["approvalStatus"] | undefined }[] = [
+  { label: "Todos", value: undefined },
   { label: "Borradores", value: "DRAFT" },
-  { label: "En revisión", value: "PENDING_APPROVAL" },
-  { label: "Publicadas", value: "APPROVED" },
-  { label: "Rechazadas", value: "REJECTED" },
+  { label: "Publicados", value: "APPROVED" },
 ]
 
 /**
- * Las recompensas por requisitos del comercio.
+ * Los desafíos de la plataforma: dónde se define cómo se ganan repes.
  *
- * Misma forma que la tabla de productos —mismos filtros, mismos estados de
- * moderación— porque para el comercio son dos cosas del mismo tipo. Lo que
- * cambia es qué se configura: en un producto, el precio; acá, el esfuerzo.
+ * Es la mitad de la economía que **acuña** moneda, y por eso vive en la zona de
+ * administración y no en el panel del comercio: el que decide cuántas repes entran al
+ * sistema tiene que ser el que responde por él. La otra mitad —los productos, que las
+ * gastan— la carga cada comercio y se revisa en `moderation-queue`.
  */
-export function BrandChallengesScreen() {
-  const [filter, setFilter] = useState<ProductApprovalStatus | undefined>(undefined)
-  const [editing, setEditing] = useState<BrandChallenge | null>(null)
+export function AdminChallengesScreen() {
+  const [filter, setFilter] = useState<AdminChallenge["approvalStatus"] | undefined>(undefined)
+  const [editing, setEditing] = useState<AdminChallenge | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const query = useBrandChallenges(filter)
+  const query = useAdminChallenges(filter)
 
   return (
     <div className="flex flex-col gap-5">
@@ -72,7 +81,7 @@ export function BrandChallengesScreen() {
 
         <Button onClick={() => setCreating(true)}>
           <Plus className="size-4" />
-          Nueva recompensa
+          Nuevo desafío
         </Button>
       </div>
 
@@ -87,21 +96,21 @@ export function BrandChallengesScreen() {
       ) : (query.data?.items.length ?? 0) === 0 ? (
         <EmptyState
           icon={Trophy}
-          title={filter ? "No hay recompensas en este estado" : "Todavía no creaste recompensas"}
-          description="Una recompensa premia el esfuerzo real: definís qué tiene que lograr el alumno —series, días consecutivos, kilos levantados— y cuántas repes gana al cumplirlo. El sistema calcula el progreso solo."
-          actionLabel={filter ? undefined : "Crear recompensa"}
+          title={filter ? "No hay desafíos en este estado" : "Todavía no creaste desafíos"}
+          description="Un desafío premia el esfuerzo real: definís qué tiene que lograr el alumno —series, días consecutivos, kilos levantados— y cuántas repes gana al cumplirlo. El sistema calcula el progreso solo y acredita el premio cuando se completa."
+          actionLabel={filter ? undefined : "Crear desafío"}
           onAction={filter ? undefined : () => setCreating(true)}
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
-          <Table label="Recompensas del comercio">
+          <Table label="Desafíos de la plataforma">
             <TableHeader>
               <TableRow>
-                <TableHead>Recompensa</TableHead>
+                <TableHead>Desafío</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Requisitos</TableHead>
                 <TableHead className="text-right">Premio</TableHead>
-                <TableHead className="text-right">Ganada por</TableHead>
+                <TableHead className="text-right">Ganado por</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -134,14 +143,17 @@ function ChallengeRow({
   challenge,
   onEdit,
 }: {
-  challenge: BrandChallenge
+  challenge: AdminChallenge
   onEdit: () => void
 }) {
-  const submit = useSubmitChallenge()
+  const publish = usePublishChallenge()
+  const unpublish = useUnpublishChallenge()
   const setActive = useSetChallengeActive()
 
   const blocked = notLiveReason(challenge)
-  const canSubmit = challenge.approvalStatus === "DRAFT" || challenge.approvalStatus === "REJECTED"
+  const published = challenge.approvalStatus === "APPROVED"
+  const exposure = maxMintedReps(challenge)
+  const pending = publish.isPending || unpublish.isPending || setActive.isPending
 
   return (
     <TableRow>
@@ -154,27 +166,27 @@ function ChallengeRow({
           >
             {challenge.name}
           </button>
-          {/* El motivo del rechazo va junto a la recompensa y no en un detalle:
-              es lo que hay que corregir. */}
+          {/* Una fila vieja de cuando los desafíos los cargaba un comercio puede
+              seguir teniendo motivo de rechazo. Se muestra en vez de esconderlo. */}
           {challenge.rejectionReason && (
             <p className="text-caption text-error-text text-pretty">{challenge.rejectionReason}</p>
           )}
           {blocked && (
             <p className="text-caption text-muted-foreground">
-              Publicada, pero no se puede ganar: {blocked.toLowerCase()}
+              Publicado, pero no se puede ganar: {blocked.toLowerCase()}
             </p>
           )}
           {!challenge.editableRequirements && (
             <p className="text-caption text-muted-foreground">
-              Condiciones congeladas: ya la ganó alguien
+              Condiciones congeladas: ya lo ganó alguien
             </p>
           )}
         </div>
       </TableCell>
 
       <TableCell>
-        <StatusPill tone={APPROVAL_TONES[challenge.approvalStatus]}>
-          {APPROVAL_LABELS[challenge.approvalStatus]}
+        <StatusPill tone={CHALLENGE_STATUS_TONES[challenge.approvalStatus]}>
+          {CHALLENGE_STATUS_LABELS[challenge.approvalStatus]}
         </StatusPill>
       </TableCell>
 
@@ -192,34 +204,56 @@ function ChallengeRow({
       </TableCell>
 
       <TableCell className="text-right tabular-nums">
-        {challenge.prizeReps} {challenge.prizeReps === 1 ? "repe" : "repes"}
+        <div>
+          {challenge.prizeReps} {challenge.prizeReps === 1 ? "repe" : "repes"}
+        </div>
+        {/* Cuántas repes acuña el desafío como techo. Es el número que nadie calcula
+            hasta que ya se emitieron: sin cupo no hay techo, y eso hay que verlo. */}
+        <p className="text-caption text-muted-foreground">
+          {exposure === null ? "Sin cupo: total abierto" : `Hasta ${exposure} en total`}
+        </p>
       </TableCell>
 
       <TableCell className="text-right tabular-nums">
-        {/* Cuántos la ganaron, nunca quiénes: el comercio no tiene relación con el
-            alumno hasta que hay un canje. */}
+        {/* Cuántos lo ganaron, nunca quiénes: para administrar la economía alcanza
+            el número. */}
         {challenge.grantedCount}
         {challenge.maxGrants !== null && ` / ${challenge.maxGrants}`}
       </TableCell>
 
       <TableCell>
         <div className="flex items-center justify-end gap-1">
-          {challenge.approvalStatus === "APPROVED" && (
+          {published && (
             <Button
               variant="ghost"
               size="icon-sm"
               aria-label={challenge.active ? `Pausar ${challenge.name}` : `Reanudar ${challenge.name}`}
-              disabled={setActive.isPending}
+              disabled={pending}
               onClick={() => setActive.mutate({ id: challenge.id, active: !challenge.active })}
             >
               {challenge.active ? <Pause /> : <Play />}
             </Button>
           )}
 
-          {canSubmit && (
-            <Button size="sm" disabled={submit.isPending} onClick={() => submit.mutate(challenge.id)}>
-              <Send />
-              Enviar
+          {/* Despublicar sólo mientras nadie lo ganó. Con otorgamientos encima el
+              backend responde 409 y lo correcto es pausarlo, así que el botón no se
+              ofrece: proponer algo que va a fallar es peor que no ofrecerlo. */}
+          {published && challenge.editableRequirements && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={`Volver ${challenge.name} a borrador`}
+              disabled={pending}
+              onClick={() => unpublish.mutate(challenge.id)}
+            >
+              <Undo2 />
+            </Button>
+          )}
+
+          {!published && (
+            <Button size="sm" disabled={pending} onClick={() => publish.mutate(challenge.id)}>
+              <Upload />
+              Publicar
             </Button>
           )}
         </div>

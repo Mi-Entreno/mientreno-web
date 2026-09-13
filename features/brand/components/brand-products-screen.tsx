@@ -68,7 +68,7 @@ export function BrandProductsScreen() {
 
         <Button onClick={() => setCreating(true)}>
           <Plus className="size-4" />
-          Nuevo producto
+          Nueva recompensa
         </Button>
       </div>
 
@@ -83,17 +83,17 @@ export function BrandProductsScreen() {
       ) : (query.data?.items.length ?? 0) === 0 ? (
         <EmptyState
           icon={Gift}
-          title={filter ? "No hay productos en este estado" : "Todavía no cargaste productos"}
-          description="Cargá tu primer producto, subile una foto y enviálo a revisión. Cuando lo aprobemos, los alumnos van a poder canjearlo."
-          actionLabel={filter ? undefined : "Cargar producto"}
+          title={filter ? "No hay recompensas en este estado" : "Todavía no cargaste recompensas"}
+          description="Cargá tu primera recompensa, subile una foto y enviála a revisión. Cuando la aprobemos, los alumnos van a poder canjearla con sus repes."
+          actionLabel={filter ? undefined : "Cargar recompensa"}
           onAction={filter ? undefined : () => setCreating(true)}
         />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border">
-          <Table label="Productos del comercio">
+          <Table label="Recompensas del comercio">
             <TableHeader>
               <TableRow>
-                <TableHead>Producto</TableHead>
+                <TableHead>Recompensa</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Costo</TableHead>
                 <TableHead className="text-right">Stock</TableHead>
@@ -156,7 +156,7 @@ function ProductRow({ product, onEdit }: { product: BrandProduct; onEdit: () => 
             >
               {product.name}
             </button>
-            {/* El motivo del rechazo va junto al producto y no escondido en un
+            {/* El motivo del rechazo va junto a la recompensa y no escondido en un
                 detalle: es lo que hay que corregir. */}
             {product.rejectionReason && (
               <p className="text-caption text-error-text text-pretty">{product.rejectionReason}</p>
@@ -209,7 +209,7 @@ function ProductRow({ product, onEdit }: { product: BrandProduct; onEdit: () => 
 
       <TableCell>
         <div className="flex items-center justify-end gap-1">
-          {/* La imagen se sube desde acá porque sin ella el producto no se puede
+          {/* La imagen se sube desde acá porque sin ella la recompensa no se puede
               enviar a revisión, y esconderlo en el formulario hacía que el botón
               de enviar rebotara sin explicar por qué. */}
           <input

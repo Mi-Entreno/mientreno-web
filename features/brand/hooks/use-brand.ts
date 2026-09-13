@@ -10,7 +10,6 @@ import { brandRepository } from "../api/brand.repository"
 import type {
   ProductApprovalStatus,
   RedemptionStatus,
-  SaveChallengeInput,
   SaveProductInput,
 } from "../dto/brand.dto"
 
@@ -64,7 +63,7 @@ function useBrandMutation<TArgs, TResult>(
 export function useCreateProduct() {
   return useBrandMutation(
     (input: SaveProductInput) => brandRepository.createProduct(input),
-    () => "Producto creado como borrador. Subile una imagen para poder enviarlo a revisión.",
+    () => "Recompensa creada como borrador. Subile una imagen para poder enviarla a revisión.",
     "save",
   )
 }
@@ -76,7 +75,7 @@ export function useUpdateProduct() {
     (product) =>
       product.approvalStatus === "PENDING_APPROVAL"
         ? "Guardado. Como cambiaste la oferta, vuelve a revisión."
-        : "Producto guardado.",
+        : "Recompensa guardada.",
     "save",
   )
 }
@@ -86,7 +85,7 @@ export function useSubmitProduct() {
     (id: number) => brandRepository.submitProduct(id),
     (product) =>
       product.approvalStatus === "APPROVED"
-        ? "Producto publicado."
+        ? "Recompensa publicada."
         : "Enviado a revisión. Te avisamos cuando lo aprobemos.",
     "send",
   )
@@ -104,7 +103,7 @@ export function useAdjustStock() {
 export function useSetProductActive() {
   return useBrandMutation(
     ({ id, active }: { id: number; active: boolean }) => brandRepository.setProductActive(id, active),
-    (product) => (product.active ? "Producto reanudado." : "Producto pausado."),
+    (product) => (product.active ? "Recompensa reanudada." : "Recompensa pausada."),
     "save",
   )
 }
@@ -146,62 +145,6 @@ export function useUpdateBrandProfile() {
     (input: Parameters<typeof brandRepository.updateProfile>[0]) =>
       brandRepository.updateProfile(input),
     () => "Perfil actualizado.",
-    "save",
-  )
-}
-
-// ── Reward challenges ──────────────────────────────────────────────────────
-
-export function useBrandChallenges(status?: ProductApprovalStatus) {
-  return useQuery({
-    queryKey: qk.brand.challenges(status),
-    queryFn: () => brandRepository.challenges(status),
-  })
-}
-
-export function useBrandChallenge(id: number) {
-  return useQuery({
-    queryKey: qk.brand.challenge(id),
-    queryFn: () => brandRepository.challenge(id),
-    enabled: Number.isFinite(id),
-  })
-}
-
-export function useCreateChallenge() {
-  return useBrandMutation(
-    (input: SaveChallengeInput) => brandRepository.createChallenge(input),
-    () => "Recompensa creada como borrador. Revisá los requisitos y enviala a revisión.",
-    "save",
-  )
-}
-
-export function useUpdateChallenge() {
-  return useBrandMutation(
-    ({ id, input }: { id: number; input: SaveChallengeInput }) =>
-      brandRepository.updateChallenge(id, input),
-    (challenge) =>
-      challenge.approvalStatus === "PENDING_APPROVAL"
-        ? "Guardada. Como cambiaste la oferta, vuelve a revisión."
-        : "Recompensa guardada.",
-    "save",
-  )
-}
-
-export function useSubmitChallenge() {
-  return useBrandMutation(
-    (id: number) => brandRepository.submitChallenge(id),
-    (challenge) =>
-      challenge.approvalStatus === "APPROVED"
-        ? "Recompensa publicada."
-        : "Enviada a revisión. Te avisamos cuando la aprobemos.",
-    "send",
-  )
-}
-
-export function useSetChallengeActive() {
-  return useBrandMutation(
-    ({ id, active }: { id: number; active: boolean }) => brandRepository.setChallengeActive(id, active),
-    (challenge) => (challenge.active ? "Recompensa reanudada." : "Recompensa pausada."),
     "save",
   )
 }

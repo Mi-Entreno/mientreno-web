@@ -8,6 +8,8 @@ import { userMessage } from "@/core/http/user-message"
 import type { BrandStatus, ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
 
 import { adminRepository } from "../api/admin.repository"
+import type { SaveChallengeInput } from "../dto/admin.dto"
+import type { AdminChallenge } from "../model/admin.model"
 
 export function usePendingProducts(status: ProductApprovalStatus = "PENDING_APPROVAL") {
   return useQuery({
@@ -127,44 +129,93 @@ export function useSetBrandStatus() {
   })
 }
 
-// ── Reward challenges ──────────────────────────────────────────────────────
+// ── Desafíos ───────────────────────────────────────────────────────────────
+// Las mutaciones invalidan sólo `qk.admin.all` y no también `brand`: un desafío no
+// aparece en ninguna lista del comercio. Es la diferencia con `useModerateProduct`,
+// que sí toca las dos porque el producto es del comercio.
 
-export function usePendingChallenges(status: ProductApprovalStatus = "PENDING_APPROVAL") {
+export function useAdminChallenges(status?: ProductApprovalStatus) {
   return useQuery({
-    queryKey: qk.admin.pendingChallenges(status),
-    queryFn: () => adminRepository.pendingChallenges(status),
+    queryKey: qk.admin.challenges(status),
+    queryFn: () => adminRepository.challenges(status),
+  })
+}
+
+export function useAdminChallenge(id: number) {
+  return useQuery({
+    queryKey: qk.admin.challenge(id),
+    queryFn: () => adminRepository.challenge(id),
+    enabled: Number.isFinite(id),
   })
 }
 
 /**
- * Aprobar o rechazar una recompensa.
+ * Una mutación de desafío: invalida la zona y avisa con el nombre.
  *
- * Sin aprobación en lote, a diferencia de los productos: acá cada aprobación
- * habilita moneda nueva, y la relación entre premio y esfuerzo hay que leerla una
- * por una. Un botón de "aprobar todo" sobre eso es un pie de imprenta.
+ * Extraído porque los cinco hooks de abajo hacen exactamente lo mismo y sólo cambia
+ * la llamada y el texto — el mismo patrón que `useBrandMutation` del panel del
+ * comercio.
  */
-export function useModerateChallenge() {
+function useChallengeMutation<TInput>(
+  mutationFn: (input: TInput) => Promise<AdminChallenge>,
+  message: (challenge: AdminChallenge) => string,
+  context: Parameters<typeof userMessage>[1],
+) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      challengeId,
-      status,
-      reason,
-    }: {
-      challengeId: number
-      status: ProductApprovalStatus
-      reason?: string
-    }) => adminRepository.moderateChallenge(challengeId, status, reason),
+    mutationFn,
     onSuccess: (challenge) => {
       queryClient.invalidateQueries({ queryKey: qk.admin.all })
-      queryClient.invalidateQueries({ queryKey: qk.brand.all })
-      toast.success(
-        challenge.approvalStatus === "APPROVED"
-          ? `${challenge.name} ya está publicada: los alumnos pueden empezar a cumplirla.`
-          : `${challenge.name} fue rechazada. Le avisamos al comercio.`,
-      )
+      toast.success(message(challenge))
     },
-    onError: (error) => toast.error(userMessage(error, "save")),
+    onError: (error) => toast.error(userMessage(error, context)),
   })
+}
+
+export function useCreateChallenge() {
+  return useChallengeMutation(
+    (input: SaveChallengeInput) => adminRepository.createChallenge(input),
+    () => "Desafío creado como borrador. Revisá los requisitos y publicalo.",
+    "save",
+  )
+}
+
+export function useUpdateChallenge() {
+  return useChallengeMutation(
+    ({ id, input }: { id: number; input: SaveChallengeInput }) =>
+      adminRepository.updateChallenge(id, input),
+    (challenge) =>
+      // Editar uno publicado lo deja publicado: no hay revisión que la edición
+      // invalide, así que no hay nada que avisar más que el guardado.
+      challenge.approvalStatus === "APPROVED"
+        ? "Desafío guardado. Sigue publicado."
+        : "Desafío guardado.",
+    "save",
+  )
+}
+
+export function usePublishChallenge() {
+  return useChallengeMutation(
+    (id: number) => adminRepository.publishChallenge(id),
+    (challenge) => `${challenge.name} ya está publicado: los alumnos pueden empezar a cumplirlo.`,
+    "save",
+  )
+}
+
+export function useUnpublishChallenge() {
+  return useChallengeMutation(
+    (id: number) => adminRepository.unpublishChallenge(id),
+    (challenge) => `${challenge.name} volvió a borrador.`,
+    "save",
+  )
+}
+
+export function useSetChallengeActive() {
+  return useChallengeMutation(
+    ({ id, active }: { id: number; active: boolean }) =>
+      adminRepository.setChallengeActive(id, active),
+    (challenge) => (challenge.active ? "Desafío reanudado." : "Desafío pausado."),
+    "save",
+  )
 }

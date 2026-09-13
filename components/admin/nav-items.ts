@@ -11,10 +11,10 @@ import type { NavItem } from "@/components/dashboard/nav-items"
  */
 export const adminNavItems: NavItem[] = [
   { label: "Revisión", href: "/admin", icon: ShieldCheck },
-  // Cola aparte y no un filtro más de la primera: un producto y una recompensa se
-  // revisan mirando cosas opuestas —un precio bajo de más vacía la economía, un
-  // premio alto de más la infla— y mezclarlas invita a aprobar con el criterio
-  // equivocado.
-  { label: "Recompensas", href: "/admin/desafios", icon: Trophy },
+  // No es una segunda cola de revisión: es donde se **configuran** los desafíos. Son
+  // la mitad de la economía que acuña repes, y la carga la plataforma justamente para
+  // que no haya nada que revisarle a un tercero. La otra mitad —las recompensas que
+  // publica cada comercio, que las gastan— es la que se revisa en "Revisión".
+  { label: "Desafíos", href: "/admin/desafios", icon: Trophy },
   { label: "Comercios", href: "/admin/comercios", icon: Store },
 ]

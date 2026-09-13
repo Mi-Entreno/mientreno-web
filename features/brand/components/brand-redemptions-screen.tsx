@@ -81,7 +81,7 @@ export function BrandRedemptionsScreen() {
         <EmptyState
           icon={PackageCheck}
           title={filter === "PENDING" ? "No tenés canjes pendientes" : "No hay canjes acá"}
-          description="Cuando un alumno canjee uno de tus productos, el pedido aparece en esta lista para que lo prepares."
+          description="Cuando un alumno canjee una de tus recompensas, el pedido aparece en esta lista para que lo prepares."
         />
       ) : (
         <ul className="flex flex-col gap-3">
@@ -210,7 +210,7 @@ function CancelDialog({
           <DialogDescription>
             Le devolvemos {redemption?.totalCostReps ?? 0}{" "}
             {redemption?.totalCostReps === 1 ? "repe" : "repes"} al alumno y el stock
-            vuelve a tu producto. El motivo le llega a él.
+            vuelve a tu recompensa. El motivo le llega a él.
           </DialogDescription>
         </DialogHeader>
 
