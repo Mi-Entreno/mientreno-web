@@ -1,5 +1,5 @@
-import { MercadoPagoScreen } from "@/features/payments/components/mercado-pago-screen"
+import { PaymentsTabs } from "@/features/bank-transfers/components/payments-tabs"
 
 export default function PaymentsPage() {
-  return <MercadoPagoScreen />
+  return <PaymentsTabs />
 }

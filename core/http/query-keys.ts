@@ -35,6 +35,8 @@ export const qk = {
     products: (status?: string) => ["brand", "products", status ?? "all"] as const,
     product: (id: number) => ["brand", "products", "detail", id] as const,
     redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
+    challenges: (status?: string) => ["brand", "challenges", status ?? "all"] as const,
+    challenge: (id: number) => ["brand", "challenges", "detail", id] as const,
   },
 
   /**
@@ -45,6 +47,7 @@ export const qk = {
   admin: {
     all: ["admin"] as const,
     pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
+    pendingChallenges: (status?: string) => ["admin", "challenges", status ?? "PENDING_APPROVAL"] as const,
     brands: ["admin", "brands"] as const,
   },
 
@@ -119,9 +122,17 @@ export const qk = {
     byToken: (token: string) => ["plan-invitations", "token", token] as const,
   },
 
+  /**
+   * Both ways of charging live under one prefix on purpose: approving a bank
+   * transfer and a Mercado Pago webhook land in the same list, so
+   * `invalidateQueries({ queryKey: qk.payments.all })` has to reach both.
+   */
   payments: {
     all: ["payments"] as const,
     mercadoPago: ["payments", "mercado-pago"] as const,
+    list: (filters: Record<string, unknown>) => ["payments", "list", filters] as const,
+    pendingReview: ["payments", "pending-review"] as const,
+    bankInfo: ["payments", "bank-info"] as const,
   },
 
   /**
