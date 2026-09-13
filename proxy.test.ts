@@ -121,7 +121,7 @@ describe("the trainer panel", () => {
 
 describe("the merchant panel", () => {
   it("lets a merchant in", () => {
-    expect(destination("/comercio/productos", brandToken)).toBeNull()
+    expect(destination("/comercio/recompensas", brandToken)).toBeNull()
   })
 
   it("redirects a trainer to their own panel", () => {

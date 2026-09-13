@@ -35,7 +35,7 @@ export function toAdminBrand(dto: AdminBrandDTO): AdminBrand {
   }
 }
 
-/** Challenges carry no media of their own, so this is a straight copy. */
+/** Los desafíos no tienen imagen propia, así que esto es una copia directa. */
 export function toAdminChallenge(dto: AdminChallengeDTO): AdminChallenge {
   return {
     id: dto.id,
@@ -49,6 +49,7 @@ export function toAdminChallenge(dto: AdminChallengeDTO): AdminChallenge {
     validTo: dto.validTo,
     maxGrants: dto.maxGrants,
     grantedCount: dto.grantedCount,
+    editableRequirements: dto.editableRequirements,
     approvalStatus: dto.approvalStatus,
     rejectionReason: dto.rejectionReason,
     brandId: dto.brandId,

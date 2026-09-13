@@ -26,9 +26,10 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 
-import type { RewardMetricType, RewardMetricWindow } from "../dto/brand.dto"
-import { useCreateChallenge, useUpdateChallenge } from "../hooks/use-brand"
-import { METRIC_OPTIONS, type BrandChallenge } from "../model/challenge.model"
+import type { RewardMetricType, RewardMetricWindow } from "../dto/admin.dto"
+import { useCreateChallenge, useUpdateChallenge } from "../hooks/use-admin"
+import type { AdminChallenge } from "../model/admin.model"
+import { METRIC_OPTIONS } from "../model/challenge.model"
 
 /**
  * El tope de premio que valida el backend (`rewards.challenges.max-prize-reps`).
@@ -110,16 +111,17 @@ function emptyForm(): FormValues {
 }
 
 /**
- * Alta y edición de una recompensa por requisitos.
+ * Alta y edición de un desafío.
  *
- * Dos cosas que el formulario tiene que dejar claras, porque son las que el
- * comercio no puede adivinar:
+ * Dos cosas que el formulario tiene que dejar claras, porque son las que no se
+ * adivinan mirando los campos:
  *
- * 1. **El premio crea repes.** Por eso hay un techo y por eso todo pasa por
- *    revisión. El aviso está al lado del campo y no escondido en un tooltip.
- * 2. **Los requisitos se congelan** en cuanto alguien gana la recompensa. Editar
- *    el objetivo con gente a mitad de camino sería mover el arco, así que a esa
- *    altura sólo se puede corregir el nombre, la descripción y la vigencia.
+ * 1. **El premio crea repes.** No las mueve de un lado a otro: las acuña, y las cobra
+ *    todo el que cumpla. Por eso hay un techo, y el aviso va al lado del campo en vez
+ *    de escondido en un tooltip o descubierto como un 400.
+ * 2. **Los requisitos se congelan** en cuanto alguien gana el desafío. Editar el
+ *    objetivo con gente a mitad de camino sería mover el arco, así que a esa altura
+ *    sólo se puede corregir el nombre, la descripción y la vigencia.
  */
 export function ChallengeFormDialog({
   open,
@@ -127,7 +129,7 @@ export function ChallengeFormDialog({
   onClose,
 }: {
   open: boolean
-  challenge: BrandChallenge | null
+  challenge: AdminChallenge | null
   onClose: () => void
 }) {
   const create = useCreateChallenge()
@@ -209,13 +211,13 @@ export function ChallengeFormDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar recompensa" : "Nueva recompensa"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar desafío" : "Nuevo desafío"}</DialogTitle>
           <DialogDescription>
             {conditionsLocked
-              ? "Ya la ganó alguien: podés corregir el nombre, la descripción y la vigencia, pero no el premio ni los requisitos. Para cambiar las condiciones, creá una recompensa nueva."
+              ? "Ya lo ganó alguien: podés corregir el nombre, la descripción y la vigencia, pero no el premio ni los requisitos. Para cambiar las condiciones, creá un desafío nuevo."
               : isEditing && challenge.approvalStatus === "APPROVED"
-                ? "Está publicada: al guardar vuelve a revisión, porque cambia lo que se ofrece."
-                : "Definí qué premiás y qué tiene que lograr el alumno. Después la envías a revisión."}
+                ? "Está publicado: al guardar sigue publicado, y los cambios se ven al instante."
+                : "Definí qué premiás y qué tiene que lograr el alumno. Después lo publicás."}
           </DialogDescription>
         </DialogHeader>
 
@@ -257,8 +259,8 @@ export function ChallengeFormDialog({
                 {...register("prizeReps")}
               />
               <p className="text-caption text-muted-foreground">
-                Máximo {MAX_PRIZE_REPS} repes. Las repes de una recompensa se crean: el alumno las
-                gana sin gastar nada.
+                Máximo {MAX_PRIZE_REPS} repes. Estas repes se crean: el alumno las gana sin
+                gastar nada, y las cobra todo el que cumpla.
               </p>
               {errors.prizeReps && (
                 <p className="text-caption text-error-text">{errors.prizeReps.message}</p>
@@ -277,7 +279,7 @@ export function ChallengeFormDialog({
                 {...register("maxGrants")}
               />
               <p className="text-caption text-muted-foreground">
-                Cuántos alumnos pueden ganarla en total.
+                Cuántos alumnos pueden ganarlo en total.
               </p>
             </div>
           </div>

@@ -2,7 +2,12 @@ import { apiFetch } from "@/core/http/client"
 import { mapPage, pageQuery, type PageParams, type PageResponse, type SpringPage } from "@/core/http/pagination"
 import type { BrandStatus, ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
 
-import type { AdminBrandDTO, AdminChallengeDTO, AdminProductDTO } from "../dto/admin.dto"
+import type {
+  AdminBrandDTO,
+  AdminChallengeDTO,
+  AdminProductDTO,
+  SaveChallengeInput,
+} from "../dto/admin.dto"
 import { toAdminBrand, toAdminChallenge, toAdminProduct } from "../mappers/admin.mapper"
 import type { AdminBrand, AdminChallenge, AdminProduct } from "../model/admin.model"
 
@@ -31,26 +36,68 @@ export const adminRepository = {
     )
   },
 
-  /** La cola de recompensas por requisitos, también del más viejo al más nuevo. */
-  async pendingChallenges(
-    status: ProductApprovalStatus = "PENDING_APPROVAL",
+  // ── Desafíos ──────────────────────────────────────────────────────────────
+  // CRUD y no cola de moderación: desde la V52 los desafíos los carga el admin, así
+  // que no hay a quién pedirle la revisión.
+
+  /** Del más nuevo al más viejo. Sin `status`, todos. */
+  async challenges(
+    status?: ProductApprovalStatus,
     params?: PageParams,
   ): Promise<PageResponse<AdminChallenge>> {
     const page = await apiFetch<SpringPage<AdminChallengeDTO>>("/api/admin/rewards/challenges", {
-      query: { ...pageQuery(params), status },
+      query: { ...pageQuery(params), ...(status ? { status } : {}) },
     })
     return mapPage(page, toAdminChallenge)
   },
 
-  async moderateChallenge(
-    challengeId: number,
-    status: ProductApprovalStatus,
-    reason?: string,
-  ): Promise<AdminChallenge> {
+  async challenge(challengeId: number): Promise<AdminChallenge> {
     return toAdminChallenge(
-      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}/approval`, {
+      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}`),
+    )
+  },
+
+  async createChallenge(input: SaveChallengeInput): Promise<AdminChallenge> {
+    return toAdminChallenge(
+      await apiFetch<AdminChallengeDTO>("/api/admin/rewards/challenges", {
+        method: "POST",
+        body: input,
+      }),
+    )
+  },
+
+  async updateChallenge(challengeId: number, input: SaveChallengeInput): Promise<AdminChallenge> {
+    return toAdminChallenge(
+      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}`, {
+        method: "PUT",
+        body: input,
+      }),
+    )
+  },
+
+  /** Upstream rechaza publicar sin requisitos: se desbloquearía para todos al instante. */
+  async publishChallenge(challengeId: number): Promise<AdminChallenge> {
+    return toAdminChallenge(
+      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}/publish`, {
+        method: "POST",
+      }),
+    )
+  },
+
+  /** Upstream responde 409 si alguien ya lo ganó: entonces se pausa, no se despublica. */
+  async unpublishChallenge(challengeId: number): Promise<AdminChallenge> {
+    return toAdminChallenge(
+      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}/unpublish`, {
+        method: "POST",
+      }),
+    )
+  },
+
+  async setChallengeActive(challengeId: number, active: boolean): Promise<AdminChallenge> {
+    return toAdminChallenge(
+      await apiFetch<AdminChallengeDTO>(`/api/admin/rewards/challenges/${challengeId}/status`, {
         method: "PATCH",
-        body: { status, reason },
+        body: { active },
       }),
     )
   },

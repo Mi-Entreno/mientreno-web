@@ -1,9 +1,9 @@
 import type { Metadata } from "next"
 
-import { BrandChallengesScreen } from "@/features/brand/components/brand-challenges-screen"
+import { BrandProductsScreen } from "@/features/brand/components/brand-products-screen"
 
 export const metadata: Metadata = { title: "Recompensas — Panel del comercio" }
 
-export default function BrandChallengesPage() {
-  return <BrandChallengesScreen />
+export default function BrandRewardsPage() {
+  return <BrandProductsScreen />
 }

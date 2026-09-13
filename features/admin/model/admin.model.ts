@@ -1,5 +1,6 @@
-import type { ChallengeRequirementMode, ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
-import type { ChallengeRequirement } from "@/features/brand/model/challenge.model"
+import type { ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
+
+import type { ChallengeRequirementMode, RewardMetricType, RewardMetricWindow } from "../dto/admin.dto"
 
 export interface AdminProduct {
   id: number
@@ -58,7 +59,18 @@ export function maxExposure(product: AdminProduct): number {
   return product.costReps * Math.max(0, product.stock)
 }
 
-// ── Reward challenges ──────────────────────────────────────────────────────
+// ── Desafíos ───────────────────────────────────────────────────────────────
+
+export interface ChallengeRequirement {
+  id: number
+  metric: RewardMetricType
+  /** Viene del enum del backend para que los dos clientes digan la misma palabra. */
+  label: string
+  unit: string
+  targetValue: number
+  window: RewardMetricWindow
+  windowDays: number | null
+}
 
 export interface AdminChallenge {
   id: number
@@ -72,6 +84,8 @@ export interface AdminChallenge {
   validTo: string | null
   maxGrants: number | null
   grantedCount: number
+  /** False en cuanto alguien lo ganó: el premio y los requisitos quedan congelados. */
+  editableRequirements: boolean
   approvalStatus: ProductApprovalStatus
   rejectionReason: string | null
   brandId: number | null
@@ -81,21 +95,15 @@ export interface AdminChallenge {
 }
 
 /**
- * What a moderator is deciding on a challenge — and it is the opposite question
- * from a product.
+ * Qué hay que mirar antes de publicar un desafío.
  *
- * A product **spends** reps: a price too low drains the economy. A challenge
- * **mints** them: a prize too large for the effort asked prints money, and
- * every student who trains collects it. So the checklist leads with the ratio
- * between prize and effort, not with the prize alone.
+ * Ya no es una checklist de moderación —el admin no se modera a sí mismo— pero las
+ * preguntas siguen siendo las mismas, y siguen siendo la opuestas a las de un
+ * producto. Un producto **gasta** repes: un precio bajo de más vacía la economía. Un
+ * desafío las **acuña**: un premio grande de más para el esfuerzo que pide imprime
+ * moneda, y lo cobra todo el que entrena. Por eso la lista arranca por la relación
+ * entre premio y esfuerzo, no por el premio solo.
  */
-export const CHALLENGE_REVIEW_CHECKLIST = [
-  "El premio es razonable para el esfuerzo que pide",
-  "Los requisitos se pueden cumplir entrenando de verdad, no en un día",
-  "El nombre y la descripción dicen qué hay que lograr",
-  "Si no tiene cupo, el premio aguanta que la gane todo el mundo",
-] as const
-
 /** A challenge with no owner was loaded by the platform, not by a merchant. */
 export function isPlatformChallenge(challenge: AdminChallenge): boolean {
   return challenge.brandId === null
