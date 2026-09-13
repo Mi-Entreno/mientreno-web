@@ -29,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea"
 import type { RewardMetricType, RewardMetricWindow } from "../dto/admin.dto"
 import { useCreateChallenge, useUpdateChallenge } from "../hooks/use-admin"
 import type { AdminChallenge } from "../model/admin.model"
-import { METRIC_OPTIONS } from "../model/challenge.model"
+import { METRIC_OPTIONS, MODE_OPTIONS, WINDOW_OPTIONS } from "../model/challenge.model"
 
 /**
  * El tope de premio que valida el backend (`rewards.challenges.max-prize-reps`).
@@ -319,75 +319,92 @@ export function ChallengeFormDialog({
               </Button>
             </div>
 
-            {fields.map((field, index) => (
-              <div key={field.id} className="grid gap-2 sm:grid-cols-[1fr_7rem_9rem_auto]">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`requirement-metric-${index}`} className="text-caption">
-                    Qué se mide
-                  </Label>
-                  <Select
-                    value={requirements?.[index]?.metric ?? "SETS_COMPLETED"}
-                    onValueChange={(value) =>
-                      setValue(`requirements.${index}.metric`, value as RewardMetricType, {
-                        shouldValidate: true,
-                      })
-                    }
-                    disabled={pending || conditionsLocked}
-                  >
-                    <SelectTrigger id={`requirement-metric-${index}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {METRIC_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/*
+              Cada campo tiene su propia pista —los días incluidos, aunque la mayoría de
+              las veces esté vacía— para que las filas alineen entre sí: cuando el input
+              de días compartía celda con el botón de borrar, elegir «Últimos N días»
+              ensanchaba esa fila y desfasaba las columnas de todas las demás.
+              `minmax(0,1fr)` es lo que deja achicar la primera columna por debajo del
+              largo de «Entrenamientos completados», que si no se sale de la tarjeta.
+            */}
+            {fields.map((field, index) => {
+              const showDays = requirements?.[index]?.window === "LAST_N_DAYS"
 
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`requirement-target-${index}`} className="text-caption">
-                    Objetivo
-                  </Label>
-                  <Input
-                    id={`requirement-target-${index}`}
-                    type="number"
-                    min={1}
-                    step={1}
-                    disabled={pending || conditionsLocked}
-                    {...register(`requirements.${index}.targetValue`)}
-                  />
-                </div>
+              return (
+                <div
+                  key={field.id}
+                  className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6rem_9rem_5rem_2.25rem] sm:items-end"
+                >
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <Label htmlFor={`requirement-metric-${index}`} className="text-caption">
+                      Qué se mide
+                    </Label>
+                    <Select
+                      items={METRIC_OPTIONS}
+                      value={requirements?.[index]?.metric ?? "SETS_COMPLETED"}
+                      onValueChange={(value) =>
+                        setValue(`requirements.${index}.metric`, value as RewardMetricType, {
+                          shouldValidate: true,
+                        })
+                      }
+                      disabled={pending || conditionsLocked}
+                    >
+                      <SelectTrigger id={`requirement-metric-${index}`} className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {METRIC_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`requirement-window-${index}`} className="text-caption">
-                    Período
-                  </Label>
-                  <Select
-                    value={requirements?.[index]?.window ?? "LIFETIME"}
-                    onValueChange={(value) =>
-                      setValue(`requirements.${index}.window`, value as RewardMetricWindow, {
-                        shouldValidate: true,
-                      })
-                    }
-                    disabled={pending || conditionsLocked}
-                  >
-                    <SelectTrigger id={`requirement-window-${index}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LIFETIME">Desde siempre</SelectItem>
-                      <SelectItem value="LAST_N_DAYS">Últimos N días</SelectItem>
-                      <SelectItem value="SINCE_CHALLENGE_START">Desde que empieza</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <Label htmlFor={`requirement-target-${index}`} className="text-caption">
+                      Objetivo
+                    </Label>
+                    <Input
+                      id={`requirement-target-${index}`}
+                      type="number"
+                      min={1}
+                      step={1}
+                      disabled={pending || conditionsLocked}
+                      {...register(`requirements.${index}.targetValue`)}
+                    />
+                  </div>
 
-                <div className="flex items-end gap-2">
-                  {requirements?.[index]?.window === "LAST_N_DAYS" && (
-                    <div className="flex flex-col gap-1.5">
+                  <div className="flex min-w-0 flex-col gap-1.5">
+                    <Label htmlFor={`requirement-window-${index}`} className="text-caption">
+                      Período
+                    </Label>
+                    <Select
+                      items={WINDOW_OPTIONS}
+                      value={requirements?.[index]?.window ?? "LIFETIME"}
+                      onValueChange={(value) =>
+                        setValue(`requirements.${index}.window`, value as RewardMetricWindow, {
+                          shouldValidate: true,
+                        })
+                      }
+                      disabled={pending || conditionsLocked}
+                    >
+                      <SelectTrigger id={`requirement-window-${index}`} className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WINDOW_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {showDays ? (
+                    <div className="flex min-w-0 flex-col gap-1.5">
                       <Label htmlFor={`requirement-days-${index}`} className="text-caption">
                         Días
                       </Label>
@@ -397,12 +414,14 @@ export function ChallengeFormDialog({
                         min={1}
                         max={365}
                         step={1}
-                        className="w-20"
                         disabled={pending || conditionsLocked}
                         {...register(`requirements.${index}.windowDays`)}
                       />
                     </div>
+                  ) : (
+                    <div className="hidden sm:block" />
                   )}
+
                   <Button
                     type="button"
                     variant="ghost"
@@ -414,8 +433,8 @@ export function ChallengeFormDialog({
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {errors.requirements?.message && (
               <p className="text-caption text-error-text">{errors.requirements.message}</p>
@@ -434,6 +453,7 @@ export function ChallengeFormDialog({
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="challenge-mode">¿Cuántos requisitos hay que cumplir?</Label>
               <Select
+                items={MODE_OPTIONS}
                 value={mode ?? "ALL"}
                 onValueChange={(value) =>
                   setValue("requirementMode", value as FormValues["requirementMode"], {
@@ -442,13 +462,15 @@ export function ChallengeFormDialog({
                 }
                 disabled={pending || conditionsLocked}
               >
-                <SelectTrigger id="challenge-mode">
+                <SelectTrigger id="challenge-mode" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">Todos</SelectItem>
-                  <SelectItem value="ANY">Cualquiera</SelectItem>
-                  <SelectItem value="N_OF_M">Algunos (N de M)</SelectItem>
+                  {MODE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

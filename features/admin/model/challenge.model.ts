@@ -1,4 +1,8 @@
-import type { RewardMetricType, RewardMetricWindow } from "../dto/admin.dto"
+import type {
+  ChallengeRequirementMode,
+  RewardMetricType,
+  RewardMetricWindow,
+} from "../dto/admin.dto"
 import type { AdminChallenge, ChallengeRequirement } from "./admin.model"
 
 /**
@@ -14,17 +18,24 @@ import type { AdminChallenge, ChallengeRequirement } from "./admin.model"
  * economía.
  */
 
-export const MODE_LABELS: Record<AdminChallenge["requirementMode"], string> = {
-  ALL: "Todos los requisitos",
-  ANY: "Cualquiera de los requisitos",
-  N_OF_M: "Algunos de los requisitos",
-}
+/**
+ * El vocabulario de los enums vive en listas `{ value, label }` y no en mapas sueltos
+ * porque un `<Select>` necesita las dos cosas del mismo lugar: las opciones del popup y
+ * la etiqueta que muestra el trigger (`items` de Base UI). Cuando eran un mapa aparte, el
+ * formulario terminaba escribiendo sus propios `<SelectItem>` a mano y el trigger mostraba
+ * el enum crudo —"LIFETIME"— hasta que se abría el desplegable.
+ */
+export const MODE_OPTIONS: { value: ChallengeRequirementMode; label: string }[] = [
+  { value: "ALL", label: "Todos" },
+  { value: "ANY", label: "Cualquiera" },
+  { value: "N_OF_M", label: "Algunos (N de M)" },
+]
 
-export const WINDOW_LABELS: Record<RewardMetricWindow, string> = {
-  LIFETIME: "Desde siempre",
-  LAST_N_DAYS: "Últimos días",
-  SINCE_CHALLENGE_START: "Desde que empieza",
-}
+export const WINDOW_OPTIONS: { value: RewardMetricWindow; label: string }[] = [
+  { value: "LIFETIME", label: "Desde siempre" },
+  { value: "LAST_N_DAYS", label: "Últimos N días" },
+  { value: "SINCE_CHALLENGE_START", label: "Desde que empieza" },
+]
 
 /**
  * Las métricas que se pueden pedir, en el orden que tiene sentido para alguien

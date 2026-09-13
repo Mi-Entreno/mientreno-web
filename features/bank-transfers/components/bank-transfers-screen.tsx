@@ -25,6 +25,23 @@ type ProviderFilter = "all" | "mercadopago" | "bank_transfer"
 type StatusFilter = "all" | "PENDING" | "APPROVED" | "REJECTED"
 
 /**
+ * The options double as the `items` map Base UI's `<Select.Value>` needs: without it the
+ * trigger prints the raw value ("all", "PENDING") until the popup is opened over it.
+ */
+const PROVIDER_OPTIONS: { value: ProviderFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "mercadopago", label: "Mercado Pago" },
+  { value: "bank_transfer", label: "Transferencia" },
+]
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "Todos" },
+  { value: "PENDING", label: "Pendientes" },
+  { value: "APPROVED", label: "Aprobados" },
+  { value: "REJECTED", label: "Rechazados" },
+]
+
+/**
  * Transfers tab: the queue first, the account details second.
  *
  * The order is the point. A trainer opens this screen because something is
@@ -55,14 +72,20 @@ export function BankTransfersScreen() {
               <Label htmlFor="filter-provider" className="text-caption text-muted-foreground">
                 Método
               </Label>
-              <Select value={provider} onValueChange={(value) => setProvider(value as ProviderFilter)}>
+              <Select
+                items={PROVIDER_OPTIONS}
+                value={provider}
+                onValueChange={(value) => setProvider(value as ProviderFilter)}
+              >
                 <SelectTrigger id="filter-provider" className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="mercadopago">Mercado Pago</SelectItem>
-                  <SelectItem value="bank_transfer">Transferencia</SelectItem>
+                  {PROVIDER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -71,15 +94,20 @@ export function BankTransfersScreen() {
               <Label htmlFor="filter-status" className="text-caption text-muted-foreground">
                 Estado
               </Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as StatusFilter)}>
+              <Select
+                items={STATUS_OPTIONS}
+                value={status}
+                onValueChange={(value) => setStatus(value as StatusFilter)}
+              >
                 <SelectTrigger id="filter-status" className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="PENDING">Pendientes</SelectItem>
-                  <SelectItem value="APPROVED">Aprobados</SelectItem>
-                  <SelectItem value="REJECTED">Rechazados</SelectItem>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

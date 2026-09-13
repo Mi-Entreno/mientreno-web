@@ -8,7 +8,9 @@ import {
   hasGrantsLeft,
   isLive,
   METRIC_OPTIONS,
+  MODE_OPTIONS,
   notLiveReason,
+  WINDOW_OPTIONS,
 } from "./challenge.model"
 
 /** Mañana y ayer, para las pruebas de vigencia sin fechas fijas que caducan. */
@@ -159,6 +161,25 @@ describe("METRIC_OPTIONS", () => {
     // If this number changes, either a metric was added upstream and the select
     // never learned about it, or one was removed and this list points at nothing.
     expect(METRIC_OPTIONS).toHaveLength(9)
+  })
+})
+
+describe("WINDOW_OPTIONS and MODE_OPTIONS", () => {
+  it("cover every value of the enums they feed the select with", () => {
+    // These lists are both the <SelectItem>s and the `items` map that renders the
+    // trigger's label. A missing value shows up on screen as the raw enum.
+    expect(WINDOW_OPTIONS.map((option) => option.value)).toEqual([
+      "LIFETIME",
+      "LAST_N_DAYS",
+      "SINCE_CHALLENGE_START",
+    ])
+    expect(MODE_OPTIONS.map((option) => option.value)).toEqual(["ALL", "ANY", "N_OF_M"])
+  })
+
+  it("labels every option: an empty label is an invisible row in the popup", () => {
+    for (const option of [...WINDOW_OPTIONS, ...MODE_OPTIONS]) {
+      expect(option.label).toBeTruthy()
+    }
   })
 })
 
