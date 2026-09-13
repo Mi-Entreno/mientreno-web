@@ -18,6 +18,7 @@ function isActive(pathname: string, href: string) {
 
 const TITLES: Record<string, string> = {
   "/admin": "Productos en revisión",
+  "/admin/desafios": "Recompensas en revisión",
   "/admin/comercios": "Comercios",
 }
 

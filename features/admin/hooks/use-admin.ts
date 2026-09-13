@@ -126,3 +126,45 @@ export function useSetBrandStatus() {
     onError: (error) => toast.error(userMessage(error, "save")),
   })
 }
+
+// ── Reward challenges ──────────────────────────────────────────────────────
+
+export function usePendingChallenges(status: ProductApprovalStatus = "PENDING_APPROVAL") {
+  return useQuery({
+    queryKey: qk.admin.pendingChallenges(status),
+    queryFn: () => adminRepository.pendingChallenges(status),
+  })
+}
+
+/**
+ * Aprobar o rechazar una recompensa.
+ *
+ * Sin aprobación en lote, a diferencia de los productos: acá cada aprobación
+ * habilita moneda nueva, y la relación entre premio y esfuerzo hay que leerla una
+ * por una. Un botón de "aprobar todo" sobre eso es un pie de imprenta.
+ */
+export function useModerateChallenge() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      challengeId,
+      status,
+      reason,
+    }: {
+      challengeId: number
+      status: ProductApprovalStatus
+      reason?: string
+    }) => adminRepository.moderateChallenge(challengeId, status, reason),
+    onSuccess: (challenge) => {
+      queryClient.invalidateQueries({ queryKey: qk.admin.all })
+      queryClient.invalidateQueries({ queryKey: qk.brand.all })
+      toast.success(
+        challenge.approvalStatus === "APPROVED"
+          ? `${challenge.name} ya está publicada: los alumnos pueden empezar a cumplirla.`
+          : `${challenge.name} fue rechazada. Le avisamos al comercio.`,
+      )
+    },
+    onError: (error) => toast.error(userMessage(error, "save")),
+  })
+}

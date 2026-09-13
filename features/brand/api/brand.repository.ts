@@ -2,16 +2,19 @@ import { apiFetch } from "@/core/http/client"
 import { mapPage, pageQuery, type PageParams, type PageResponse, type SpringPage } from "@/core/http/pagination"
 
 import type {
+  BrandChallengeDTO,
   BrandProductDTO,
   BrandProfileDTO,
   CompleteBrandProfileInput,
   ProductApprovalStatus,
   RedemptionDTO,
   RedemptionStatus,
+  SaveChallengeInput,
   SaveProductInput,
 } from "../dto/brand.dto"
-import { toBrandProduct, toBrandProfile, toRedemption } from "../mappers/brand.mapper"
+import { toBrandChallenge, toBrandProduct, toBrandProfile, toRedemption } from "../mappers/brand.mapper"
 import type { BrandProduct, BrandProfile, Redemption } from "../model/brand.model"
+import type { BrandChallenge } from "../model/challenge.model"
 
 /**
  * The only caller of `apiFetch` in this slice.
@@ -105,6 +108,62 @@ export const brandRepository = {
       await apiFetch<BrandProductDTO>(`/api/brand/rewards/products/${id}/image`, {
         method: "POST",
         formData,
+      }),
+    )
+  },
+
+  // ── Reward challenges ───────────────────────────────────────────────────
+  // Same shape as products, one difference that matters: the prize creates reps
+  // out of nothing, so the backend caps it and re-moderates every change to the
+  // conditions. `editableRequirements` comes back false once somebody won it.
+
+  async challenges(
+    status?: ProductApprovalStatus,
+    params?: PageParams,
+  ): Promise<PageResponse<BrandChallenge>> {
+    const page = await apiFetch<SpringPage<BrandChallengeDTO>>("/api/brand/rewards/challenges", {
+      query: { ...pageQuery(params), status },
+    })
+    return mapPage(page, toBrandChallenge)
+  },
+
+  async challenge(id: number): Promise<BrandChallenge> {
+    return toBrandChallenge(await apiFetch<BrandChallengeDTO>(`/api/brand/rewards/challenges/${id}`))
+  },
+
+  async createChallenge(input: SaveChallengeInput): Promise<BrandChallenge> {
+    return toBrandChallenge(
+      await apiFetch<BrandChallengeDTO>("/api/brand/rewards/challenges", {
+        method: "POST",
+        body: input,
+      }),
+    )
+  },
+
+  /** The requirement list replaces the previous one: editing is redefining. */
+  async updateChallenge(id: number, input: SaveChallengeInput): Promise<BrandChallenge> {
+    return toBrandChallenge(
+      await apiFetch<BrandChallengeDTO>(`/api/brand/rewards/challenges/${id}`, {
+        method: "PUT",
+        body: input,
+      }),
+    )
+  },
+
+  /** Upstream rejects a challenge with no requirements: it would unlock for everyone. */
+  async submitChallenge(id: number): Promise<BrandChallenge> {
+    return toBrandChallenge(
+      await apiFetch<BrandChallengeDTO>(`/api/brand/rewards/challenges/${id}/submit`, {
+        method: "POST",
+      }),
+    )
+  },
+
+  async setChallengeActive(id: number, active: boolean): Promise<BrandChallenge> {
+    return toBrandChallenge(
+      await apiFetch<BrandChallengeDTO>(`/api/brand/rewards/challenges/${id}/status`, {
+        method: "PATCH",
+        body: { active },
       }),
     )
   },

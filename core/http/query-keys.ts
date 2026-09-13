@@ -35,6 +35,8 @@ export const qk = {
     products: (status?: string) => ["brand", "products", status ?? "all"] as const,
     product: (id: number) => ["brand", "products", "detail", id] as const,
     redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
+    challenges: (status?: string) => ["brand", "challenges", status ?? "all"] as const,
+    challenge: (id: number) => ["brand", "challenges", "detail", id] as const,
   },
 
   /**
@@ -45,6 +47,7 @@ export const qk = {
   admin: {
     all: ["admin"] as const,
     pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
+    pendingChallenges: (status?: string) => ["admin", "challenges", status ?? "PENDING_APPROVAL"] as const,
     brands: ["admin", "brands"] as const,
   },
 
