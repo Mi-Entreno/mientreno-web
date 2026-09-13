@@ -1,4 +1,9 @@
-import type { BrandStatus, ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
+import type {
+  BrandStatus,
+  ChallengeRequirementDTO,
+  ChallengeRequirementMode,
+  ProductApprovalStatus,
+} from "@/features/brand/dto/brand.dto"
 
 /**
  * Mirrors of `AdminRewardProductResponseDTO` and `BrandProfileResponseDTO`.
@@ -37,4 +42,33 @@ export interface AdminBrandDTO {
   pickupNotes: string | null
   status: BrandStatus
   createdAt: string
+}
+
+/**
+ * Mirror of `AdminRewardChallengeResponseDTO`.
+ *
+ * The moderator's view adds the owner to what the merchant already sees. There
+ * are no student identities here by design: the merchant has no relationship
+ * with the student until a redemption exists, and neither does this queue.
+ */
+export interface AdminChallengeDTO {
+  id: number
+  name: string
+  description: string | null
+  prizeReps: number
+  requirementMode: ChallengeRequirementMode
+  requiredCount: number | null
+  active: boolean
+  validFrom: string | null
+  validTo: string | null
+  maxGrants: number | null
+  grantedCount: number
+  approvalStatus: ProductApprovalStatus
+  rejectionReason: string | null
+  /** Null = challenge loaded by the platform itself. */
+  brandId: number | null
+  brandName: string | null
+  requirements: ChallengeRequirementDTO[]
+  createdAt: string
+  updatedAt: string
 }

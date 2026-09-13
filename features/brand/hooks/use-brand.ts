@@ -7,7 +7,12 @@ import { userMessage, type FailureContext } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
 
 import { brandRepository } from "../api/brand.repository"
-import type { ProductApprovalStatus, RedemptionStatus, SaveProductInput } from "../dto/brand.dto"
+import type {
+  ProductApprovalStatus,
+  RedemptionStatus,
+  SaveChallengeInput,
+  SaveProductInput,
+} from "../dto/brand.dto"
 
 export function useBrandProfile() {
   return useQuery({
@@ -141,6 +146,62 @@ export function useUpdateBrandProfile() {
     (input: Parameters<typeof brandRepository.updateProfile>[0]) =>
       brandRepository.updateProfile(input),
     () => "Perfil actualizado.",
+    "save",
+  )
+}
+
+// ── Reward challenges ──────────────────────────────────────────────────────
+
+export function useBrandChallenges(status?: ProductApprovalStatus) {
+  return useQuery({
+    queryKey: qk.brand.challenges(status),
+    queryFn: () => brandRepository.challenges(status),
+  })
+}
+
+export function useBrandChallenge(id: number) {
+  return useQuery({
+    queryKey: qk.brand.challenge(id),
+    queryFn: () => brandRepository.challenge(id),
+    enabled: Number.isFinite(id),
+  })
+}
+
+export function useCreateChallenge() {
+  return useBrandMutation(
+    (input: SaveChallengeInput) => brandRepository.createChallenge(input),
+    () => "Recompensa creada como borrador. Revisá los requisitos y enviala a revisión.",
+    "save",
+  )
+}
+
+export function useUpdateChallenge() {
+  return useBrandMutation(
+    ({ id, input }: { id: number; input: SaveChallengeInput }) =>
+      brandRepository.updateChallenge(id, input),
+    (challenge) =>
+      challenge.approvalStatus === "PENDING_APPROVAL"
+        ? "Guardada. Como cambiaste la oferta, vuelve a revisión."
+        : "Recompensa guardada.",
+    "save",
+  )
+}
+
+export function useSubmitChallenge() {
+  return useBrandMutation(
+    (id: number) => brandRepository.submitChallenge(id),
+    (challenge) =>
+      challenge.approvalStatus === "APPROVED"
+        ? "Recompensa publicada."
+        : "Enviada a revisión. Te avisamos cuando la aprobemos.",
+    "send",
+  )
+}
+
+export function useSetChallengeActive() {
+  return useBrandMutation(
+    ({ id, active }: { id: number; active: boolean }) => brandRepository.setChallengeActive(id, active),
+    (challenge) => (challenge.active ? "Recompensa reanudada." : "Recompensa pausada."),
     "save",
   )
 }

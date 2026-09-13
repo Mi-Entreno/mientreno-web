@@ -11,7 +11,7 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href)
 }
 
-/** Four entries fit comfortably on a 360 px screen; the trainer's five is the ceiling. */
+/** Five entries is the ceiling on a 360 px screen — the same as the trainer's. */
 export function BrandBottomNav() {
   const pathname = usePathname()
 
