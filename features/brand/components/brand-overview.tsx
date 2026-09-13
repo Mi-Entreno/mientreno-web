@@ -48,23 +48,23 @@ export function BrandOverview() {
         />
         <StatCard
           icon={Gift}
-          label="Productos publicados"
+          label="Recompensas publicadas"
           value={live}
-          href="/comercio/productos"
+          href="/comercio/recompensas"
           loading={loading}
         />
         <StatCard
           icon={AlertTriangle}
           label="En revisión"
           value={inReview}
-          href="/comercio/productos"
+          href="/comercio/recompensas"
           loading={loading}
         />
         <StatCard
           icon={PackageX}
           label="Sin stock"
           value={outOfStock}
-          href="/comercio/productos"
+          href="/comercio/recompensas"
           loading={loading}
         />
       </div>
@@ -74,8 +74,8 @@ export function BrandOverview() {
           <CardHeader>
             <CardTitle className="text-body-lg">
               {rejected === 1
-                ? "Tenés un producto rechazado"
-                : `Tenés ${rejected} productos rechazados`}
+                ? "Tenés una recompensa rechazada"
+                : `Tenés ${rejected} recompensas rechazadas`}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-start gap-3">
@@ -83,7 +83,7 @@ export function BrandOverview() {
               Cada uno tiene el motivo del rechazo. Corregilo y volvé a enviarlo a revisión.
             </p>
             <Link
-              href="/comercio/productos?estado=REJECTED"
+              href="/comercio/recompensas?estado=REJECTED"
               className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
             >
               Ver cuáles
@@ -98,9 +98,9 @@ export function BrandOverview() {
         </CardHeader>
         <CardContent className="text-body text-muted-foreground">
           <ol className="flex list-decimal flex-col gap-1.5 pl-4">
-            <li>Cargás un producto con su foto, su costo en repes y su stock.</li>
-            <li>Lo enviás a revisión. Cuando lo aprobamos, aparece en el catálogo de los alumnos.</li>
-            <li>Un alumno lo canjea y el canje te llega acá. Lo marcás listo y después entregado.</li>
+            <li>Cargás una recompensa con su foto, su costo en repes y su stock.</li>
+            <li>La enviás a revisión. Cuando la aprobamos, aparece en el catálogo de los alumnos.</li>
+            <li>Un alumno la canjea y el canje te llega acá. Lo marcás listo y después entregado.</li>
           </ol>
         </CardContent>
       </Card>

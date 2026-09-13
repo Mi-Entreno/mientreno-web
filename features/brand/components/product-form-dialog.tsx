@@ -37,7 +37,7 @@ const schema = z.object({
 type FormValues = z.input<typeof schema>
 
 /**
- * Alta y edición de un producto.
+ * Alta y edición de una recompensa.
  *
  * El stock se pide en el alta y después se ajusta desde la tabla, por delta:
  * mandar un valor absoluto mientras el backend procesa un canje pisaría el
@@ -108,10 +108,10 @@ export function ProductFormDialog({
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar producto" : "Nuevo producto"}</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar recompensa" : "Nueva recompensa"}</DialogTitle>
           <DialogDescription>
             {isEditing && product.approvalStatus === "APPROVED"
-              ? "Este producto está publicado: al guardar vuelve a revisión, porque cambia lo que se ofrece."
+              ? "Esta recompensa está publicada: al guardar vuelve a revisión, porque cambia lo que se ofrece."
               : "Después vas a poder subirle una foto y enviarlo a revisión."}
           </DialogDescription>
         </DialogHeader>

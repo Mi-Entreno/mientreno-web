@@ -1,8 +1,7 @@
 import { toMediaUrl } from "@/core/http/media"
 
-import type { BrandChallengeDTO, BrandProductDTO, BrandProfileDTO, RedemptionDTO } from "../dto/brand.dto"
+import type { BrandProductDTO, BrandProfileDTO, RedemptionDTO } from "../dto/brand.dto"
 import type { BrandProduct, BrandProfile, Redemption } from "../model/brand.model"
-import type { BrandChallenge } from "../model/challenge.model"
 
 /**
  * DTO → model.
@@ -55,38 +54,5 @@ export function toRedemption(dto: RedemptionDTO): Redemption {
     deliveryNotes: dto.deliveryNotes,
     cancelledReason: dto.cancelledReason,
     createdAt: dto.createdAt,
-  }
-}
-
-/**
- * Challenges carry no media of their own — the brand logo comes from the profile
- * — so this is a straight copy. It exists anyway so the components never see a
- * DTO, which is the rule that keeps a backend rename from reaching the UI.
- */
-export function toBrandChallenge(dto: BrandChallengeDTO): BrandChallenge {
-  return {
-    id: dto.id,
-    name: dto.name,
-    description: dto.description,
-    prizeReps: dto.prizeReps,
-    requirementMode: dto.requirementMode,
-    requiredCount: dto.requiredCount,
-    active: dto.active,
-    validFrom: dto.validFrom,
-    validTo: dto.validTo,
-    maxGrants: dto.maxGrants,
-    grantedCount: dto.grantedCount,
-    editableRequirements: dto.editableRequirements,
-    approvalStatus: dto.approvalStatus,
-    rejectionReason: dto.rejectionReason,
-    requirements: dto.requirements.map((requirement) => ({
-      id: requirement.id,
-      metric: requirement.metric,
-      label: requirement.label,
-      unit: requirement.unit,
-      targetValue: requirement.targetValue,
-      window: requirement.window,
-      windowDays: requirement.windowDays,
-    })),
   }
 }

@@ -141,7 +141,7 @@ export function BrandProfileScreen() {
         return
       }
 
-      toast.success("¡Listo! Ya podés cargar tus productos.")
+      toast.success("¡Listo! Ya podés cargar tus recompensas.")
       router.replace("/comercio")
       router.refresh()
     } catch {
@@ -174,7 +174,7 @@ export function BrandProfileScreen() {
             <CardTitle className="text-body-lg">Completá los datos de tu comercio</CardTitle>
           </CardHeader>
           <CardContent className="text-body text-muted-foreground text-pretty">
-            Con esto ya podés empezar a cargar productos. La dirección de retiro es la que van a ver
+            Con esto ya podés empezar a cargar recompensas. La dirección de retiro es la que van a ver
             los alumnos al canjear.
           </CardContent>
         </Card>
@@ -255,7 +255,7 @@ export function BrandProfileScreen() {
             <Field
               id="displayName"
               label="Nombre comercial"
-              hint="Es el que ven los alumnos en la tarjeta del producto."
+              hint="Es el que ven los alumnos en la tarjeta de la recompensa."
               error={errors.displayName?.message}
             >
               <Input id="displayName" disabled={pending} {...register("displayName")} />
