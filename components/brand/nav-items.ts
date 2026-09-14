@@ -1,26 +1,24 @@
-import { Gift, LayoutDashboard, PackageCheck, Store } from "lucide-react"
+import { LayoutDashboard, PackageCheck, Store, Target } from "lucide-react"
 
 import type { NavItem } from "@/components/dashboard/nav-items"
 
 /**
- * Merchant navigation.
+ * Navegación del comercio.
  *
- * Four entries and no "Ajustes": the merchant panel has one settings surface —
- * the profile — and burying it behind a second menu would be a level of
- * indirection over a single screen.
+ * Cuatro entradas y ningún "Ajustes": el panel tiene una sola superficie de
+ * configuración —el perfil— y esconderla detrás de un segundo menú sería un
+ * nivel de indirección sobre una única pantalla.
  *
- * There used to be a fifth, "Recompensas", for reward challenges. It went away
- * when challenges moved to the admin panel: a challenge **mints** reps, and who
- * mints them has to be whoever answers for the economy. What the merchant offers
- * — the rewards a student redeems, which **spend** reps — is the whole of its job
- * here, so it took over the name.
+ * "Desafíos" reemplaza a la vieja "Recompensas". No es un cambio de nombre: la
+ * recompensa dejó de ser un ítem de catálogo con precio y pasó a ser lo que un
+ * desafío entrega, así que la pantalla donde se la carga es la del desafío.
  *
- * "Canjes" earns a slot for the same reason "Invitaciones" does in the trainer
- * panel: it is a queue. Something is waiting to be handed over.
+ * "Canjes" se gana un lugar por el mismo motivo que "Invitaciones" en el panel
+ * del entrenador: es una cola. Hay algo esperando a ser entregado.
  */
 export const brandNavItems: NavItem[] = [
   { label: "Inicio", href: "/comercio", icon: LayoutDashboard },
-  { label: "Recompensas", href: "/comercio/recompensas", icon: Gift },
+  { label: "Desafíos", href: "/comercio/desafios", icon: Target },
   { label: "Canjes", href: "/comercio/canjes", icon: PackageCheck },
   { label: "Mi comercio", href: "/comercio/perfil", icon: Store },
 ]

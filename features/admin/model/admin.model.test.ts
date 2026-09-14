@@ -1,58 +1,40 @@
 import { describe, expect, it } from "vitest"
 
-import { isPlatformProduct, maxExposure, REVIEW_CHECKLIST } from "./admin.model"
-import type { AdminProduct } from "./admin.model"
+import { canPublish, isMissingPickupAddress, type AdminBrand } from "./admin.model"
 
-const product = (overrides: Partial<AdminProduct> = {}): AdminProduct => ({
-  id: 1,
-  name: "Botella",
-  description: null,
-  imageUrl: null,
-  costReps: 3,
-  stock: 10,
-  active: true,
-  approvalStatus: "PENDING_APPROVAL",
-  rejectionReason: null,
-  brandId: 30,
-  brandName: "Suplementos Norte",
-  updatedAt: "2026-09-01T10:00:00Z",
-  ...overrides,
-})
+function brand(overrides: Partial<AdminBrand> = {}): AdminBrand {
+  return {
+    id: 1,
+    displayName: "Café Central",
+    legalName: null,
+    taxId: null,
+    logoUrl: null,
+    contactEmail: null,
+    contactPhone: null,
+    pickupAddress: "Av. Siempreviva 742",
+    status: "ACTIVE",
+    createdAt: "2026-09-01T10:00:00Z",
+    ...overrides,
+  }
+}
 
-describe("isPlatformProduct", () => {
-  it("is false for a merchant's product", () => {
-    expect(isPlatformProduct(product())).toBe(false)
+describe("canPublish", () => {
+  it("un comercio activo puede publicar", () => {
+    expect(canPublish(brand())).toBe(true)
   })
 
-  it("is true when nobody owns it", () => {
-    // Not a degenerate case: it is how the platform loads its own without
-    // inventing a merchant to represent itself.
-    expect(isPlatformProduct(product({ brandId: null, brandName: null }))).toBe(true)
+  it("uno suspendido no: suspenderlo saca sus desafíos del catálogo", () => {
+    expect(canPublish(brand({ status: "SUSPENDED" }))).toBe(false)
   })
 })
 
-describe("maxExposure", () => {
-  it("multiplies cost by stock", () => {
-    // The number nobody computes until the inventory is gone: 25 reps times
-    // 40 units is a thousand reps of liability.
-    expect(maxExposure(product({ costReps: 25, stock: 40 }))).toBe(1000)
+describe("isMissingPickupAddress", () => {
+  it("sin dirección de retiro el alumno no sabe dónde buscar el premio", () => {
+    expect(isMissingPickupAddress(brand({ pickupAddress: null }))).toBe(true)
+    expect(isMissingPickupAddress(brand({ pickupAddress: "   " }))).toBe(true)
   })
 
-  it("is zero with no stock", () => {
-    expect(maxExposure(product({ stock: 0 }))).toBe(0)
-  })
-
-  it("never goes negative on a corrupt stock value", () => {
-    // The CHECK upstream makes this impossible, but a negative exposure shown
-    // to a moderator would read as if approving *created* reps.
-    expect(maxExposure(product({ stock: -5 }))).toBe(0)
-  })
-})
-
-describe("REVIEW_CHECKLIST", () => {
-  it("leads with the cost", () => {
-    // What moderation exists to prevent is a one-rep prize draining the
-    // economy — not a typo in the description.
-    expect(REVIEW_CHECKLIST[0]).toContain("costo")
+  it("con dirección cargada, no hay nada que marcar", () => {
+    expect(isMissingPickupAddress(brand())).toBe(false)
   })
 })

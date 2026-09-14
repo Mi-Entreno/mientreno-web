@@ -5,18 +5,9 @@ import { toast } from "sonner"
 
 import { qk } from "@/core/http/query-keys"
 import { userMessage } from "@/core/http/user-message"
-import type { BrandStatus, ProductApprovalStatus } from "@/features/brand/dto/brand.dto"
+import type { BrandStatus } from "@/features/brand/dto/brand.dto"
 
 import { adminRepository } from "../api/admin.repository"
-import type { SaveChallengeInput } from "../dto/admin.dto"
-import type { AdminChallenge } from "../model/admin.model"
-
-export function usePendingProducts(status: ProductApprovalStatus = "PENDING_APPROVAL") {
-  return useQuery({
-    queryKey: qk.admin.pendingProducts(status),
-    queryFn: () => adminRepository.pendingProducts(status),
-  })
-}
 
 export function useAdminBrands() {
   return useQuery({
@@ -26,91 +17,12 @@ export function useAdminBrands() {
 }
 
 /**
- * Moderating invalidates both namespaces.
+ * Suspender o reactivar invalida también `challenges`.
  *
- * `admin` because the queue shrank, and `brand` because the merchant's own
- * lists changed — a moderator is often looking at both in the same session
- * while testing.
+ * Un comercio suspendido desaparece del catálogo con todos sus desafíos, así que
+ * cualquier lista de desafíos abierta en otra pestaña está mostrando algo que ya
+ * no es cierto.
  */
-export function useModerateProduct() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: ({
-      productId,
-      status,
-      reason,
-    }: {
-      productId: number
-      status: ProductApprovalStatus
-      reason?: string
-    }) => adminRepository.moderate(productId, status, reason),
-    onSuccess: (product) => {
-      queryClient.invalidateQueries({ queryKey: qk.admin.all })
-      queryClient.invalidateQueries({ queryKey: qk.brand.all })
-      toast.success(
-        product.approvalStatus === "APPROVED"
-          ? `${product.name} ya está en el catálogo.`
-          : `${product.name} fue rechazado. Le avisamos al comercio.`,
-      )
-    },
-    onError: (error) => toast.error(userMessage(error, "save")),
-  })
-}
-
-/**
- * Approves several products under one confirmation.
- *
- * Sequential and not `Promise.all`: each call is a separate write against the
- * same brand's rows, and a burst of parallel ones is how a queue of five turns
- * into a partial, unordered mess upstream. A failure does not abort the rest —
- * the moderator asked for all of them — so the result reports both halves and
- * the toast says exactly what got through.
- */
-export function useBulkApproveProducts() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (productIds: number[]) => {
-      const approved: string[] = []
-      const failed: number[] = []
-
-      for (const productId of productIds) {
-        try {
-          const product = await adminRepository.moderate(productId, "APPROVED")
-          approved.push(product.name)
-        } catch {
-          failed.push(productId)
-        }
-      }
-
-      return { approved, failed }
-    },
-
-    onSuccess: ({ approved, failed }) => {
-      queryClient.invalidateQueries({ queryKey: qk.admin.all })
-      queryClient.invalidateQueries({ queryKey: qk.brand.all })
-
-      if (approved.length > 0) {
-        toast.success(
-          approved.length === 1
-            ? `${approved[0]} ya está en el catálogo.`
-            : `${approved.length} productos ya están en el catálogo.`,
-        )
-      }
-      if (failed.length > 0) {
-        toast.error(
-          failed.length === 1
-            ? "Un producto no se pudo aprobar. Siguen en la cola."
-            : `${failed.length} productos no se pudieron aprobar. Siguen en la cola.`,
-        )
-      }
-    },
-
-    onError: (error) => toast.error(userMessage(error, "save")),
-  })
-}
-
 export function useSetBrandStatus() {
   const queryClient = useQueryClient()
 
@@ -119,103 +31,13 @@ export function useSetBrandStatus() {
       adminRepository.setBrandStatus(brandId, status),
     onSuccess: (brand) => {
       queryClient.invalidateQueries({ queryKey: qk.admin.all })
+      queryClient.invalidateQueries({ queryKey: qk.challenges.all })
       toast.success(
         brand.status === "SUSPENDED"
-          ? `${brand.displayName} quedó suspendido. Sus productos ya no aparecen en el catálogo.`
-          : `${brand.displayName} vuelve a estar activo.`,
+          ? "Comercio suspendido. Sus desafíos ya no aparecen en la app."
+          : "Comercio reactivado.",
       )
     },
     onError: (error) => toast.error(userMessage(error, "save")),
   })
-}
-
-// ── Desafíos ───────────────────────────────────────────────────────────────
-// Las mutaciones invalidan sólo `qk.admin.all` y no también `brand`: un desafío no
-// aparece en ninguna lista del comercio. Es la diferencia con `useModerateProduct`,
-// que sí toca las dos porque el producto es del comercio.
-
-export function useAdminChallenges(status?: ProductApprovalStatus) {
-  return useQuery({
-    queryKey: qk.admin.challenges(status),
-    queryFn: () => adminRepository.challenges(status),
-  })
-}
-
-export function useAdminChallenge(id: number) {
-  return useQuery({
-    queryKey: qk.admin.challenge(id),
-    queryFn: () => adminRepository.challenge(id),
-    enabled: Number.isFinite(id),
-  })
-}
-
-/**
- * Una mutación de desafío: invalida la zona y avisa con el nombre.
- *
- * Extraído porque los cinco hooks de abajo hacen exactamente lo mismo y sólo cambia
- * la llamada y el texto — el mismo patrón que `useBrandMutation` del panel del
- * comercio.
- */
-function useChallengeMutation<TInput>(
-  mutationFn: (input: TInput) => Promise<AdminChallenge>,
-  message: (challenge: AdminChallenge) => string,
-  context: Parameters<typeof userMessage>[1],
-) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn,
-    onSuccess: (challenge) => {
-      queryClient.invalidateQueries({ queryKey: qk.admin.all })
-      toast.success(message(challenge))
-    },
-    onError: (error) => toast.error(userMessage(error, context)),
-  })
-}
-
-export function useCreateChallenge() {
-  return useChallengeMutation(
-    (input: SaveChallengeInput) => adminRepository.createChallenge(input),
-    () => "Desafío creado como borrador. Revisá los requisitos y publicalo.",
-    "save",
-  )
-}
-
-export function useUpdateChallenge() {
-  return useChallengeMutation(
-    ({ id, input }: { id: number; input: SaveChallengeInput }) =>
-      adminRepository.updateChallenge(id, input),
-    (challenge) =>
-      // Editar uno publicado lo deja publicado: no hay revisión que la edición
-      // invalide, así que no hay nada que avisar más que el guardado.
-      challenge.approvalStatus === "APPROVED"
-        ? "Desafío guardado. Sigue publicado."
-        : "Desafío guardado.",
-    "save",
-  )
-}
-
-export function usePublishChallenge() {
-  return useChallengeMutation(
-    (id: number) => adminRepository.publishChallenge(id),
-    (challenge) => `${challenge.name} ya está publicado: los alumnos pueden empezar a cumplirlo.`,
-    "save",
-  )
-}
-
-export function useUnpublishChallenge() {
-  return useChallengeMutation(
-    (id: number) => adminRepository.unpublishChallenge(id),
-    (challenge) => `${challenge.name} volvió a borrador.`,
-    "save",
-  )
-}
-
-export function useSetChallengeActive() {
-  return useChallengeMutation(
-    ({ id, active }: { id: number; active: boolean }) =>
-      adminRepository.setChallengeActive(id, active),
-    (challenge) => (challenge.active ? "Desafío reanudado." : "Desafío pausado."),
-    "save",
-  )
 }
