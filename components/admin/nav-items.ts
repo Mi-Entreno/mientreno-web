@@ -1,20 +1,16 @@
-import { ShieldCheck, Store, Trophy } from "lucide-react"
+import { Store } from "lucide-react"
 
 import type { NavItem } from "@/components/dashboard/nav-items"
 
 /**
- * Moderation navigation. Three entries, and no "Inicio".
+ * Navegación de administración. Una sola entrada, y el padrón es la home.
  *
- * The queue *is* the home: an admin opens this zone to resolve what is waiting,
- * not to read a summary of it. A dashboard in front of three screens would be a
- * click between the person and their only job.
+ * Había tres: una cola de moderación de productos, el alta de desafíos de la
+ * plataforma y el padrón de comercios. Las dos primeras desaparecieron con el
+ * modelo nuevo — el desafío y su premio son del comercio, que los paga y los
+ * entrega, así que no hay contenido de terceros que aprobar de a uno. Lo que la
+ * plataforma sigue decidiendo es quién puede publicar.
  */
 export const adminNavItems: NavItem[] = [
-  { label: "Revisión", href: "/admin", icon: ShieldCheck },
-  // No es una segunda cola de revisión: es donde se **configuran** los desafíos. Son
-  // la mitad de la economía que acuña repes, y la carga la plataforma justamente para
-  // que no haya nada que revisarle a un tercero. La otra mitad —las recompensas que
-  // publica cada comercio, que las gastan— es la que se revisa en "Revisión".
-  { label: "Desafíos", href: "/admin/desafios", icon: Trophy },
   { label: "Comercios", href: "/admin/comercios", icon: Store },
 ]

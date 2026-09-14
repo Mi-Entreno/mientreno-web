@@ -25,31 +25,41 @@ export const qk = {
   },
 
   /**
-   * Merchant panel. Invalidating `qk.brand.all` reaches the profile, the
-   * products and the redemption inbox — which is what a status change needs,
-   * since approving or delivering moves more than one list.
+   * Merchant panel: identity only.
+   *
+   * The catalogue of products moved out entirely — a reward now lives inside the
+   * challenge that grants it, under `qk.challenges`.
    */
   brand: {
     all: ["brand"] as const,
     profile: ["brand", "profile"] as const,
-    products: (status?: string) => ["brand", "products", status ?? "all"] as const,
-    product: (id: number) => ["brand", "products", "detail", id] as const,
-    redemptions: (status?: string) => ["brand", "redemptions", status ?? "all"] as const,
   },
 
   /**
-   * Zona de administración. Namespace propio y no un rincón de `brand`: aprobar un
-   * producto invalida también las listas del comercio, pero esto lo lee otra persona
-   * en otra pantalla.
+   * Zona de administración.
    *
-   * Los desafíos viven acá y no en `brand` desde la V52: los carga el admin.
+   * Namespace propio y no un rincón de `brand`: lo lee otra persona en otra
+   * pantalla. Quedó reducido al padrón de comercios — los desafíos volvieron al
+   * comercio, que ahora pone el premio, y la cola de moderación desapareció con
+   * el catálogo de productos.
    */
   admin: {
     all: ["admin"] as const,
-    pendingProducts: (status?: string) => ["admin", "products", status ?? "PENDING_APPROVAL"] as const,
-    challenges: (status?: string) => ["admin", "challenges", status ?? "all"] as const,
-    challenge: (id: number) => ["admin", "challenges", "detail", id] as const,
     brands: ["admin", "brands"] as const,
+  },
+
+  /**
+   * Desafíos del comercio. Namespace propio y no parte de `brand` porque un
+   * desafío arrastra sus participantes y sus canjes: invalidar `qk.challenges.all`
+   * después de publicar o entregar alcanza a las tres listas, y no tiene por qué
+   * refrescar el perfil del comercio.
+   */
+  challenges: {
+    all: ["challenges"] as const,
+    list: (status?: string) => ["challenges", "list", status ?? "all"] as const,
+    detail: (id: number) => ["challenges", "detail", id] as const,
+    participants: (id: number) => ["challenges", "detail", id, "participants"] as const,
+    redemptions: ["challenges", "redemptions"] as const,
   },
 
   students: {

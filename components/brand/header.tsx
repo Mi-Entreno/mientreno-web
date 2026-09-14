@@ -8,13 +8,13 @@ import { useLogout } from "@/features/auth/hooks/use-auth-actions"
 
 const TITLES: Record<string, string> = {
   "/comercio": "Inicio",
-  "/comercio/recompensas": "Recompensas",
+  "/comercio/desafios": "Desafíos",
   "/comercio/canjes": "Canjes",
   "/comercio/perfil": "Mi comercio",
 }
 
 function titleFor(pathname: string) {
-  if (pathname.startsWith("/comercio/recompensas/")) return "Detalle de la recompensa"
+  if (pathname.startsWith("/comercio/desafios/")) return "Detalle del desafío"
   return TITLES[pathname] ?? "Inicio"
 }
 

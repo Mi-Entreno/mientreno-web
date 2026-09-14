@@ -61,7 +61,7 @@ export function PrivacyPolicy() {
         <p>
           <strong>Datos de comercios:</strong> información comercial, productos,
           imágenes, descripciones, precios, stock y demás información necesaria
-          para administrar el catálogo de recompensas.
+          para administrar sus desafíos y las recompensas que ofrecen.
         </p>
 
         <p>
@@ -122,9 +122,9 @@ export function PrivacyPolicy() {
 
           <li>Registrar y mostrar la actividad y progreso de entrenamiento.</li>
 
-          <li>Calcular puntos y gestionar la conversión de puntos en repes.</li>
+          <li>Calcular el progreso de los desafíos que el alumno acepta.</li>
 
-          <li>Permitir el canje de repes por productos o beneficios.</li>
+          <li>Permitir el canje de las recompensas desbloqueadas.</li>
 
           <li>Procesar pagos y gestionar suscripciones cuando corresponda.</li>
 
@@ -295,17 +295,17 @@ export function PrivacyPolicy() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Puntos y repes">
+      <LegalSection title="Desafíos y recompensas">
         <p>
-          Mi Entreno registra las actividades necesarias para calcular los
-          puntos obtenidos por los usuarios de acuerdo con las reglas vigentes
-          del sistema de recompensas.
+          Mi Entreno registra las actividades de entrenamiento necesarias para
+          calcular el progreso de los desafíos que cada alumno acepta, de acuerdo
+          con las condiciones que cada desafío establece.
         </p>
 
         <p>
-          También podemos registrar el saldo de puntos, las conversiones
-          realizadas a repes, los canjes efectuados y el historial necesario
-          para administrar el programa.
+          También registramos qué desafíos aceptó cada usuario, cuándo los
+          completó, las recompensas desbloqueadas y los canjes efectuados, junto
+          con el historial necesario para administrar el programa.
         </p>
 
         <p>
@@ -357,7 +357,7 @@ export function PrivacyPolicy() {
 
         <p>
           La eliminación de la cuenta puede implicar la eliminación de tu
-          perfil, historial de entrenamientos, progreso, puntos, repes y otros
+          perfil, historial de entrenamientos, progreso, desafíos, recompensas y otros
           datos asociados a la cuenta, cuando legalmente corresponda.
         </p>
 
