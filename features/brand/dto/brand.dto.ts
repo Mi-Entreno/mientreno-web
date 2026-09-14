@@ -1,20 +1,12 @@
 /**
- * Literal mirrors of the backend DTOs.
+ * Literal mirror of `brand/dto/response/BrandProfileResponseDTO.java`.
  *
- * Sources: `brand/dto/response/BrandProfileResponseDTO.java`,
- * `rewards/dto/response/BrandRewardProductResponseDTO.java` and
- * `rewards/dto/response/RedemptionResponseDTO.java`.
- *
- * The challenge types used to live here too. They moved to `features/admin` when
- * challenges became the platform's: a challenge mints reps, a product spends them,
- * and only the second half is the merchant's.
+ * The product and redemption shapes left with the currency: a reward is not a
+ * catalogue item any more, it is what a challenge hands over, and it lives in
+ * `features/challenges`.
  */
 
 export type BrandStatus = "ACTIVE" | "SUSPENDED"
-
-export type ProductApprovalStatus = "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED"
-
-export type RedemptionStatus = "PENDING" | "READY" | "DELIVERED" | "CANCELLED"
 
 export interface BrandProfileDTO {
   id: number
@@ -29,53 +21,6 @@ export interface BrandProfileDTO {
   pickupNotes: string | null
   status: BrandStatus
   createdAt: string
-}
-
-export interface BrandProductDTO {
-  id: number
-  name: string
-  description: string | null
-  imageUrl: string | null
-  costReps: number
-  stock: number
-  active: boolean
-  sortOrder: number
-  approvalStatus: ProductApprovalStatus
-  rejectionReason: string | null
-  canSubmit: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface RedemptionStatusChangeDTO {
-  from: RedemptionStatus | null
-  to: RedemptionStatus
-  reason: string | null
-  at: string
-}
-
-export interface RedemptionDTO {
-  id: number
-  productId: number | null
-  productName: string
-  productImageUrl: string | null
-  quantity: number
-  totalCostReps: number
-  status: RedemptionStatus
-  deliveryNotes: string | null
-  cancelledReason: string | null
-  canCancel: boolean
-  createdAt: string
-  history: RedemptionStatusChangeDTO[]
-}
-
-export interface SaveProductInput {
-  name: string
-  description?: string
-  costReps: number
-  stock: number
-  active?: boolean
-  sortOrder?: number
 }
 
 export interface CompleteBrandProfileInput {

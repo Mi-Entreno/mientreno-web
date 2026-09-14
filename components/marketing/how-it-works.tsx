@@ -3,25 +3,25 @@ import { Dumbbell, Gift, Trophy } from "lucide-react"
 /**
  * El ciclo completo del producto, en tres pasos.
  *
- * <p>Está numerado porque es una secuencia real: sin entrenar no hay repes, y
- * sin repes no hay canje. El número dice algo verdadero sobre el contenido, no
+ * <p>Está numerado porque es una secuencia real: sin aceptar no hay progreso, y
+ * sin completar no hay premio. El número dice algo verdadero sobre el contenido, no
  * lo decora.</p>
  */
 const STEPS = [
   {
     icon: Dumbbell,
     title: "Entrená",
-    copy: "Con el plan de tu entrenador o con el tuyo propio. Cada entrenamiento que cuenta suma puntos.",
+    copy: "Con el plan de tu entrenador o con el tuyo propio. Cada entrenamiento que cuenta avanza tus desafíos.",
   },
   {
     icon: Trophy,
-    title: "Sumá repes",
-    copy: "Los puntos se convierten solos en repes, la moneda de la app. La constancia semanal suma un extra.",
+    title: "Aceptá un desafío",
+    copy: "Los comercios proponen objetivos con premio: entrená cinco días, levantá 5.000 kg. Elegís cuál querés.",
   },
   {
     icon: Gift,
-    title: "Canjeá",
-    copy: "Elegí un producto del catálogo y retiralo en el comercio. Las repes se descuentan al confirmar.",
+    title: "Llevate el premio",
+    copy: "Al completarlo se desbloquea la recompensa. Mostrás el código en el comercio y la retirás.",
   },
 ]
 

@@ -20,6 +20,14 @@ interface ConfirmDialogProps {
   destructive?: boolean
   loading?: boolean
   onConfirm: () => void
+  /**
+   * Un campo que la confirmación necesita, si lo necesita.
+   *
+   * "Agregar unidades" es confirmar *y* decir cuántas: sin esto haría falta un
+   * diálogo propio para pedir un solo número, que es la forma de terminar con
+   * dos componentes que se parecen y se comportan distinto.
+   */
+  children?: React.ReactNode
 }
 
 export function ConfirmDialog({
@@ -31,6 +39,7 @@ export function ConfirmDialog({
   destructive,
   loading,
   onConfirm,
+  children,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -39,6 +48,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="text-pretty">{description}</DialogDescription>
         </DialogHeader>
+        {children && <div className="flex flex-col gap-3">{children}</div>}
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             Cancelar

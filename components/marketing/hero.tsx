@@ -61,9 +61,9 @@ export function MarketingHero() {
           Entrená. Controlá. <span className="text-brand-green">Crecé.</span>
         </h1>
         <p className="mt-5 max-w-xl text-body-lg text-white/75 text-pretty">
-          Mi Entreno conecta a los alumnos con su entrenador y premia la constancia: cada
-          entrenamiento suma puntos que se convierten en repes, y las repes se canjean por
-          productos reales.
+          Mi Entreno conecta a los alumnos con su entrenador y premia la constancia: los
+          comercios proponen desafíos con recompensa, y lo que entrenás te acerca a un premio
+          real.
         </p>
 
         {/* Los dos CTA son el par que la portada tiene que ofrecer: crear cuenta,

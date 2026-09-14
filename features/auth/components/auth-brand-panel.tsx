@@ -44,11 +44,11 @@ export const NEUTRAL_BRAND: AuthBrandCopy = {
       <span className="text-brand-green">Crecé.</span>
     </>
   ),
-  copy: "Mi Entreno conecta a los alumnos con su entrenador y premia la constancia: cada entrenamiento suma puntos que se convierten en repes, y las repes se canjean por productos reales.",
+  copy: "Mi Entreno conecta a los alumnos con su entrenador y premia la constancia: los comercios proponen desafíos con recompensa, y lo que el alumno entrena lo acerca a un premio real.",
   features: [
     { icon: Dumbbell, label: "Planes de entrenamiento y nutrición" },
     { icon: Users, label: "El progreso de cada alumno, al día" },
-    { icon: Gift, label: "Repes que se canjean por productos reales" },
+    { icon: Gift, label: "Desafíos con premio, puestos por comercios" },
     { icon: Store, label: "Comercios que ponen los premios" },
   ],
   note: "© 2026 JJTECH",
@@ -73,7 +73,7 @@ export const TRAINER_BRAND: AuthBrandCopy = {
   note: "© 2026 JJTECH",
 }
 
-/** El otro público: un comercio que aporta premios al catálogo de canjes. */
+/** El otro público: un comercio que propone desafíos y pone el premio. */
 export const MERCHANT_BRAND: AuthBrandCopy = {
   headline: (
     <>
@@ -82,10 +82,10 @@ export const MERCHANT_BRAND: AuthBrandCopy = {
       <span className="text-brand-green">su motivación.</span>
     </>
   ),
-  copy: "Sumá tus productos al catálogo de premios. Los alumnos los canjean con las repes que ganan entrenando, y vos llegás a gente que ya está en movimiento.",
+  copy: "Proponé un desafío con su premio. Los alumnos lo aceptan, entrenan para cumplirlo y pasan por tu local a retirarlo.",
   features: [
     { icon: Store, label: "Cargá tus productos y su stock" },
-    { icon: Gift, label: "Los alumnos los canjean con repes" },
+    { icon: Gift, label: "El premio lo ponés vos, y se retira en tu local" },
     { icon: PackageCheck, label: "Gestioná las entregas desde tu panel" },
     { icon: Users, label: "Llegá a una audiencia que ya entrena" },
   ],

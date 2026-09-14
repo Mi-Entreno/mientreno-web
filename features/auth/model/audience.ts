@@ -56,7 +56,7 @@ export const BRAND_AUDIENCE: AudienceCopy = {
   loginTitle: "Iniciá sesión como comercio",
   loginDescription: "Cargá tus productos y seguí las entregas desde tu panel.",
   registerTitle: "Registrá tu comercio",
-  registerDescription: "Sumá tus productos al catálogo de premios de Mi Entreno.",
+  registerDescription: "Proponé desafíos con premio y llegá a alumnos que ya están entrenando.",
   loginHref: "/comercio/login",
   registerHref: "/comercio/register",
   registerEndpoint: "/auth/brand/register",

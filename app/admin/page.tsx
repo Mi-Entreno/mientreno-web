@@ -1,9 +1,13 @@
-import { ModerationQueue } from "@/features/admin/components/moderation-queue"
+import { BrandsList } from "@/features/admin/components/brands-list"
 
 /**
- * La cola *es* la home de esta zona: un admin entra a resolver lo que está
- * esperando, no a leer un resumen de ello.
+ * El padrón *es* la home de esta zona.
+ *
+ * Antes lo era la cola de moderación: los productos los cargaba un tercero y
+ * alguien tenía que aprobarlos uno por uno. Con el desafío y su premio en manos
+ * del comercio no hay nada que revisar de a uno, y lo que le queda a la
+ * plataforma es decidir quién puede publicar.
  */
 export default function AdminPage() {
-  return <ModerationQueue />
+  return <BrandsList />
 }

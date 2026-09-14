@@ -65,7 +65,7 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
     title: "Términos y condiciones",
     shortTitle: "Términos y condiciones",
     description:
-      "Las reglas de uso de Mi Entreno: qué ofrecemos, qué esperamos de vos y cómo funcionan las cuentas, los cobros y las repes.",
+      "Las reglas de uso de Mi Entreno: qué ofrecemos, qué esperamos de vos y cómo funcionan las cuentas, los cobros y los desafíos con recompensa.",
   },
   {
     slug: "cookies",

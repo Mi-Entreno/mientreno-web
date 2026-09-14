@@ -14,11 +14,10 @@ export function TermsOfService() {
         </p>
 
         <p>
-          Mi Entreno también cuenta con un sistema de recompensas por
-          constancia: los entrenamientos y determinadas actividades pueden
-          generar puntos que, de acuerdo con las reglas vigentes del programa,
-          pueden convertirse en repes. Las repes pueden utilizarse para canjear
-          productos o beneficios ofrecidos dentro de la plataforma.
+          Mi Entreno también cuenta con un sistema de desafíos con recompensa por
+          constancia: los comercios adheridos proponen objetivos de
+          entrenamiento y, al completarlos dentro del período de vigencia, el
+          alumno obtiene la recompensa asociada a ese desafío.
         </p>
 
         <p>
@@ -193,80 +192,58 @@ export function TermsOfService() {
         </p>
       </LegalSection>
 
-      <LegalSection title="Puntos y repes">
+      <LegalSection title="Desafíos y recompensas">
         <p>
-          Mi Entreno cuenta con un sistema de recompensas mediante el cual los
-          usuarios pueden obtener puntos por realizar entrenamientos, mantener
-          su constancia y participar en determinadas actividades de la
-          plataforma.
+          Mi Entreno cuenta con un sistema de desafíos mediante el cual los
+          comercios adheridos proponen objetivos de entrenamiento y ofrecen una
+          recompensa a quienes los completan.
         </p>
 
         <p>
-          La cantidad de puntos otorgada por cada actividad y las condiciones
-          para obtenerlos pueden variar de acuerdo con las reglas vigentes del
-          programa.
+          Cada desafío indica las condiciones que hay que cumplir, el período
+          durante el cual puede aceptarse y completarse, la recompensa asociada y
+          la cantidad de unidades disponibles. Esas condiciones son las que rigen
+          para quien lo acepta, incluso si el comercio modifica o da de baja el
+          desafío después.
         </p>
 
         <p>
-          Los puntos no son dinero, no constituyen moneda de curso legal, no
-          generan intereses y no pueden cambiarse por efectivo, salvo que Mi
-          Entreno establezca expresamente lo contrario.
+          Aceptar un desafío no garantiza obtener la recompensa: es necesario
+          cumplir las condiciones dentro del período de vigencia. Mi Entreno
+          puede establecer un límite máximo de desafíos que un usuario puede
+          aceptar por mes calendario, informado dentro de la aplicación.
         </p>
 
         <p>
-          Los puntos pueden convertirse en repes de acuerdo con la relación de
-          conversión vigente en la plataforma.
+          Las recompensas no son dinero, no constituyen moneda de curso legal, no
+          generan intereses, no pueden cambiarse por efectivo y no pueden
+          venderse, transferirse ni intercambiarse entre cuentas, salvo que Mi
+          Entreno habilite expresamente una funcionalidad para hacerlo.
         </p>
 
         <p>
-          Las repes son unidades virtuales de recompensa utilizadas dentro de Mi
-          Entreno. No son dinero, no tienen valor monetario fuera de la
-          plataforma, no generan intereses y no pueden retirarse como efectivo.
+          Cada recompensa tiene una fecha de vencimiento propia, que puede ser
+          posterior a la del desafío. Una vez desbloqueada, debe canjearse antes
+          de esa fecha; vencida, la recompensa deja de estar disponible.
         </p>
 
         <p>
-          Salvo que Mi Entreno habilite expresamente una funcionalidad para
-          hacerlo, los puntos y las repes no pueden venderse, transferirse ni
-          intercambiarse entre cuentas.
+          Las recompensas publicadas por comercios adheridos son responsabilidad
+          del comercio que las ofrece, incluyendo su disponibilidad,
+          características, entrega, garantía y servicio posventa. El canje se
+          realiza presentando en el comercio el código que la aplicación entrega
+          al alumno.
         </p>
 
         <p>
-          Podemos corregir puntos o repes asignados por error, duplicaciones,
-          problemas técnicos, fraude o manipulación del sistema.
-        </p>
-      </LegalSection>
-
-      <LegalSection title="Canje de repes y productos">
-        <p>
-          Las repes pueden utilizarse para canjear productos, descuentos,
-          beneficios u otras recompensas disponibles dentro de Mi Entreno.
-        </p>
-
-        <p>
-          Cada producto puede requerir una determinada cantidad de repes y estar
-          sujeto a disponibilidad, stock, ubicación, condiciones de entrega y
-          otras condiciones informadas en el momento del canje.
-        </p>
-
-        <p>
-          Los productos publicados por comercios adheridos son responsabilidad
-          del comercio que los ofrece, incluyendo, cuando corresponda, su
-          disponibilidad, características, entrega, garantía y servicio
-          posventa.
-        </p>
-
-        <p>
-          Mi Entreno puede modificar el catálogo de productos y la cantidad de
-          repes necesaria para futuros canjes. Los canjes que ya hayan sido
-          confirmados serán respetados de acuerdo con las condiciones informadas
-          al momento de realizarlos, salvo circunstancias excepcionales o
-          disposiciones legales que establezcan lo contrario.
+          Podemos corregir o anular desafíos y recompensas otorgados por error,
+          duplicaciones, problemas técnicos, fraude o manipulación del sistema.
         </p>
       </LegalSection>
 
-      <LegalSection title="Uso indebido del sistema de recompensas">
+      <LegalSection title="Uso indebido del sistema de desafíos">
         <p>
-          No está permitido manipular el sistema de puntos o repes ni utilizar
+          No está permitido manipular el sistema de desafíos ni utilizar
           mecanismos destinados a obtener recompensas de manera fraudulenta o no
           autorizada.
         </p>
@@ -276,8 +253,7 @@ export function TermsOfService() {
             Simular entrenamientos o actividades que no fueron realizadas.
           </li>
           <li>
-            Alterar información enviada a Mi Entreno para obtener puntos o
-            repes.
+            Alterar información enviada a Mi Entreno para completar un desafío.
           </li>
           <li>
             Crear múltiples cuentas con el objetivo de obtener beneficios
@@ -292,14 +268,15 @@ export function TermsOfService() {
             recompensas.
           </li>
           <li>
-            Intentar modificar artificialmente el saldo de puntos o repes.
+            Intentar registrar como completado un desafío sin haber cumplido sus
+            condiciones.
           </li>
         </ul>
 
         <p>
           Si detectamos actividad fraudulenta o irregular, podemos investigar el
-          caso y anular los puntos o repes obtenidos de manera indebida, además
-          de suspender o cancelar la cuenta cuando corresponda.
+          caso y anular las recompensas obtenidas de manera indebida, además de
+          suspender o cancelar la cuenta cuando corresponda.
         </p>
       </LegalSection>
 
@@ -447,7 +424,7 @@ export function TermsOfService() {
         <p>
           La eliminación de una cuenta puede implicar la pérdida de información
           asociada a ella, incluyendo historial de entrenamientos, progreso,
-          puntos, repes y beneficios pendientes, sin perjuicio de las
+          desafíos en curso y recompensas pendientes de canje, sin perjuicio de las
           obligaciones legales de conservación de información que pudieran
           resultar aplicables.
         </p>
