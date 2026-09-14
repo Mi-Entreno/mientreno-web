@@ -8,31 +8,10 @@ import { qk } from "@/core/http/query-keys"
 import { catalogExercisesRepository } from "../api/catalog-exercises.repository"
 import type { CatalogExercise, CatalogSearchParams } from "../model/catalog-exercise.model"
 
-/**
- * Filter options.
- *
- * The catalogue is imported reference data that only changes when the importer
- * runs, so this is cached for the whole session. It also feeds the filter UI,
- * whose values must match the stored strings exactly — the backend compares
- * them with `=`.
- */
-export function useCatalogFilters() {
-  return useQuery({
-    queryKey: qk.catalogExercises.filters,
-    queryFn: () => catalogExercisesRepository.getFilters(),
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
-}
-
 /** Paginated search, flattened for infinite scrolling. */
 export function useCatalogSearch(params: CatalogSearchParams) {
   const query = useInfiniteQuery({
-    queryKey: qk.catalogExercises.search({
-      search: params.search.trim(),
-      muscleGroup: params.muscleGroup,
-      equipment: params.equipment,
-    }),
+    queryKey: qk.catalogExercises.search({ search: params.search.trim() }),
     queryFn: ({ pageParam }) => catalogExercisesRepository.search(params, pageParam),
     initialPageParam: 0,
     getNextPageParam: nextPageParam,

@@ -3,13 +3,8 @@ import { describe, expect, it } from "vitest"
 import type {
   CatalogExerciseDetailDTO,
   CatalogExerciseSummaryDTO,
-  CatalogFilterOptionsDTO,
 } from "../dto/catalog-exercise.dto"
-import {
-  toCatalogExercise,
-  toCatalogExerciseDetail,
-  toCatalogFilterOptions,
-} from "./catalog-exercise.mapper"
+import { toCatalogExercise, toCatalogExerciseDetail } from "./catalog-exercise.mapper"
 
 const SUMMARY: CatalogExerciseSummaryDTO = {
   id: 12,
@@ -64,29 +59,5 @@ describe("toCatalogExerciseDetail", () => {
 
     expect(detail.secondaryMuscles).toEqual([])
     expect(detail.instructions).toBeNull()
-  })
-})
-
-describe("toCatalogFilterOptions", () => {
-  it("passes values through verbatim", () => {
-    // The repository filters with `ce.muscleGroup = :muscleGroup` — exact
-    // equality — so trimming or re-casing here would stop matching anything.
-    const dto: CatalogFilterOptionsDTO = {
-      muscleGroups: ["Chest", "Upper Back"],
-      equipment: ["Barbell", "Cable Machine"],
-    }
-
-    expect(toCatalogFilterOptions(dto).muscleGroups).toEqual(["Chest", "Upper Back"])
-    expect(toCatalogFilterOptions(dto).equipment).toEqual(["Barbell", "Cable Machine"])
-  })
-
-  it("drops blanks and duplicates", () => {
-    const options = toCatalogFilterOptions({
-      muscleGroups: ["Chest", "", "Chest"],
-      equipment: [],
-    })
-
-    expect(options.muscleGroups).toEqual(["Chest"])
-    expect(options.equipment).toEqual([])
   })
 })

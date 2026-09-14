@@ -90,7 +90,6 @@ export const qk = {
 
   catalogExercises: {
     all: ["catalog-exercises"] as const,
-    filters: ["catalog-exercises", "filters"] as const,
     search: (params: Record<string, unknown>) => ["catalog-exercises", "search", params] as const,
     detail: (id: number) => ["catalog-exercises", "detail", id] as const,
   },

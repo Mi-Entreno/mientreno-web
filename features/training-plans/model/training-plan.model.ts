@@ -100,6 +100,93 @@ export interface EditorPlan {
   days: EditorDay[]
 }
 
+// ── Límites e higiene de los campos ──────────────────────────────────────────
+//
+// El editor es un formulario largo con muchos campos libres, y el backend no
+// perdona ninguno de los excesos: pasarse de largo en un texto termina en un
+// `DataIntegrityViolationException` que `GlobalExceptionHandler` traduce a un
+// 409 "Conflicto con un registro existente", y un número negativo en un
+// `@PositiveOrZero` termina en un 400 con la ruta del campo como clave. Ni uno
+// ni otro le dicen al entrenador qué escribió mal, así que los límites viven
+// acá y se aplican mientras se tipea.
+
+/** `TrainingPlan.title`, `@Column(nullable = false, length = 150)`. */
+export const PLAN_TITLE_MAX_LENGTH = 150
+
+/** `TrainingDay.label`, `@Column(length = 100)`. */
+export const DAY_LABEL_MAX_LENGTH = 100
+
+/** `Exercise.name`, `@Column(nullable = false, length = 150)`. */
+export const EXERCISE_NAME_MAX_LENGTH = 150
+
+/** Más que esto en una serie es un error de tipeo, no un objetivo. */
+export const MAX_SETS = 12
+
+/** `ExerciseSet.targetReps` es `@PositiveOrZero Integer`. */
+export const MAX_REPS_DIGITS = 3
+
+/** `restSeconds` y `durationSeconds` son `Integer`: 9999 s son casi tres horas. */
+export const MAX_SECONDS_DIGITS = 4
+
+/** `ExerciseSet.targetWeightValue` es `@Column(precision = 6, scale = 2)`. */
+export const MAX_WEIGHT_INTEGER_DIGITS = 4
+export const MAX_WEIGHT_DECIMALS = 2
+
+/**
+ * Un entero tecleado a mano: sólo dígitos, sin signo ni separadores.
+ *
+ * Filtra mientras se escribe en vez de avisar al publicar porque lo que se
+ * colaba no daba error sino silencio: `toNumberOrNull` hace `Number("10-12")`,
+ * eso es `NaN`, y el mapper lo manda como `null`. El entrenador escribía un
+ * rango de repeticiones, publicaba sin ninguna advertencia y el alumno recibía
+ * el ejercicio sin objetivo. Un "-3", en cambio, sí es un 400 contra
+ * `@PositiveOrZero`.
+ */
+export function sanitizeInteger(value: string, maxDigits: number): string {
+  return value.replace(/\D/g, "").slice(0, maxDigits)
+}
+
+/**
+ * Un peso: dígitos, un único separador decimal y dos decimales.
+ *
+ * La coma se normaliza a punto —se teclea en el numpad y es lo natural en
+ * castellano— y el entero se corta en cuatro dígitos: la columna es
+ * `numeric(6,2)`, así que 10000 kg no es un 400 sino el 409 opaco de arriba.
+ */
+export function sanitizeDecimal(value: string): string {
+  const [whole = "", ...rest] = value
+    .replace(/[^\d.,]/g, "")
+    .replace(/,/g, ".")
+    .split(".")
+
+  const head = whole.slice(0, MAX_WEIGHT_INTEGER_DIGITS)
+  if (rest.length === 0) return head
+
+  // El punto se conserva aunque todavía no haya decimales: si no, escribir
+  // "80." borraría el separador en el mismo momento de teclearlo.
+  return `${head}.${rest.join("").slice(0, MAX_WEIGHT_DECIMALS)}`
+}
+
+/**
+ * Qué le falta a un ejercicio para poder guardarse, o null si está completo.
+ *
+ * Espeja lo que rechaza el backend, en el orden en que lo rechaza:
+ * `resolveExerciseName` tira 400 si no hay ni nombre ni ejercicio de catálogo.
+ * La unidad de peso no es un 400 —se guarda en null— pero deja al alumno un
+ * número sin unidad, que es peor que el error.
+ */
+export function exerciseIssue(exercise: EditorExercise): string | null {
+  if (!exercise.name.trim() && exercise.catalogExerciseId === null) {
+    return "Este ejercicio necesita un nombre"
+  }
+
+  if (exercise.weightUnit === "" && exercise.sets.some((set) => set.weightValue.trim())) {
+    return "Elegí la unidad del peso: kg, lb o peso corporal"
+  }
+
+  return null
+}
+
 export const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: "KG", label: "kg" },
   { value: "LB", label: "lb" },

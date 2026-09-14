@@ -8,10 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
-import { WEIGHT_UNITS, resizeSets, type EditorExercise, type WeightUnit } from "../model/training-plan.model"
-
-/** Upper bound for the set count input; beyond this it is a data-entry slip. */
-const MAX_SETS = 12
+import {
+  EXERCISE_NAME_MAX_LENGTH,
+  MAX_REPS_DIGITS,
+  MAX_SECONDS_DIGITS,
+  MAX_SETS,
+  WEIGHT_UNITS,
+  resizeSets,
+  sanitizeDecimal,
+  sanitizeInteger,
+  type EditorExercise,
+  type WeightUnit,
+} from "../model/training-plan.model"
 
 interface ExerciseRowEditorProps {
   exercise: EditorExercise
@@ -59,6 +67,7 @@ export function ExerciseRowEditor({
           <Input
             value={exercise.name}
             disabled={disabled}
+            maxLength={EXERCISE_NAME_MAX_LENGTH}
             aria-label={`Nombre del ejercicio ${index + 1}`}
             aria-invalid={error ? true : undefined}
             aria-describedby={errorId}
@@ -159,12 +168,13 @@ export function ExerciseRowEditor({
           id={`${exercise.key}-sets`}
           label="Series"
           value={String(exercise.sets.length)}
+          maxDigits={2}
           disabled={disabled}
           onChange={(value) => {
             const count = Number(value)
             // While the field is empty or out of range the rows are left alone:
             // the trainer is still typing.
-            if (!value || !Number.isInteger(count) || count < 1 || count > MAX_SETS) return
+            if (!value || count < 1 || count > MAX_SETS) return
             onChange({ sets: resizeSets(exercise.sets, count) })
           }}
         />
@@ -172,6 +182,7 @@ export function ExerciseRowEditor({
           id={`${exercise.key}-rest`}
           label="Descanso (s)"
           value={exercise.restSeconds}
+          maxDigits={MAX_SECONDS_DIGITS}
           disabled={disabled}
           onChange={(restSeconds) => onChange({ restSeconds })}
         />
@@ -179,6 +190,7 @@ export function ExerciseRowEditor({
           id={`${exercise.key}-duration`}
           label="Duración (s)"
           value={exercise.durationSeconds}
+          maxDigits={MAX_SECONDS_DIGITS}
           disabled={disabled}
           onChange={(durationSeconds) => onChange({ durationSeconds })}
         />
@@ -254,7 +266,9 @@ export function ExerciseRowEditor({
               onChange={(event) =>
                 onChange({
                   sets: exercise.sets.map((current, position) =>
-                    position === index ? { ...current, reps: event.target.value } : current,
+                    position === index
+                      ? { ...current, reps: sanitizeInteger(event.target.value, MAX_REPS_DIGITS) }
+                      : current,
                   ),
                 })
               }
@@ -268,7 +282,9 @@ export function ExerciseRowEditor({
               onChange={(event) =>
                 onChange({
                   sets: exercise.sets.map((current, position) =>
-                    position === index ? { ...current, weightValue: event.target.value } : current,
+                    position === index
+                      ? { ...current, weightValue: sanitizeDecimal(event.target.value) }
+                      : current,
                   ),
                 })
               }
@@ -292,16 +308,23 @@ export function ExerciseRowEditor({
   )
 }
 
+/**
+ * Un entero sin signo. Sanea en el `onChange` y no sólo al publicar: el mapper
+ * manda `null` ante cualquier cosa que `Number()` no entienda, así que una
+ * letra de más no daba error, daba silencio.
+ */
 function NumberField({
   id,
   label,
   value,
+  maxDigits,
   disabled,
   onChange,
 }: {
   id: string
   label: string
   value: string
+  maxDigits: number
   disabled?: boolean
   onChange: (value: string) => void
 }) {
@@ -313,7 +336,7 @@ function NumberField({
         inputMode="numeric"
         value={value}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(sanitizeInteger(event.target.value, maxDigits))}
       />
     </div>
   )
