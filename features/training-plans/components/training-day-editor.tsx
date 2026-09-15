@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { ExercisePicker, type PickedExercise } from "@/features/catalog-exercises/components/exercise-picker"
 import {
+  DAY_LABEL_MAX_LENGTH,
   cloneExercise,
   emptyExercise,
   nextKey,
@@ -112,6 +113,9 @@ export function TrainingDayEditor({
             id={`${day.key}-label`}
             value={day.label}
             disabled={disabled}
+            // `TrainingDay.label` es `length = 100`: pasarse no da un 400 sino
+            // un 409 "Conflicto con un registro existente".
+            maxLength={DAY_LABEL_MAX_LENGTH}
             placeholder="Torso · Empuje"
             onChange={(event) => onChange({ label: event.target.value })}
           />

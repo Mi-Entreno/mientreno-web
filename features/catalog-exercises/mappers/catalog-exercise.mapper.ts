@@ -1,13 +1,8 @@
 import type {
   CatalogExerciseDetailDTO,
   CatalogExerciseSummaryDTO,
-  CatalogFilterOptionsDTO,
 } from "../dto/catalog-exercise.dto"
-import type {
-  CatalogExercise,
-  CatalogExerciseDetail,
-  CatalogFilterOptions,
-} from "../model/catalog-exercise.model"
+import type { CatalogExercise, CatalogExerciseDetail } from "../model/catalog-exercise.model"
 
 function blankToNull(value: string | null | undefined): string | null {
   const trimmed = value?.trim()
@@ -34,17 +29,5 @@ export function toCatalogExerciseDetail(dto: CatalogExerciseDetailDTO): CatalogE
     secondaryMuscles: [
       ...new Set((dto.secondaryMuscles ?? []).map((item) => item.trim()).filter(Boolean)),
     ],
-  }
-}
-
-/**
- * The filter values are compared with `=` upstream, so they are passed through
- * verbatim — trimming or re-casing them here would silently stop matching.
- * Only blanks and duplicates are dropped.
- */
-export function toCatalogFilterOptions(dto: CatalogFilterOptionsDTO): CatalogFilterOptions {
-  return {
-    muscleGroups: [...new Set((dto.muscleGroups ?? []).filter(Boolean))],
-    equipment: [...new Set((dto.equipment ?? []).filter(Boolean))],
   }
 }

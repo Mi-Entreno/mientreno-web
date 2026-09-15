@@ -1,6 +1,6 @@
 "use client"
 
-import { PencilLine } from "lucide-react"
+import { PencilLine, Search } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -17,8 +17,10 @@ import {
 import { useDebouncedValue } from "@/core/hooks/use-debounced-value"
 import { useCatalogSearch } from "../hooks/use-catalog-exercises"
 import { EMPTY_SEARCH, type CatalogExercise, type CatalogSearchParams } from "../model/catalog-exercise.model"
-import { ExerciseFilters } from "./exercise-filters"
 import { ExerciseList } from "./exercise-list"
+
+/** Mirrors `Exercise.name`, `@Column(length = 150)`. */
+const NAME_MAX_LENGTH = 150
 
 export interface PickedExercise {
   /** Set when chosen from the catalogue; null for a custom exercise. */
@@ -42,6 +44,10 @@ interface ExercisePickerProps {
  * required, and that sending `catalogExerciseId` lets the backend link the
  * catalogue entry and reuse its title. So the catalogue is the primary path and
  * free text is the escape hatch, not the default.
+ *
+ * Búsqueda por nombre y nada más: los filtros por grupo muscular y
+ * equipamiento vivían acá arriba y empujaban la lista fuera de la pantalla
+ * (ver `CatalogSearchParams`).
  */
 export function ExercisePicker({ open, onOpenChange, onPick }: ExercisePickerProps) {
   const [params, setParams] = useState<CatalogSearchParams>(EMPTY_SEARCH)
@@ -49,7 +55,7 @@ export function ExercisePicker({ open, onOpenChange, onPick }: ExercisePickerPro
 
   // Debounced so typing does not fire a request per keystroke.
   const debouncedSearch = useDebouncedValue(params.search, 300)
-  const search = useCatalogSearch({ ...params, search: debouncedSearch })
+  const search = useCatalogSearch({ search: debouncedSearch })
 
   function pickFromCatalogue(exercise: CatalogExercise) {
     onPick({
@@ -82,7 +88,16 @@ export function ExercisePicker({ open, onOpenChange, onPick }: ExercisePickerPro
         </SheetHeader>
 
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-2">
-          <ExerciseFilters value={params} onChange={setParams} />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={params.search}
+              placeholder="Buscar por nombre…"
+              aria-label="Buscar ejercicio"
+              className="pl-9"
+              onChange={(event) => setParams({ search: event.target.value })}
+            />
+          </div>
 
           <ExerciseList
             exercises={search.exercises}
@@ -121,6 +136,7 @@ export function ExercisePicker({ open, onOpenChange, onPick }: ExercisePickerPro
                 <Input
                   id="custom-exercise"
                   value={customName}
+                  maxLength={NAME_MAX_LENGTH}
                   placeholder="Nombre del ejercicio"
                   onChange={(event) => setCustomName(event.target.value)}
                   onKeyDown={(event) => {

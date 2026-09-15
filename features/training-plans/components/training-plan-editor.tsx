@@ -11,9 +11,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { useUnsavedChanges } from "@/core/hooks/use-unsaved-changes"
 import { ApiError, unclaimedFieldErrors } from "@/core/http/errors"
 import {
+  PLAN_TITLE_MAX_LENGTH,
   cloneDay,
   countExercises,
   emptyDay,
+  exerciseIssue,
   type EditorDay,
   type EditorPlan,
 } from "../model/training-plan.model"
@@ -124,26 +126,31 @@ export function TrainingPlanEditor({
     const perExercise: Record<string, string> = {}
 
     if (!value.title.trim()) found.title = "El título es obligatorio"
+    // El input ya corta en 150, pero el título es el único campo que llega
+    // hasta acá desde un plan abierto para editar, que pudo guardarse antes de
+    // este límite.
+    else if (value.title.trim().length > PLAN_TITLE_MAX_LENGTH) {
+      found.title = `El título no puede pasar de ${PLAN_TITLE_MAX_LENGTH} caracteres`
+    }
+
     if (value.days.length === 0) found.days = "El plan necesita al menos un día"
 
-    // Mirrors `resolveExerciseName`, which throws 400 unless an exercise has a
-    // name or a catalogue id. Anchored to the row so the trainer does not have
-    // to hunt for which of thirty exercises is the nameless one.
+    // `exerciseIssue` espeja lo que rechaza el backend. Anclado a la fila para
+    // que el entrenador no tenga que adivinar cuál de treinta ejercicios es.
     for (const day of value.days) {
       if (day.restDay) continue
       for (const exercise of day.exercises) {
-        if (!exercise.name.trim() && exercise.catalogExerciseId === null) {
-          perExercise[exercise.key] = "Este ejercicio necesita un nombre"
-        }
+        const issue = exerciseIssue(exercise)
+        if (issue) perExercise[exercise.key] = issue
       }
     }
 
-    const nameless = Object.keys(perExercise).length
-    if (nameless > 0) {
+    const incomplete = Object.keys(perExercise).length
+    if (incomplete > 0) {
       found.exercises =
-        nameless === 1
-          ? "Hay un ejercicio sin nombre, marcado abajo."
-          : `Hay ${nameless} ejercicios sin nombre, marcados abajo.`
+        incomplete === 1
+          ? "Hay un ejercicio incompleto, marcado abajo."
+          : `Hay ${incomplete} ejercicios incompletos, marcados abajo.`
     }
 
     setErrors(found)
@@ -180,6 +187,8 @@ export function TrainingPlanEditor({
             id="plan-title"
             value={value.title}
             disabled={isPending}
+            // `TrainingPlan.title` es `length = 150`. Ver `PLAN_TITLE_MAX_LENGTH`.
+            maxLength={PLAN_TITLE_MAX_LENGTH}
             aria-invalid={allErrors.title ? true : undefined}
             placeholder="Fuerza · Torso-pierna"
             onChange={(event) => onChange({ ...value, title: event.target.value })}

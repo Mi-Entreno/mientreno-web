@@ -11,15 +11,18 @@ export interface CatalogExerciseDetail extends CatalogExercise {
   secondaryMuscles: string[]
 }
 
-export interface CatalogFilterOptions {
-  muscleGroups: string[]
-  equipment: string[]
-}
-
+/**
+ * Sólo texto libre.
+ *
+ * El catálogo se filtraba además por grupo muscular y equipamiento, con las
+ * opciones que devuelve `/api/catalog-exercises/filters`. Se sacaron del
+ * selector: al armar una rutina el entrenador ya sabe qué ejercicio busca y lo
+ * escribe, y las dos filas de chips empujaban la lista fuera de la pantalla
+ * justo cuando hay que elegir. El endpoint sigue existiendo upstream si alguna
+ * vez hace falta una pantalla de exploración del catálogo.
+ */
 export interface CatalogSearchParams {
   search: string
-  muscleGroup: string | null
-  equipment: string | null
 }
 
 /**
@@ -28,12 +31,4 @@ export interface CatalogSearchParams {
  */
 export const CATALOG_PAGE_SIZE = 24
 
-export const EMPTY_SEARCH: CatalogSearchParams = {
-  search: "",
-  muscleGroup: null,
-  equipment: null,
-}
-
-export function hasActiveFilters(params: CatalogSearchParams): boolean {
-  return Boolean(params.search.trim() || params.muscleGroup || params.equipment)
-}
+export const EMPTY_SEARCH: CatalogSearchParams = { search: "" }

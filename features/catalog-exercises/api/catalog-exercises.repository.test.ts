@@ -32,13 +32,6 @@ const server = setupServer(
     })
   }),
 
-  http.get("*/api/backend/api/catalog-exercises/filters", () =>
-    HttpResponse.json({
-      muscleGroups: ["Chest", "Upper Back"],
-      equipment: ["Barbell", "Cable Machine"],
-    }),
-  ),
-
   http.get("*/api/backend/api/catalog-exercises/:id", ({ params }) =>
     HttpResponse.json({
       id: Number(params.id),
@@ -60,10 +53,7 @@ afterAll(() => server.close())
 
 describe("catalogExercisesRepository.search", () => {
   it("flattens the Spring page into a PageResponse", async () => {
-    const page = await catalogExercisesRepository.search(
-      { search: "", muscleGroup: null, equipment: null },
-      1,
-    )
+    const page = await catalogExercisesRepository.search({ search: "" }, 1)
 
     expect(page.items).toHaveLength(2)
     expect(page.items[0].title).toBe("Barbell Bench Press")
@@ -73,38 +63,21 @@ describe("catalogExercisesRepository.search", () => {
     expect(page.isLast).toBe(false)
   })
 
-  it("omits blank filters rather than sending empty params", async () => {
-    await catalogExercisesRepository.search(
-      { search: "   ", muscleGroup: null, equipment: null },
-      0,
-    )
+  it("omits a blank search rather than sending an empty param", async () => {
+    await catalogExercisesRepository.search({ search: "   " }, 0)
 
     expect(lastUrl?.searchParams.has("search")).toBe(false)
-    expect(lastUrl?.searchParams.has("muscleGroup")).toBe(false)
-    expect(lastUrl?.searchParams.has("equipment")).toBe(false)
     expect(lastUrl?.searchParams.get("page")).toBe("0")
     expect(lastUrl?.searchParams.get("size")).toBe("24")
   })
 
-  it("sends filter values untouched, because the backend compares with =", async () => {
-    await catalogExercisesRepository.search(
-      { search: " press ", muscleGroup: "Upper Back", equipment: "Cable Machine" },
-      0,
-    )
+  it("trims the search term", async () => {
+    await catalogExercisesRepository.search({ search: " press " }, 0)
 
-    // Only the free-text search is trimmed; the enum-like filters are verbatim.
     expect(lastUrl?.searchParams.get("search")).toBe("press")
-    expect(lastUrl?.searchParams.get("muscleGroup")).toBe("Upper Back")
-    expect(lastUrl?.searchParams.get("equipment")).toBe("Cable Machine")
-  })
-})
-
-describe("catalogExercisesRepository.getFilters", () => {
-  it("returns the option lists", async () => {
-    const filters = await catalogExercisesRepository.getFilters()
-
-    expect(filters.muscleGroups).toEqual(["Chest", "Upper Back"])
-    expect(filters.equipment).toEqual(["Barbell", "Cable Machine"])
+    // El grupo muscular y el equipamiento ya no se envían: el selector no los ofrece.
+    expect(lastUrl?.searchParams.has("muscleGroup")).toBe(false)
+    expect(lastUrl?.searchParams.has("equipment")).toBe(false)
   })
 })
 
