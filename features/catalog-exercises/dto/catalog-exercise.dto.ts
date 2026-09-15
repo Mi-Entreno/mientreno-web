@@ -17,15 +17,3 @@ export interface CatalogExerciseDetailDTO {
   secondaryMuscles: string[]
   equipment: string | null
 }
-
-/**
- * `CatalogFilterOptionsDTO` — the distinct values present in the catalogue.
- *
- * These matter more than they look: the repository query filters with
- * `ce.muscleGroup = :muscleGroup`, i.e. **exact equality**. Free text typed by
- * a user will never match, so the filter UI must offer only these values.
- */
-export interface CatalogFilterOptionsDTO {
-  muscleGroups: string[]
-  equipment: string[]
-}

@@ -60,7 +60,7 @@ export function ExerciseList({
       <EmptyState
         icon={SearchX}
         title="Ningún ejercicio coincide"
-        description="Probá con otro término o sacá alguno de los filtros."
+        description="Probá con otro término o agregalo como ejercicio personalizado."
       />
     )
   }
