@@ -1,10 +1,10 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ImagePlus, Store } from "lucide-react"
+import { ImagePlus, Loader2, Store } from "lucide-react"
 import Image from "next/image"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -20,10 +20,22 @@ import { ApiError } from "@/core/http/errors"
 
 import { brandRepository } from "../api/brand.repository"
 import { useBrandProfile, useUpdateBrandProfile } from "../hooks/use-brand"
+import {
+  INSTAGRAM_HANDLE,
+  WEBSITE_URL,
+  normalizeInstagram,
+  normalizeWebsite,
+} from "../model/brand.model"
 
-const schema = z.object({
-  firstName: z.string().trim().min(1, "Tu nombre es obligatorio").max(100),
-  lastName: z.string().trim().min(1, "Tu apellido es obligatorio").max(100),
+/**
+ * Los campos del comercio, que son los mismos en el alta y en la edición.
+ *
+ * Las redes se validan sobre su forma **normalizada**, no sobre lo que se
+ * escribió: el comercio pega el enlace que copió de Instagram y eso es válido
+ * aunque no se parezca a un usuario. Lo que viaja al backend sale del mismo
+ * normalizador, así que lo que acá pasa, allá pasa.
+ */
+const profileFields = {
   displayName: z.string().trim().min(1, "El nombre del comercio es obligatorio").max(150),
   legalName: z.string().trim().max(200).optional(),
   taxId: z.string().trim().max(20).optional(),
@@ -36,9 +48,54 @@ const schema = z.object({
     .min(1, "Sin dirección de retiro el alumno no sabe dónde buscar su premio")
     .max(250),
   pickupNotes: z.string().trim().max(2000).optional(),
+  instagram: z
+    .string()
+    .trim()
+    .max(120)
+    .refine(
+      (value) => value === "" || INSTAGRAM_HANDLE.test(normalizeInstagram(value)),
+      "Poné tu usuario o el enlace a tu perfil",
+    )
+    .optional(),
+  // 190 y no 200: el normalizador puede agregarle "https://" y la columna del
+  // backend corta en 200.
+  websiteUrl: z
+    .string()
+    .trim()
+    .max(190)
+    .refine(
+      (value) => value === "" || WEBSITE_URL.test(normalizeWebsite(value)),
+      "Poné la dirección completa, por ejemplo micomercio.com",
+    )
+    .optional(),
+}
+
+const identityFields = {
+  firstName: z.string().trim().min(1, "Tu nombre es obligatorio").max(100),
+  lastName: z.string().trim().min(1, "Tu apellido es obligatorio").max(100),
+}
+
+const onboardingSchema = z.object({ ...profileFields, ...identityFields })
+
+/**
+ * En edición el nombre de la persona no se pide ni se muestra: vive en
+ * `UserDetailDb` y sólo lo escribe el alta.
+ *
+ * Tener un único esquema con los dos campos obligatorios era el motivo por el
+ * que "Guardar cambios" no hacía nada: los inputs no se renderizan fuera del
+ * onboarding, así que llegaban vacíos, `handleSubmit` abortaba y el error
+ * quedaba colgado de un campo invisible. Sin reacción en pantalla y sin
+ * petición.
+ */
+const editSchema = z.object({
+  ...profileFields,
+  // Presentes y sin exigencias, no ausentes: así los dos esquemas infieren el
+  // mismo tipo y `useForm` puede cambiar de resolver sin cambiar de forma.
+  firstName: z.string(),
+  lastName: z.string(),
 })
 
-type FormValues = z.infer<typeof schema>
+type FormValues = z.infer<typeof onboardingSchema>
 
 /**
  * Perfil del comercio, y también su onboarding.
@@ -50,7 +107,6 @@ type FormValues = z.infer<typeof schema>
  * al terminar reemite los tokens.
  */
 export function BrandProfileScreen() {
-  const router = useRouter()
   const params = useSearchParams()
   const query = useBrandProfile()
   const update = useUpdateBrandProfile()
@@ -62,15 +118,26 @@ export function BrandProfileScreen() {
   // cargó sus datos. El guard ya lo mandó a esta pantalla con `?complete=1`.
   const missingProfile =
     query.isError && query.error instanceof ApiError && query.error.status === 404
-  const isOnboarding = missingProfile || params.get("complete") === "1"
+
+  // La ausencia del perfil manda sobre el parámetro, no al revés: el claim del
+  // JWT puede ir atrasado y dejar `?complete=1` pegado en la URL de alguien que
+  // ya tiene comercio. Con el parámetro como autoridad, ese comercio editaba su
+  // perfil contra el endpoint de alta y se comía un 409.
+  const isOnboarding = missingProfile || (!query.data && params.get("complete") === "1")
+
+  const resolver = useMemo(
+    () => zodResolver(isOnboarding ? onboardingSchema : editSchema),
+    [isOnboarding],
+  )
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver,
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -82,6 +149,8 @@ export function BrandProfileScreen() {
       contactPhone: "",
       pickupAddress: "",
       pickupNotes: "",
+      instagram: "",
+      websiteUrl: "",
     },
   })
 
@@ -98,8 +167,26 @@ export function BrandProfileScreen() {
       contactPhone: query.data.contactPhone ?? "",
       pickupAddress: query.data.pickupAddress ?? "",
       pickupNotes: query.data.pickupNotes ?? "",
+      instagram: query.data.instagram ?? "",
+      websiteUrl: query.data.websiteUrl ?? "",
     })
   }, [query.data, reset])
+
+  /**
+   * Deja en el campo exactamente lo que se va a guardar.
+   *
+   * Normalizar en silencio al enviar dejaría al comercio mirando el enlace
+   * largo que pegó y creyendo que eso es lo que quedó guardado. Va como opción
+   * de `register` y no como un `onBlur` propio: reemplazar el del registro le
+   * saca a react-hook-form el evento con el que marca el campo como tocado.
+   */
+  function normalizing(field: "instagram" | "websiteUrl", normalize: (value: string) => string) {
+    return {
+      onBlur: (event: React.FocusEvent<HTMLInputElement>) => {
+        setValue(field, normalize(event.target.value), { shouldValidate: true })
+      },
+    }
+  }
 
   async function onSubmit(values: FormValues) {
     const payload = {
@@ -111,9 +198,11 @@ export function BrandProfileScreen() {
       contactPhone: values.contactPhone || undefined,
       pickupAddress: values.pickupAddress,
       pickupNotes: values.pickupNotes || undefined,
+      instagram: normalizeInstagram(values.instagram ?? "") || undefined,
+      websiteUrl: normalizeWebsite(values.websiteUrl ?? "") || undefined,
     }
 
-    if (!isOnboarding && query.data) {
+    if (!isOnboarding) {
       update.mutate(payload)
       return
     }
@@ -138,15 +227,27 @@ export function BrandProfileScreen() {
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as { message?: string } | null
         toast.error(body?.message ?? "No pudimos guardar tu comercio. Volvé a intentarlo.")
+        setCompleting(false)
         return
       }
 
       toast.success("¡Listo! Ya podés cargar tus recompensas.")
-      router.replace("/comercio")
-      router.refresh()
+
+      // Navegación dura, y no `router.replace("/comercio")`.
+      //
+      // El botón parecía no hacer nada: la barra lateral prefetchea `/comercio`
+      // apenas se pinta, o sea mientras el perfil todavía estaba incompleto, y
+      // lo que el router cachea de ese prefetch es el redirect del guard hacia
+      // `/comercio/perfil?complete=1`. Una navegación blanda reusa esa entrada
+      // y devuelve al comercio a esta misma pantalla, con la cookie nueva y
+      // todo. Un pedido de documento nuevo tira el caché del router entero y
+      // reevalúa el guard contra la cookie recién escrita.
+      //
+      // No se apaga `completing`: la página se está yendo y reactivar el botón
+      // sólo invita a un segundo alta que responde 409.
+      window.location.assign("/comercio")
     } catch {
       toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
-    } finally {
       setCompleting(false)
     }
   }
@@ -276,6 +377,49 @@ export function BrandProfileScreen() {
           </CardContent>
         </Card>
 
+        {/*
+          Redes: las dos opcionales y las dos públicas, a diferencia del email y
+          el teléfono de abajo, que son operativos. El comercio puede pegar el
+          enlace entero y el campo se normaliza al salir, así que lo que ve es
+          lo que se guarda.
+        */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-body-lg">Redes (opcional)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-2">
+            <Field
+              id="instagram"
+              label="Instagram"
+              hint="Tu usuario o el enlace a tu perfil."
+              error={errors.instagram?.message}
+            >
+              <Input
+                id="instagram"
+                inputMode="url"
+                placeholder="micomercio"
+                disabled={pending}
+                {...register("instagram", normalizing("instagram", normalizeInstagram))}
+              />
+            </Field>
+            <Field
+              id="websiteUrl"
+              label="Sitio web"
+              hint="Si no ponés http://, lo completamos por vos."
+              error={errors.websiteUrl?.message}
+            >
+              <Input
+                id="websiteUrl"
+                type="url"
+                inputMode="url"
+                placeholder="micomercio.com"
+                disabled={pending}
+                {...register("websiteUrl", normalizing("websiteUrl", normalizeWebsite))}
+              />
+            </Field>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-body-lg">Retiro y contacto</CardTitle>
@@ -320,12 +464,19 @@ export function BrandProfileScreen() {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={pending}>
-            {isOnboarding ? "Crear mi comercio" : "Guardar cambios"}
+            {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            {submitLabel(isOnboarding, pending)}
           </Button>
         </div>
       </form>
     </div>
   )
+}
+
+/** El botón dice en qué estado está: sin esto, guardar no se distingue de no hacer nada. */
+function submitLabel(isOnboarding: boolean, pending: boolean): string {
+  if (isOnboarding) return pending ? "Creando tu comercio…" : "Crear mi comercio"
+  return pending ? "Guardando…" : "Guardar cambios"
 }
 
 function Field({
