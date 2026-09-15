@@ -9,7 +9,13 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectItem } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Sheet,
   SheetContent,
@@ -184,7 +190,7 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
   const requirementMode = useWatch({ control, name: "requirementMode" })
   const requirements = useWatch({ control, name: "requirements" })
 
-  /** Las familias ya usadas: se sacan del selector para que el error no ocurra. */
+  /** Las familias ya usadas. `Agregar` arranca en una libre; ver `availableMetrics`. */
   const usedFamilies = new Set(
     (requirements ?? [])
       .map((requirement) => metricOption(requirement?.metric as never)?.family)
@@ -302,11 +308,16 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
                       }
                       disabled={pending}
                     >
-                      {METRIC_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
+                      <SelectTrigger className="w-full" aria-label="Qué medir">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableMetrics(requirements, index).map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                     {errors.requirements?.[index]?.metric && (
                       <p className="text-caption text-error-text">
@@ -318,6 +329,7 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
                     <Input
                       type="number"
                       min={1}
+                      aria-label="Objetivo"
                       disabled={pending}
                       {...register(`requirements.${index}.targetValue`)}
                     />
@@ -355,11 +367,16 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
                     }
                     disabled={pending}
                   >
-                    {MODE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
+                    <SelectTrigger id="requirementMode" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MODE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </Field>
                 {requirementMode === "N_OF_M" && (
@@ -558,6 +575,32 @@ function Field({
 /** La primera métrica de una familia todavía libre. */
 function firstFreeMetric(usedFamilies: Set<string>): string {
   return METRIC_OPTIONS.find((option) => !usedFamilies.has(option.family))?.value ?? "SETS_COMPLETED"
+}
+
+/**
+ * Qué puede elegir esta condición: todo menos las familias que ocupan las otras.
+ *
+ * Es la misma regla que el `superRefine` del esquema y que el backend, pero
+ * aplicada antes: ofrecer una opción que va a dar error y avisar después es
+ * pedirle al comercio que descubra la restricción probando. La propia métrica
+ * de la fila queda siempre en la lista, o el selector no podría mostrar lo que
+ * ya tiene elegido.
+ */
+function availableMetrics(
+  requirements: { metric?: string }[] | undefined,
+  index: number,
+): typeof METRIC_OPTIONS {
+  const takenByOthers = new Set(
+    (requirements ?? [])
+      .filter((_, other) => other !== index)
+      .map((requirement) => metricOption(requirement?.metric as never)?.family)
+      .filter(Boolean) as string[],
+  )
+  const own = requirements?.[index]?.metric
+
+  return METRIC_OPTIONS.filter(
+    (option) => option.value === own || !takenByOthers.has(option.family),
+  )
 }
 
 function toFormValues(challenge: BrandChallenge): FormValues {

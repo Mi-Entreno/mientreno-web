@@ -19,6 +19,9 @@ export interface BrandProfileDTO {
   contactPhone: string | null
   pickupAddress: string | null
   pickupNotes: string | null
+  /** Usuario canónico, sin arroba ni URL: el backend lo garantiza con un CHECK. */
+  instagram: string | null
+  websiteUrl: string | null
   status: BrandStatus
   createdAt: string
 }
@@ -34,4 +37,6 @@ export interface CompleteBrandProfileInput {
   contactPhone?: string
   pickupAddress: string
   pickupNotes?: string
+  instagram?: string
+  websiteUrl?: string
 }
