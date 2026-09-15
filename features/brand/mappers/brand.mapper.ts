@@ -22,6 +22,8 @@ export function toBrandProfile(dto: BrandProfileDTO): BrandProfile {
     contactPhone: dto.contactPhone,
     pickupAddress: dto.pickupAddress,
     pickupNotes: dto.pickupNotes,
+    instagram: dto.instagram,
+    websiteUrl: dto.websiteUrl,
     status: dto.status,
   }
 }
