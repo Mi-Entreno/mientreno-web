@@ -17,10 +17,11 @@ export const studentSearchRepository = {
     query: string,
     page: number,
     size: number = STUDENT_SEARCH_PAGE_SIZE,
+    signal?: AbortSignal,
   ): Promise<PageResponse<StudentCandidate>> {
     const dto = await apiFetch<SpringPage<StudentSearchResultDTO>>(
       "/api/users/students/search",
-      { query: { q: query.trim(), page, size } },
+      { signal, query: { q: query.trim(), page, size } },
     )
 
     return mapPage(dto, toStudentCandidate)

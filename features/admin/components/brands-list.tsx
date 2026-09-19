@@ -1,6 +1,6 @@
 "use client"
 
-import { MapPin, Store } from "lucide-react"
+import { Loader2, MapPin, Store } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -40,7 +40,7 @@ export function BrandsList() {
     )
   }
 
-  if ((query.data?.items.length ?? 0) === 0) {
+  if (query.items.length === 0) {
     return (
       <EmptyState
         icon={Store}
@@ -53,7 +53,7 @@ export function BrandsList() {
   return (
     <>
       <ul className="flex flex-col gap-3">
-        {query.data?.items.map((brand) => (
+        {query.items.map((brand) => (
           <li
             key={brand.id}
             className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-card p-4"
@@ -111,6 +111,18 @@ export function BrandsList() {
           </li>
         ))}
       </ul>
+
+      {query.hasNextPage && (
+        <Button
+          variant="outline"
+          className="mt-3 self-center"
+          disabled={query.isFetchingNextPage}
+          onClick={() => query.fetchNextPage()}
+        >
+          {query.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {query.isFetchingNextPage ? "Cargando…" : "Cargar más"}
+        </Button>
+      )}
 
       <Dialog open={suspending !== null} onOpenChange={(next) => !next && setSuspending(null)}>
         <DialogContent>

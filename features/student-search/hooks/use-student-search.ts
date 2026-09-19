@@ -22,7 +22,8 @@ export function useStudentSearch(term: string) {
 
   const query = useInfiniteQuery({
     queryKey: qk.studentSearch.query({ q: trimmed }),
-    queryFn: ({ pageParam }) => studentSearchRepository.search(trimmed, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      studentSearchRepository.search(trimmed, pageParam, undefined, signal),
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     enabled,

@@ -19,11 +19,16 @@ import type { BrandChallenge, ChallengeParticipant, Redemption } from "../model/
  * to make.
  */
 export const challengesRepository = {
-  async list(status?: ChallengeStatus, params?: PageParams): Promise<PageResponse<BrandChallenge>> {
-    const page = await apiFetch<SpringPage<BrandChallengeDTO>>("/api/brand/challenges", {
-      query: { ...pageQuery(params), status },
+  async list(
+    status?: ChallengeStatus,
+    page?: number,
+    signal?: AbortSignal,
+  ): Promise<PageResponse<BrandChallenge>> {
+    const dto = await apiFetch<SpringPage<BrandChallengeDTO>>("/api/brand/challenges", {
+      signal,
+      query: { ...pageQuery({ page }), status },
     })
-    return mapPage(page, toBrandChallenge)
+    return mapPage(dto, toBrandChallenge)
   },
 
   async detail(id: number): Promise<BrandChallenge> {
