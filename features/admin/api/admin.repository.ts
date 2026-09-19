@@ -1,5 +1,5 @@
 import { apiFetch } from "@/core/http/client"
-import { mapPage, pageQuery, type PageParams, type PageResponse, type SpringPage } from "@/core/http/pagination"
+import { mapPage, pageQuery, type PageResponse, type SpringPage } from "@/core/http/pagination"
 import type { BrandStatus } from "@/features/brand/dto/brand.dto"
 
 import type { AdminBrandDTO } from "../dto/admin.dto"
@@ -16,11 +16,12 @@ import type { AdminBrand } from "../model/admin.model"
  * entero, que saca de circulación todos sus desafíos de una vez.
  */
 export const adminRepository = {
-  async brands(params?: PageParams): Promise<PageResponse<AdminBrand>> {
-    const page = await apiFetch<SpringPage<AdminBrandDTO>>("/api/admin/brands", {
-      query: pageQuery(params),
+  async brands(page?: number, signal?: AbortSignal): Promise<PageResponse<AdminBrand>> {
+    const dto = await apiFetch<SpringPage<AdminBrandDTO>>("/api/admin/brands", {
+      signal,
+      query: pageQuery({ page }),
     })
-    return mapPage(page, toAdminBrand)
+    return mapPage(dto, toAdminBrand)
   },
 
   async setBrandStatus(brandId: number, status: BrandStatus): Promise<AdminBrand> {

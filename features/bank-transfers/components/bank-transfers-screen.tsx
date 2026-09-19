@@ -1,9 +1,10 @@
 "use client"
 
-import { Inbox, Landmark } from "lucide-react"
+import { Inbox, Landmark, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { Button } from "@/components/ui/button"
 import { ErrorState } from "@/components/dashboard/error-state"
 import {
   Select,
@@ -120,7 +121,7 @@ export function BankTransfersScreen() {
           <ErrorState error={payments.error} context="load" onRetry={() => payments.refetch()} inline />
         )}
 
-        {payments.data?.isEmpty && (
+        {payments.isEmpty && (
           <EmptyState
             icon={info.isMissing ? Landmark : Inbox}
             title={info.isMissing ? "Todavía no aceptás transferencias" : "No hay cobros para mostrar"}
@@ -132,12 +133,26 @@ export function BankTransfersScreen() {
           />
         )}
 
-        {payments.data && !payments.data.isEmpty && (
-          <PaymentsTable
-            payments={payments.data.items}
-            onReview={setReviewing}
-            reviewingId={reviewing?.id ?? null}
-          />
+        {!payments.isEmpty && payments.items.length > 0 && (
+          <>
+            <PaymentsTable
+              payments={payments.items}
+              onReview={setReviewing}
+              reviewingId={reviewing?.id ?? null}
+            />
+
+            {payments.hasNextPage && (
+              <Button
+                variant="outline"
+                className="self-center"
+                disabled={payments.isFetchingNextPage}
+                onClick={() => payments.fetchNextPage()}
+              >
+                {payments.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+                {payments.isFetchingNextPage ? "Cargando…" : "Cargar más"}
+              </Button>
+            )}
+          </>
         )}
       </section>
 

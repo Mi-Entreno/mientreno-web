@@ -31,7 +31,13 @@ export function ChallengesOverview() {
     return <ErrorState error={challenges.error} context="load" onRetry={() => challenges.refetch()} />
   }
 
-  const items = challenges.data?.items ?? []
+  // OJO: estos dos agregados cubren sólo las páginas cargadas, y esta pantalla no
+  // pagina — o sea, la primera. Es una limitación PREEXISTENTE (antes el hook
+  // pedía la página 0 sin saberlo) y no una regresión: un comercio con más de 20
+  // desafíos ya veía estos números cortos. Calcularlos bien no es cuestión de
+  // traer más páginas —sería bajar el padrón entero para sumar dos columnas—
+  // sino de un endpoint que los devuelva agregados desde la base.
+  const items = challenges.items
   const live = items.filter((challenge) => isLive(challenge)).length
   const participants = items.reduce((total, challenge) => total + challenge.acceptedCount, 0)
   const loading = challenges.isLoading || pending.isLoading

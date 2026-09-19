@@ -19,7 +19,8 @@ import type { Food, FoodSearchParams } from "../model/food.model"
 export function useFoodSearch(params: FoodSearchParams) {
   const query = useInfiniteQuery({
     queryKey: qk.foods.search({ q: params.search.trim(), category: params.category }),
-    queryFn: ({ pageParam }) => foodsRepository.search(params, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      foodsRepository.search(params, pageParam, undefined, signal),
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     staleTime: 5 * 60_000,

@@ -12,7 +12,8 @@ import type { CatalogExercise, CatalogSearchParams } from "../model/catalog-exer
 export function useCatalogSearch(params: CatalogSearchParams) {
   const query = useInfiniteQuery({
     queryKey: qk.catalogExercises.search({ search: params.search.trim() }),
-    queryFn: ({ pageParam }) => catalogExercisesRepository.search(params, pageParam),
+    queryFn: ({ pageParam, signal }) =>
+      catalogExercisesRepository.search(params, pageParam, undefined, signal),
     initialPageParam: 0,
     getNextPageParam: nextPageParam,
     staleTime: 5 * 60_000,
