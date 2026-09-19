@@ -56,7 +56,7 @@ export function ChallengesScreen() {
   const pause = usePauseChallenge()
   const cancel = useCancelChallenge()
 
-  const challenges = query.data?.items ?? []
+  const challenges = query.items
 
   function openNew() {
     setEditing(null)
@@ -119,6 +119,18 @@ export function ChallengesScreen() {
             />
           ))}
         </ul>
+      )}
+
+      {query.hasNextPage && (
+        <Button
+          variant="outline"
+          className="self-center"
+          disabled={query.isFetchingNextPage}
+          onClick={() => query.fetchNextPage()}
+        >
+          {query.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {query.isFetchingNextPage ? "Cargando…" : "Cargar más"}
+        </Button>
       )}
 
       <ChallengeWizard open={wizardOpen} onOpenChange={setWizardOpen} challenge={editing} />

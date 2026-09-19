@@ -18,8 +18,10 @@ export const foodsRepository = {
     params: FoodSearchParams,
     page: number,
     size: number = FOODS_PAGE_SIZE,
+    signal?: AbortSignal,
   ): Promise<PageResponse<Food>> {
     const dto = await apiFetch<SpringPage<FoodResponseDTO>>("/api/foods", {
+      signal,
       query: {
         // Matched against name OR brand, partial and case-insensitive.
         q: params.search.trim() || undefined,

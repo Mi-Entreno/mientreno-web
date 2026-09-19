@@ -1,12 +1,16 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMemo } from "react"
+
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { qk } from "@/core/http/query-keys"
 import { ApiError } from "@/core/http/errors"
+import { nextPageParam } from "@/core/http/pagination"
 import { specificMessage } from "@/core/http/user-message"
 import { bankTransfersRepository, type PaymentFilters } from "../api/bank-transfers.repository"
+import type { TrainerPayment } from "../model/bank-transfer.model"
 
 function errorMessage(error: unknown, fallback: string): string {
   return specificMessage(error) ?? fallback
@@ -17,19 +21,46 @@ function isNotFound(error: unknown): boolean {
   return error instanceof ApiError && error.status === 404
 }
 
+/**
+ * Cobros del entrenador, paginados.
+ *
+ * `page` sale del cursor de la infinite query y no de `filters`: la pantalla pedía
+ * `size: 20` sin `page` y sin ningún control para avanzar, así que sólo se veían
+ * los primeros 20 cobros. Los filtros (método, estado) siguen en la queryKey, que
+ * es lo correcto — cambiarlos es una lista distinta y tiene que empezar de cero.
+ */
 export function useTrainerPayments(filters: PaymentFilters) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: qk.payments.list({
       provider: filters.provider ?? null,
       status: filters.status ?? null,
-      page: filters.page ?? 0,
       size: filters.size ?? null,
     }),
-    queryFn: () => bankTransfersRepository.list(filters),
+    queryFn: ({ pageParam, signal }) =>
+      bankTransfersRepository.list({ ...filters, page: pageParam }, signal),
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
     // A charge the trainer is waiting on can land at any moment, and this is
     // the screen they sit on while waiting.
     staleTime: 15_000,
   })
+
+  const items = useMemo<TrainerPayment[]>(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  )
+
+  return {
+    items,
+    isEmpty: query.data !== undefined && items.length === 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  }
 }
 
 export function usePendingReviewCount() {

@@ -27,8 +27,10 @@ export const catalogExercisesRepository = {
     params: CatalogSearchParams,
     page: number,
     size: number = CATALOG_PAGE_SIZE,
+    signal?: AbortSignal,
   ): Promise<PageResponse<CatalogExercise>> {
     const dto = await apiFetch<SpringPage<CatalogExerciseSummaryDTO>>("/api/catalog-exercises", {
+      signal,
       query: {
         search: params.search.trim() || undefined,
         page,

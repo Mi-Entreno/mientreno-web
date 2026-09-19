@@ -1,19 +1,50 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMemo } from "react"
+
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { qk } from "@/core/http/query-keys"
+import { nextPageParam } from "@/core/http/pagination"
 import { userMessage, type FailureContext } from "@/core/http/user-message"
 
 import { challengesRepository } from "../api/challenges.repository"
 import type { ChallengeStatus, SaveChallengeInput } from "../dto/challenge.dto"
+import type { BrandChallenge } from "../model/challenge.model"
 
+/**
+ * Desafíos del comercio, paginados de verdad.
+ *
+ * Antes llamaba a `list(status)` sin params, así que el repositorio no mandaba
+ * `page` ni `size` y el backend devolvía la página 0: sólo se veían los primeros
+ * ~20 desafíos y no había forma de llegar al resto. El endpoint siempre paginó y
+ * el repositorio siempre aceptó `PageParams` — lo que faltaba era usarlos.
+ */
 export function useChallenges(status?: ChallengeStatus) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: qk.challenges.list(status),
-    queryFn: () => challengesRepository.list(status),
+    queryFn: ({ pageParam, signal }) => challengesRepository.list(status, pageParam, signal),
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
   })
+
+  const items = useMemo<BrandChallenge[]>(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  )
+
+  return {
+    items,
+    totalItems: query.data?.pages[0]?.totalItems ?? 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  }
 }
 
 export function useChallenge(id: number) {

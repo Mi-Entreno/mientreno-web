@@ -21,15 +21,19 @@ export interface PaymentFilters extends PageParams {
 
 export const bankTransfersRepository = {
   /** `GET /api/trainer/payments` — both methods, filtered. */
-  async list(filters: PaymentFilters = {}): Promise<PageResponse<TrainerPayment>> {
-    const page = await apiFetch<SpringPage<TrainerPaymentDTO>>(PAYMENTS, {
+  async list(
+    filters: PaymentFilters = {},
+    signal?: AbortSignal,
+  ): Promise<PageResponse<TrainerPayment>> {
+    const dto = await apiFetch<SpringPage<TrainerPaymentDTO>>(PAYMENTS, {
+      signal,
       query: {
         ...pageQuery(filters),
         provider: filters.provider ?? null,
         status: filters.status ?? null,
       },
     })
-    return mapPage(page, toTrainerPayment)
+    return mapPage(dto, toTrainerPayment)
   },
 
   /** `GET /api/trainer/payments/pending-review-count`. */
