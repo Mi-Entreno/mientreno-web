@@ -1,6 +1,6 @@
 "use client"
 
-import { Gift, Loader2, Plus, Target } from "lucide-react"
+import { Gift, Loader2, Plus, Target, Users } from "lucide-react"
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
@@ -29,6 +29,7 @@ import {
   notLiveReason,
   type BrandChallenge,
 } from "../model/challenge.model"
+import { ChallengeParticipantsSheet } from "./challenge-participants-sheet"
 import { ChallengeWizard } from "./challenge-wizard"
 
 const FILTERS: { label: string; value: ChallengeStatus | undefined }[] = [
@@ -50,6 +51,9 @@ export function ChallengesScreen() {
   const [editing, setEditing] = useState<BrandChallenge | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [cancelling, setCancelling] = useState<BrandChallenge | null>(null)
+  // El id y no el objeto: publicar o pausar invalida la lista, y una copia
+  // guardada acá dejaría los totales de la ficha congelados en lo de antes.
+  const [viewingId, setViewingId] = useState<number | null>(null)
 
   const query = useChallenges(filter)
   const publish = usePublishChallenge()
@@ -57,6 +61,7 @@ export function ChallengesScreen() {
   const cancel = useCancelChallenge()
 
   const challenges = query.items
+  const viewing = challenges.find((challenge) => challenge.id === viewingId) ?? null
 
   function openNew() {
     setEditing(null)
@@ -116,6 +121,7 @@ export function ChallengesScreen() {
                 pause.mutate({ id: challenge.id, paused: challenge.status !== "PAUSED" })
               }
               onCancel={() => setCancelling(challenge)}
+              onViewParticipants={() => setViewingId(challenge.id)}
             />
           ))}
         </ul>
@@ -134,6 +140,12 @@ export function ChallengesScreen() {
       )}
 
       <ChallengeWizard open={wizardOpen} onOpenChange={setWizardOpen} challenge={editing} />
+
+      <ChallengeParticipantsSheet
+        challenge={viewing}
+        open={viewing !== null}
+        onOpenChange={(open) => !open && setViewingId(null)}
+      />
 
       <ConfirmDialog
         open={cancelling !== null}
@@ -162,6 +174,7 @@ function ChallengeRow({
   onPublish,
   onTogglePause,
   onCancel,
+  onViewParticipants,
 }: {
   challenge: BrandChallenge
   publishing: boolean
@@ -169,6 +182,7 @@ function ChallengeRow({
   onPublish: () => void
   onTogglePause: () => void
   onCancel: () => void
+  onViewParticipants: () => void
 }) {
   const blocked = notLiveReason(challenge)
   const closed = challenge.status === "CANCELLED" || challenge.status === "ENDED"
@@ -210,6 +224,10 @@ function ChallengeRow({
             <dd className="text-body-strong">{challenge.completedCount}</dd>
           </div>
           <div>
+            <dt className="text-muted-foreground">Canjearon</dt>
+            <dd className="text-body-strong">{challenge.redeemedCount}</dd>
+          </div>
+          <div>
             <dt className="text-muted-foreground">Quedan</dt>
             <dd className="text-body-strong">{challenge.stockLeft}</dd>
           </div>
@@ -217,6 +235,16 @@ function ChallengeRow({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        {/*
+          Primero en la fila y siempre presente, incluso en un desafío terminado:
+          los números de arriba no se podían abrir, y saber quién está adentro es
+          lo que el comercio pregunta antes que cualquier otra cosa.
+        */}
+        <Button size="sm" variant="outline" onClick={onViewParticipants}>
+          <Users className="size-4" />
+          Ver alumnos
+          {challenge.acceptedCount > 0 && ` (${challenge.acceptedCount})`}
+        </Button>
         {challenge.status === "DRAFT" && (
           <Button size="sm" onClick={onPublish} disabled={publishing}>
             {publishing && <Loader2 className="size-4 animate-spin" />} Publicar

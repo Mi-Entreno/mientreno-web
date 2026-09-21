@@ -216,3 +216,61 @@ export function familiesOf(challenge: BrandChallenge): MetricFamily[] {
 export function isPendingDelivery(redemption: Redemption): boolean {
   return redemption.status === "REDEEMED" && redemption.deliveredAt === null
 }
+
+/**
+ * Días que faltan para que el desafío deje de aceptar gente.
+ *
+ * Cuenta días de calendario, no de 24 horas: al comercio le importa "termina
+ * mañana", y eso se contesta comparando fechas, no restando milisegundos.
+ */
+export function daysUntilEnd(challenge: BrandChallenge, now = new Date()): number {
+  const end = new Date(challenge.endsAt)
+  const startOfDay = (date: Date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  return Math.round((startOfDay(end) - startOfDay(now)) / 86_400_000)
+}
+
+/** A partir de acá "termina pronto" deja de ser una obviedad y pasa a ser un aviso. */
+export const ENDING_SOON_DAYS = 7
+
+/**
+ * Lo que el comercio tiene que resolver con este desafío, en una línea.
+ *
+ * Distinto de `notLiveReason`: ese explica por qué un desafío no se ve, incluso
+ * cuando el motivo es definitivo y no hay nada que hacer. Esto devuelve sólo lo
+ * accionable —publicar, reponer, extender— para que la home pueda armar una
+ * lista de pendientes sin llenarla de desafíos cancelados el mes pasado.
+ */
+export function attentionReason(challenge: BrandChallenge, now = new Date()): string | null {
+  if (challenge.status === "DRAFT") return "Sin publicar: los alumnos todavía no lo ven"
+  if (challenge.status === "PAUSED") return "Pausado: nadie puede aceptarlo"
+  if (challenge.status !== "PUBLISHED") return null
+  if (challenge.stockLeft <= 0) return "Sin unidades: nadie más puede aceptarlo"
+
+  const days = daysUntilEnd(challenge, now)
+  if (days < 0) return "Terminó su vigencia"
+  if (days === 0) return "Termina hoy"
+  if (days === 1) return "Termina mañana"
+  if (days <= ENDING_SOON_DAYS) return `Termina en ${days} días`
+  return null
+}
+
+/**
+ * Qué parte del stock ya está comprometida, de 0 a 1.
+ *
+ * "Comprometida" y no "entregada": cada alumno que acepta reserva su unidad, así
+ * que la barra se llena cuando el desafío se agota, no cuando se retira el
+ * premio. Es la lectura que le sirve al comercio para decidir si repone.
+ */
+export function stockUsedRatio(challenge: BrandChallenge): number {
+  const total = challenge.reward.stock
+  if (total <= 0) return 1
+  return Math.min(1, Math.max(0, (total - challenge.stockLeft) / total))
+}
+
+/** La última cosa que pasó con esta participación, con su fecha. */
+export function lastParticipantEvent(participant: ChallengeParticipant): { label: string; at: string } {
+  if (participant.deliveredAt) return { label: "Retiró el premio", at: participant.deliveredAt }
+  if (participant.redeemedAt) return { label: "Canjeó", at: participant.redeemedAt }
+  if (participant.completedAt) return { label: "Completó", at: participant.completedAt }
+  return { label: "Aceptó", at: participant.acceptedAt }
+}

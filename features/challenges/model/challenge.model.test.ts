@@ -1,15 +1,24 @@
 import { describe, expect, it } from "vitest"
 
-import type { BrandChallenge, ChallengeRequirement, Redemption } from "./challenge.model"
+import type {
+  BrandChallenge,
+  ChallengeParticipant,
+  ChallengeRequirement,
+  Redemption,
+} from "./challenge.model"
 import {
+  attentionReason,
+  daysUntilEnd,
   describeMode,
   describeRequirement,
   familiesOf,
   isLive,
   isPendingDelivery,
+  lastParticipantEvent,
   METRIC_OPTIONS,
   metricOption,
   notLiveReason,
+  stockUsedRatio,
 } from "./challenge.model"
 
 const NOW = new Date("2026-09-15T12:00:00Z")
@@ -176,5 +185,95 @@ describe("isPendingDelivery", () => {
 
   it("una vez entregado sale de la cola", () => {
     expect(isPendingDelivery(redemption({ deliveredAt: "2026-09-15T11:00:00Z" }))).toBe(false)
+  })
+})
+
+function participant(overrides: Partial<ChallengeParticipant> = {}): ChallengeParticipant {
+  return {
+    id: 1,
+    studentFirstName: "Ana",
+    status: "ACCEPTED",
+    acceptedAt: "2026-09-02T10:00:00Z",
+    completedAt: null,
+    redeemedAt: null,
+    deliveredAt: null,
+    redemptionCode: null,
+    ...overrides,
+  }
+}
+
+describe("daysUntilEnd", () => {
+  it("cuenta días de calendario, no ventanas de 24 horas", () => {
+    // NOW es el 15 al mediodía y el desafío termina el 16 a la mañana: quedan
+    // menos de 24 horas, pero para el comercio "termina mañana".
+    expect(daysUntilEnd(challenge({ endsAt: "2026-09-16T08:00:00Z" }), NOW)).toBe(1)
+    expect(daysUntilEnd(challenge({ endsAt: "2026-09-15T23:59:59Z" }), NOW)).toBe(0)
+  })
+
+  it("es negativo cuando ya terminó", () => {
+    expect(daysUntilEnd(challenge({ endsAt: "2026-09-10T23:59:59Z" }), NOW)).toBeLessThan(0)
+  })
+})
+
+describe("attentionReason", () => {
+  it("marca el borrador que nadie publicó", () => {
+    expect(attentionReason(challenge({ status: "DRAFT" }), NOW)).toMatch(/sin publicar/i)
+  })
+
+  it("marca el que se quedó sin unidades antes que el que está por terminar", () => {
+    const agotado = challenge({ stockLeft: 0, endsAt: "2026-09-17T23:59:59Z" })
+    expect(attentionReason(agotado, NOW)).toMatch(/sin unidades/i)
+  })
+
+  it("avisa cuando la vigencia se termina esta semana", () => {
+    expect(attentionReason(challenge({ endsAt: "2026-09-15T23:59:59Z" }), NOW)).toBe("Termina hoy")
+    expect(attentionReason(challenge({ endsAt: "2026-09-16T23:59:59Z" }), NOW)).toBe("Termina mañana")
+    expect(attentionReason(challenge({ endsAt: "2026-09-19T23:59:59Z" }), NOW)).toBe("Termina en 4 días")
+  })
+
+  it("calla cuando no hay nada que decidir", () => {
+    expect(attentionReason(challenge(), NOW)).toBeNull()
+  })
+
+  it("calla también para lo que ya está cerrado: no hay decisión que tomar", () => {
+    expect(attentionReason(challenge({ status: "CANCELLED" }), NOW)).toBeNull()
+    expect(attentionReason(challenge({ status: "ENDED" }), NOW)).toBeNull()
+  })
+})
+
+describe("stockUsedRatio", () => {
+  it("mide unidades comprometidas, que es lo que se pierde al aceptar", () => {
+    expect(stockUsedRatio(challenge({ reward: { ...challenge().reward, stock: 20 }, stockLeft: 15 }))).toBe(
+      0.25,
+    )
+  })
+
+  it("no se pasa de 1 ni cae debajo de 0 con datos raros", () => {
+    expect(stockUsedRatio(challenge({ stockLeft: -3 }))).toBe(1)
+    expect(stockUsedRatio(challenge({ stockLeft: 999 }))).toBe(0)
+    expect(stockUsedRatio(challenge({ reward: { ...challenge().reward, stock: 0 }, stockLeft: 0 }))).toBe(1)
+  })
+})
+
+describe("lastParticipantEvent", () => {
+  it("cuenta lo último que pasó, no lo primero", () => {
+    expect(lastParticipantEvent(participant()).label).toBe("Aceptó")
+    expect(lastParticipantEvent(participant({ completedAt: "2026-09-10T10:00:00Z" })).label).toBe(
+      "Completó",
+    )
+    expect(
+      lastParticipantEvent(
+        participant({ completedAt: "2026-09-10T10:00:00Z", redeemedAt: "2026-09-11T10:00:00Z" }),
+      ),
+    ).toEqual({ label: "Canjeó", at: "2026-09-11T10:00:00Z" })
+    expect(
+      lastParticipantEvent(
+        participant({
+          completedAt: "2026-09-10T10:00:00Z",
+          redeemedAt: "2026-09-11T10:00:00Z",
+          deliveredAt: "2026-09-12T10:00:00Z",
+        }),
+      ).label,
+    ).toBe("Retiró el premio")
   })
 })

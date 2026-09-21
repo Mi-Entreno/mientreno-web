@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Gift, Loader2, PackageCheck, Search } from "lucide-react"
+import { Loader2, PackageCheck, Search } from "lucide-react"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
@@ -9,11 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { StatusPill } from "@/features/brand/components/status-pill"
-import { formatDate } from "@/lib/format"
 
-import { useMarkDelivered, useRedemptions, useValidateRedemption } from "../hooks/use-challenges"
-import type { Redemption } from "../model/challenge.model"
+import { useRedemptions, useValidateRedemption } from "../hooks/use-challenges"
+import { RedemptionRow } from "./redemption-row"
 
 const FILTERS: { label: string; value: "PENDING" | "DELIVERED" | "ALL" }[] = [
   { label: "Para entregar", value: "PENDING" },
@@ -107,48 +105,9 @@ function CodeLookup() {
 
       {validate.data && (
         <div className="mt-3 border-t border-border pt-3">
-          <RedemptionRow redemption={validate.data} highlighted />
+          <RedemptionRow redemption={validate.data} bare />
         </div>
       )}
     </section>
-  )
-}
-
-function RedemptionRow({ redemption, highlighted }: { redemption: Redemption; highlighted?: boolean }) {
-  const deliver = useMarkDelivered()
-  const pending = redemption.deliveredAt === null
-
-  return (
-    <li className={highlighted ? "list-none" : "rounded-xl border border-border bg-card p-4"}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <p className="flex items-center gap-2 text-body-strong">
-            <Gift className="size-4" /> {redemption.rewardName}
-          </p>
-          <p className="text-caption text-muted-foreground">Por completar “{redemption.challengeName}”</p>
-          <p className="font-heading text-subtitle tracking-widest">{redemption.redemptionCode}</p>
-          <p className="text-caption text-muted-foreground tabular-nums">
-            Canjeado el {redemption.redeemedAt ? formatDate(redemption.redeemedAt) : "—"}
-            {redemption.deliveredAt && ` · entregado el ${formatDate(redemption.deliveredAt)}`}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <StatusPill tone={pending ? "warning" : "success"}>
-            {pending ? "Para entregar" : "Entregado"}
-          </StatusPill>
-          {pending && (
-            <Button size="sm" onClick={() => deliver.mutate(redemption.id)} disabled={deliver.isPending}>
-              {deliver.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Check className="size-4" />
-              )}
-              Entregar
-            </Button>
-          )}
-        </div>
-      </div>
-    </li>
   )
 }
