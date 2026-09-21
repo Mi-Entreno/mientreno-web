@@ -11,7 +11,7 @@ import { userMessage, type FailureContext } from "@/core/http/user-message"
 
 import { challengesRepository } from "../api/challenges.repository"
 import type { ChallengeStatus, SaveChallengeInput } from "../dto/challenge.dto"
-import type { BrandChallenge } from "../model/challenge.model"
+import type { BrandChallenge, ChallengeParticipant } from "../model/challenge.model"
 
 /**
  * Desafíos del comercio, paginados de verdad.
@@ -55,12 +55,40 @@ export function useChallenge(id: number) {
   })
 }
 
+/**
+ * Los alumnos anotados en un desafío.
+ *
+ * Paginado desde el arranque —y no una sola página como quedó `useRedemptions`—
+ * porque acá el largo de la lista lo decide el éxito del desafío: el que
+ * funciona es justamente el que no entra en veinte filas. `enabled` existe para
+ * que el panel no pida los participantes hasta que alguien abre la ficha.
+ */
 export function useChallengeParticipants(id: number, enabled = true) {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: qk.challenges.participants(id),
-    queryFn: () => challengesRepository.participants(id),
+    queryFn: ({ pageParam, signal }) =>
+      challengesRepository.participants(id, { page: pageParam }, signal),
+    initialPageParam: 0,
+    getNextPageParam: nextPageParam,
     enabled: enabled && Number.isFinite(id),
   })
+
+  const items = useMemo<ChallengeParticipant[]>(
+    () => query.data?.pages.flatMap((page) => page.items) ?? [],
+    [query.data],
+  )
+
+  return {
+    items,
+    totalItems: query.data?.pages[0]?.totalItems ?? 0,
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch,
+    hasNextPage: query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  }
 }
 
 /**
