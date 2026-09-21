@@ -94,10 +94,14 @@ export const challengesRepository = {
     )
   },
 
-  async participants(id: number, params?: PageParams): Promise<PageResponse<ChallengeParticipant>> {
+  async participants(
+    id: number,
+    params?: PageParams,
+    signal?: AbortSignal,
+  ): Promise<PageResponse<ChallengeParticipant>> {
     const page = await apiFetch<SpringPage<ChallengeParticipantDTO>>(
       `/api/brand/challenges/${id}/participants`,
-      { query: pageQuery(params) },
+      { query: pageQuery(params), signal },
     )
     return mapPage(page, toParticipant)
   },
