@@ -62,6 +62,7 @@ function challenge(overrides: Partial<BrandChallenge> = {}): BrandChallenge {
     completedCount: 1,
     redeemedCount: 0,
     stockLeft: 17,
+    repsCost: 0,
     editable: false,
     ...overrides,
   }

@@ -70,7 +70,15 @@ const schema = z
     endDate: z.string().min(1, "Indicá hasta cuándo se puede completar"),
     requirementMode: z.enum(["ALL", "ANY", "N_OF_M"]),
     requiredCount: z.coerce.number().int().min(1).nullish(),
-    requirements: z.array(requirementSchema).min(1, "Agregá al menos una condición"),
+    // Sin `.min(1)`: un desafío puede no tener condiciones si cuesta repes — el
+    // alumno lo compra en vez de entrenarlo. La regla real ("una condición O un
+    // costo") es cruzada y vive en el refine de más abajo, igual que en
+    // `ChallengeAuthoringService.validate`.
+    requirements: z.array(requirementSchema),
+    repsCost: z.coerce
+      .number({ message: "Indicá el costo en repes" })
+      .int("Tiene que ser un número entero")
+      .min(0, "El costo no puede ser negativo"),
     rewardName: z.string().trim().min(1, "La recompensa necesita un nombre").max(150, "Máximo 150 caracteres"),
     rewardDescription: z.string().trim().max(2000, "Máximo 2000 caracteres").optional(),
     rewardTerms: z.string().trim().max(2000, "Máximo 2000 caracteres").optional(),
@@ -79,6 +87,22 @@ const schema = z
       .number({ message: "Indicá cuántas unidades hay" })
       .int("Tiene que ser un número entero")
       .min(1, "Tiene que haber al menos una unidad"),
+  })
+  // La regla que reemplaza al `.min(1)` de requirements. El mensaje ofrece las
+  // dos salidas porque las dos son válidas.
+  //
+  // Se ancla en `repsCost` y no en `requirements` por una razón concreta: con
+  // `useFieldArray`, react-hook-form guarda el error de nivel array en
+  // `errors.requirements.root` y no en `errors.requirements.message`, así que
+  // el mensaje no se renderizaba. `repsCost` es un campo común, está justo
+  // encima de la lista, y el texto nombra igual las dos salidas.
+  .refine((values) => values.requirements.length > 0 || values.repsCost > 0, {
+    message: "Agregá una condición, o ponele un costo en repes: sin ninguna de las dos, se lo lleva el primero",
+    path: ["repsCost"],
+  })
+  .refine((values) => values.requirementMode !== "N_OF_M" || values.requirements.length > 0, {
+    message: "N_OF_M pide cumplir N de varias condiciones, y no cargaste ninguna",
+    path: ["requirementMode"],
   })
   .refine((values) => values.requirementMode !== "N_OF_M" || !!values.requiredCount, {
     message: "Indicá cuántas condiciones hay que cumplir",
@@ -131,6 +155,7 @@ function emptyForm(): FormValues {
     requirementMode: "ALL",
     requiredCount: null,
     requirements: [{ metric: "WORKOUTS_COMPLETED", targetValue: 5 }],
+    repsCost: 0,
     rewardName: "",
     rewardDescription: "",
     rewardTerms: "",
@@ -199,7 +224,15 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
 
   async function goNext() {
     if (step === "challenge") {
-      const ok = await trigger(["name", "startDate", "endDate", "requirements", "requirementMode", "requiredCount"])
+      const ok = await trigger([
+        "name",
+        "startDate",
+        "endDate",
+        "requirements",
+        "requirementMode",
+        "requiredCount",
+        "repsCost",
+      ])
       if (ok) setStep("reward")
       return
     }
@@ -234,6 +267,7 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
       rewardTerms: parsed.rewardTerms || undefined,
       rewardExpirationDate: parsed.rewardExpirationDate,
       rewardStock: parsed.rewardStock,
+      repsCost: parsed.repsCost,
     }
 
     const action = isEditing
@@ -280,6 +314,24 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
               </Field>
             </div>
 
+            <Field
+              label="Costo en repes"
+              error={errors.repsCost?.message}
+              hint="Lo que el alumno gasta para desbloquearlo. Las repes las gana entrenando y en la ruleta. Dejalo en 0 para que sea gratis."
+            >
+              {/* aria-label explícito, como los inputs de las condiciones: el
+                  <Label> de Field no lleva htmlFor, así que sin esto el campo
+                  queda sin nombre accesible. */}
+              <Input
+                id="repsCost"
+                type="number"
+                min={0}
+                aria-label="Costo en repes"
+                disabled={pending}
+                {...register("repsCost")}
+              />
+            </Field>
+
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <Label>Condiciones</Label>
@@ -294,7 +346,9 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
                 </Button>
               </div>
               <p className="text-caption text-muted-foreground">
-                Lo que el alumno tiene que lograr entrenando. El sistema lo mide solo, desde el día que acepta.
+                {fields.length === 0
+                  ? "Sin condiciones, el desafío se desbloquea sólo pagando repes: el esfuerzo ya lo hizo juntándolas."
+                  : "Lo que el alumno tiene que lograr entrenando. El sistema lo mide solo, desde el día que lo desbloquea."}
               </p>
 
               {fields.map((field, index) => (
@@ -339,11 +393,14 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
                       </p>
                     )}
                   </div>
+                  {/* Se puede quitar la última: un desafío sin condiciones es
+                      válido mientras tenga costo, y el refine cruzado del schema
+                      es el que avisa cuando no lo tiene. */}
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    disabled={pending || fields.length === 1}
+                    disabled={pending}
                     onClick={() => remove(index)}
                     aria-label="Quitar condición"
                   >
@@ -485,17 +542,28 @@ function ReviewStep({
         </header>
         <p className="text-body-strong">{values.name || "Sin nombre"}</p>
         {values.description && <p className="text-body text-muted-foreground">{values.description}</p>}
-        <ul className="mt-2 flex flex-col gap-1">
-          {(values.requirements ?? []).map((requirement, index) => {
-            const option = metricOption(requirement?.metric as never)
-            return (
-              <li key={index} className="text-body tabular-nums">
-                {String(requirement?.targetValue ?? "")} {option?.unit ?? ""}
-                <span className="text-muted-foreground"> · {option?.label}</span>
-              </li>
-            )
-          })}
-        </ul>
+        {Number(values.repsCost ?? 0) > 0 && (
+          <p className="mt-2 text-body-strong tabular-nums">
+            Cuesta {String(values.repsCost)} repes
+          </p>
+        )}
+        {(values.requirements ?? []).length === 0 ? (
+          <p className="mt-2 text-body text-muted-foreground">
+            Sin condiciones: se desbloquea sólo pagando.
+          </p>
+        ) : (
+          <ul className="mt-2 flex flex-col gap-1">
+            {(values.requirements ?? []).map((requirement, index) => {
+              const option = metricOption(requirement?.metric as never)
+              return (
+                <li key={index} className="text-body tabular-nums">
+                  {String(requirement?.targetValue ?? "")} {option?.unit ?? ""}
+                  <span className="text-muted-foreground"> · {option?.label}</span>
+                </li>
+              )
+            })}
+          </ul>
+        )}
         <p className="mt-2 text-caption text-muted-foreground tabular-nums">
           Del {values.startDate} al {values.endDate}
         </p>
@@ -521,8 +589,15 @@ function ReviewStep({
       </section>
 
       <p className="text-body text-muted-foreground">
-        Así lo va a leer el alumno: <strong>completá este desafío y llevate esta recompensa</strong>. Se
-        publica desde la lista, cuando estés conforme.
+        Así lo va a leer el alumno:{" "}
+        <strong>
+          {(values.requirements ?? []).length === 0
+            ? "pagá estas repes y llevate esta recompensa"
+            : Number(values.repsCost ?? 0) > 0
+              ? "pagá estas repes, completá el desafío y llevate esta recompensa"
+              : "completá este desafío y llevate esta recompensa"}
+        </strong>
+        . Se publica desde la lista, cuando estés conforme.
       </p>
     </div>
   )
@@ -621,5 +696,6 @@ function toFormValues(challenge: BrandChallenge): FormValues {
     rewardTerms: challenge.reward.terms ?? "",
     rewardExpirationDate: challenge.reward.expiresAt.slice(0, 10),
     rewardStock: challenge.reward.stock,
+    repsCost: challenge.repsCost,
   }
 }

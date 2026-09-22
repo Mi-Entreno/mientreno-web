@@ -74,3 +74,55 @@ describe("ChallengeWizard · condiciones", () => {
     expect(within(listbox).getByText("Series realizadas")).toBeInTheDocument()
   })
 })
+
+describe("ChallengeWizard · costo en repes", () => {
+  it("arranca en cero: un desafío es gratis mientras nadie diga lo contrario", () => {
+    renderWizard()
+
+    expect(screen.getByLabelText("Costo en repes")).toHaveValue(0)
+  })
+
+  /**
+   * La regla que reemplazó al `.min(1)` de `requirements`. Sin condiciones y sin
+   * costo, el premio se lo lleva el primero que toque el botón — y el mensaje
+   * tiene que ofrecer las dos salidas, porque las dos son válidas.
+   */
+  it("sin condiciones y sin costo no deja avanzar", async () => {
+    renderWizard()
+
+    // El nombre se completa aunque el test no lo esté probando: los refines de
+    // zod son una cadena sobre el objeto, así que si la validación base falla
+    // —nombre vacío— ninguno llega a correr y el mensaje cruzado no aparece.
+    fireEvent.change(screen.getByPlaceholderText("Constancia de acero"), {
+      target: { value: "Café directo" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Quitar condición" }))
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+
+    expect(await screen.findByText(/ponele un costo en repes/i)).toBeInTheDocument()
+  })
+
+  it("sin condiciones pero con costo sí avanza: el alumno lo compra", async () => {
+    renderWizard()
+
+    fireEvent.change(screen.getByPlaceholderText("Constancia de acero"), {
+      target: { value: "Café directo" },
+    })
+    fireEvent.click(screen.getByRole("button", { name: "Quitar condición" }))
+    fireEvent.change(screen.getByLabelText("Costo en repes"), { target: { value: "80" } })
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+
+    // El paso siguiente es el de la recompensa: si el refine hubiera bloqueado,
+    // seguiríamos viendo el campo de costo.
+    expect(await screen.findByText("Qué se lleva")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Costo en repes")).not.toBeInTheDocument()
+  })
+
+  it("se puede quitar la última condición", () => {
+    renderWizard()
+
+    // Antes el botón se deshabilitaba con una sola fila, porque cero condiciones
+    // era imposible. Con precio dejó de serlo.
+    expect(screen.getByRole("button", { name: "Quitar condición" })).toBeEnabled()
+  })
+})
