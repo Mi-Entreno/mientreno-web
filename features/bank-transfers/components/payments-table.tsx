@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Eye, Loader2 } from "lucide-react"
+import { Clock, Eye } from "lucide-react"
 
 import {
   Table,
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { formatCurrency, formatDate } from "@/lib/format"
@@ -85,7 +86,7 @@ export function PaymentsTable({
                     disabled={reviewingId === payment.id}
                   >
                     {reviewingId === payment.id ? (
-                      <Loader2 className="size-4 animate-spin" />
+                      <BarsLoader />
                     ) : (
                       <Eye className="size-4" />
                     )}

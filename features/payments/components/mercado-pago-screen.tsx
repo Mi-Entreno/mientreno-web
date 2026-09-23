@@ -7,13 +7,13 @@ import {
   CreditCard,
   ExternalLink,
   Link2Off,
-  Loader2,
   ShieldCheck,
 } from "lucide-react"
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
@@ -156,7 +156,7 @@ function ConnectionCard({
           {(!linked || needsReconnect(connection)) && (
             <Button onClick={onConnect} disabled={connecting}>
               {connecting ? (
-                <Loader2 className="size-4 animate-spin" />
+                <BarsLoader />
               ) : (
                 <ArrowUpRight className="size-4" />
               )}

@@ -301,6 +301,34 @@
   }
 
   /*
+   * Indicador de carga de marca (`components/ui/bars-loader.tsx`): las tres
+   * barras inclinadas del isotipo, saltando en ola. El `skewX(-18deg)` es la
+   * inclinación del logo y va *dentro* del keyframe porque `transform` es una
+   * sola propiedad: declararlo aparte lo pisaría la animación. El orden
+   * importa — `translateY` primero significa que el salto se aplica *después*
+   * de la inclinación, así la barra sube derecho en vez de correrse también en
+   * horizontal. Pinta en `currentColor` para heredar el color del botón que lo
+   * contiene; el componente pasa el alto del salto en `--me-bars-lift`.
+   */
+  @keyframes me-bars {
+    0%,
+    100% {
+      transform: translateY(0) skewX(-18deg);
+      opacity: 0.3;
+    }
+    50% {
+      transform: translateY(var(--me-bars-lift, -3px)) skewX(-18deg);
+      opacity: 1;
+    }
+  }
+  .me-bars-bar {
+    display: block;
+    border-radius: 1px;
+    background-color: currentColor;
+    animation: me-bars 940ms ease-in-out infinite;
+  }
+
+  /*
    * `SidebarLink` maneja la preferencia utilidad por utilidad, pero era el
    * único: las entradas de los sheets, los diálogos y los toasts se animaban
    * igual con `prefers-reduced-motion: reduce` puesto.
@@ -314,10 +342,11 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
-    /* Los spinners son indicadores de progreso, no decoración: congelarlos
-       hace que una pantalla que está cargando parezca colgada. Siguen
-       girando, más lento. */
-    .animate-spin {
+    /* Los indicadores de carga son progreso, no decoración: congelarlos hace
+       que una pantalla que está cargando parezca colgada. Siguen animándose,
+       más lento. */
+    .animate-spin,
+    .me-bars-bar {
       animation-duration: 1.5s !important;
       animation-iteration-count: infinite !important;
     }

@@ -1,10 +1,11 @@
 "use client"
 
-import { Check, Loader2, Search, UserRoundSearch } from "lucide-react"
+import { Check, Search, UserRoundSearch } from "lucide-react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -118,7 +119,7 @@ export function StudentSearchPanel({
               disabled={search.isFetchingNextPage}
               onClick={() => search.fetchNextPage()}
             >
-              {search.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+              {search.isFetchingNextPage && <BarsLoader />}
               {search.isFetchingNextPage ? "Cargando…" : "Cargar más"}
             </Button>
           )}

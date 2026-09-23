@@ -1,7 +1,8 @@
 "use client"
 
-import { Check, Gift, Loader2 } from "lucide-react"
+import { Check, Gift } from "lucide-react"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/features/brand/components/status-pill"
 import { formatDate } from "@/lib/format"
@@ -66,7 +67,7 @@ export function RedemptionRow({
           {pending && (
             <Button size="sm" onClick={() => deliver.mutate(redemption.id)} disabled={deliver.isPending}>
               {deliver.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
+                <BarsLoader />
               ) : (
                 <Check className="size-4" />
               )}

@@ -1,10 +1,11 @@
 "use client"
 
-import { Loader2, PackageCheck, Search } from "lucide-react"
+import { PackageCheck, Search } from "lucide-react"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -98,7 +99,7 @@ function CodeLookup() {
           />
         </div>
         <Button type="submit" disabled={validate.isPending || !code.trim()}>
-          {validate.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+          {validate.isPending ? <BarsLoader /> : <Search className="size-4" />}
           Buscar
         </Button>
       </form>

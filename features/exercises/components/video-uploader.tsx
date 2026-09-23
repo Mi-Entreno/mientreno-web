@@ -1,8 +1,9 @@
 "use client"
 
-import { Loader2, Upload } from "lucide-react"
+import { Upload } from "lucide-react"
 import { useRef, useState } from "react"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useUploadExerciseVideo } from "../hooks/use-exercises"
@@ -61,7 +62,7 @@ export function VideoUploader({ exerciseId }: { exerciseId: number }) {
         onClick={() => inputRef.current?.click()}
       >
         {upload.isPending ? (
-          <Loader2 className="size-4 animate-spin" />
+          <BarsLoader />
         ) : (
           <Upload className="size-4" />
         )}

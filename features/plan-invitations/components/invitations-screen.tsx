@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowRight, Clock, Loader2, RotateCcw, Send, Trash2 } from "lucide-react"
+import { ArrowRight, Clock, RotateCcw, Send, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -169,7 +170,7 @@ function InvitationList({ status }: { status: InvitationStatus | null }) {
           disabled={list.isFetchingNextPage}
           onClick={() => list.fetchNextPage()}
         >
-          {list.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {list.isFetchingNextPage && <BarsLoader />}
           {list.isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}
@@ -268,7 +269,7 @@ function InvitationRow({
             {/* Reenviar no pasa por un diálogo, así que este spinner es su
                 único acuse de recibo hasta que llega el toast. */}
             {resending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
             ) : (
               <RotateCcw className="size-4" />
             )}
@@ -285,7 +286,7 @@ function InvitationRow({
             onClick={onCancel}
           >
             {cancelling ? (
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
             ) : (
               <Trash2 className="size-4" />
             )}

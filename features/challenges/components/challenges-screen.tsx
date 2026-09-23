@@ -1,11 +1,12 @@
 "use client"
 
-import { Gift, Loader2, Plus, Target, Users } from "lucide-react"
+import { Gift, Plus, Target, Users } from "lucide-react"
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -134,7 +135,7 @@ export function ChallengesScreen() {
           disabled={query.isFetchingNextPage}
           onClick={() => query.fetchNextPage()}
         >
-          {query.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {query.isFetchingNextPage && <BarsLoader />}
           {query.isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}
@@ -247,7 +248,7 @@ function ChallengeRow({
         </Button>
         {challenge.status === "DRAFT" && (
           <Button size="sm" onClick={onPublish} disabled={publishing}>
-            {publishing && <Loader2 className="size-4 animate-spin" />} Publicar
+            {publishing && <BarsLoader />} Publicar
           </Button>
         )}
         {(challenge.status === "PUBLISHED" || challenge.status === "PAUSED") && (

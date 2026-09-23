@@ -1,12 +1,13 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Landmark, Loader2, Trash2 } from "lucide-react"
+import { Landmark, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -200,7 +201,7 @@ export function BankInfoForm() {
           </Button>
         )}
         <Button type="submit" disabled={save.isPending}>
-          {save.isPending && <Loader2 className="size-4 animate-spin" />}
+          {save.isPending && <BarsLoader />}
           Guardar datos bancarios
         </Button>
       </div>

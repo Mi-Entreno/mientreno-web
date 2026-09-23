@@ -1,9 +1,10 @@
 "use client"
 
-import { Bell, CheckCheck, Loader2 } from "lucide-react"
+import { Bell, CheckCheck } from "lucide-react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -31,7 +32,7 @@ export function NotificationsScreen() {
 
         {unread > 0 && (
           <Button variant="outline" disabled={markAll.isPending} onClick={() => markAll.mutate()}>
-            {markAll.isPending && <Loader2 className="size-4 animate-spin" />}
+            {markAll.isPending && <BarsLoader />}
             <CheckCheck className="size-4" />
             Marcar todas como leídas
           </Button>
@@ -82,7 +83,7 @@ export function NotificationsScreen() {
               disabled={list.isFetchingNextPage}
               onClick={() => list.fetchNextPage()}
             >
-              {list.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+              {list.isFetchingNextPage && <BarsLoader />}
               {list.isFetchingNextPage ? "Cargando…" : "Cargar más"}
             </Button>
           )}

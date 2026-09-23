@@ -1,11 +1,12 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowLeft, Gift, Loader2, Plus, Target, Trash2 } from "lucide-react"
+import { ArrowLeft, Gift, Plus, Target, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -506,7 +507,7 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
 
         {step === "review" ? (
           <Button type="submit" disabled={pending}>
-            {pending && <Loader2 className="size-4 animate-spin" />}
+            {pending && <BarsLoader />}
             {isEditing ? "Guardar" : "Crear borrador"}
           </Button>
         ) : (

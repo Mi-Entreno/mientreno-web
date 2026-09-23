@@ -1,10 +1,11 @@
 "use client"
 
-import { Dumbbell, Loader2, Plus, SearchX } from "lucide-react"
+import { Dumbbell, Plus, SearchX } from "lucide-react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { CatalogExercise } from "../model/catalog-exercise.model"
@@ -117,7 +118,7 @@ export function ExerciseList({
           disabled={isFetchingNextPage}
           onClick={onLoadMore}
         >
-          {isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {isFetchingNextPage && <BarsLoader />}
           {isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}

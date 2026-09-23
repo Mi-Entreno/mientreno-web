@@ -1,6 +1,7 @@
-import { ArrowRight, Loader2 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import type { ReactNode } from "react"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -40,7 +41,7 @@ export function AuthSubmitButton({
     >
       {pending ? (
         <>
-          <Loader2 className="size-4 animate-spin" />
+          <BarsLoader />
           {pendingLabel ?? children}
         </>
       ) : (

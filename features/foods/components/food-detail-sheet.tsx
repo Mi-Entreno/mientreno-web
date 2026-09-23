@@ -1,10 +1,11 @@
 "use client"
 
-import { Loader2, Plus } from "lucide-react"
+import { Plus } from "lucide-react"
 import { useState } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -78,7 +79,7 @@ export function FoodDetailSheet({ foodId, onOpenChange, onPick }: FoodDetailShee
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-2">
           {isLoading && (
             <p className="flex items-center gap-2 text-body text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
               Cargando ficha…
             </p>
           )}
