@@ -1,9 +1,9 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
 import { OptionGroup } from "@/components/shared/option-group"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -220,7 +220,7 @@ function PlanForm({ plan, onDone }: { plan: SubscriptionPlan | null; onDone: () 
           Cancelar
         </Button>
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending && <Loader2 className="size-4 animate-spin" />}
+          {mutation.isPending && <BarsLoader />}
           {isEditing ? "Guardar cambios" : "Crear plan"}
         </Button>
       </SheetFooter>

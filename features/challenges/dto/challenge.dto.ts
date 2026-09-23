@@ -84,6 +84,8 @@ export interface BrandChallengeDTO {
   completedCount: number
   redeemedCount: number
   stockLeft: number
+  /** Reps it costs a student to unlock it. 0 means free. Added in backend V62. */
+  repsCost: number
   editable: boolean
 }
 
@@ -128,7 +130,19 @@ export interface SaveChallengeInput {
   endDate: string
   requirementMode: RequirementMode
   requiredCount?: number | null
+  /**
+   * May be empty when `repsCost > 0`: that is a challenge the student buys with
+   * reps instead of training for. The backend dropped `@NotEmpty` here for that
+   * reason — see `SaveChallengeRequestDTO.java`.
+   */
   requirements: SaveRequirementInput[]
+  /**
+   * Reps the student pays to unlock it. 0 or omitted means free.
+   *
+   * The one combination the backend rejects is no requirements AND no cost:
+   * that would hand the reward to whoever taps first.
+   */
+  repsCost?: number
   rewardName: string
   rewardDescription?: string
   rewardTerms?: string

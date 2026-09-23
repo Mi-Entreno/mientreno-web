@@ -1,11 +1,12 @@
 "use client"
 
-import { Loader2, MapPin, Store } from "lucide-react"
+import { MapPin, Store } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -119,7 +120,7 @@ export function BrandsList() {
           disabled={query.isFetchingNextPage}
           onClick={() => query.fetchNextPage()}
         >
-          {query.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {query.isFetchingNextPage && <BarsLoader />}
           {query.isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}

@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ImagePlus, Loader2, Store } from "lucide-react"
+import { ImagePlus, Store } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -464,7 +465,7 @@ export function BrandProfileScreen() {
 
         <div className="flex justify-end">
           <Button type="submit" disabled={pending}>
-            {pending && <Loader2 aria-hidden className="size-4 animate-spin" />}
+            {pending && <BarsLoader />}
             {submitLabel(isOnboarding, pending)}
           </Button>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { AlertTriangle, Loader2, Pause, Play, Search, Send, Users } from "lucide-react"
+import { AlertTriangle, Pause, Play, Search, Send, Users } from "lucide-react"
 import Link from "next/link"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -218,7 +219,7 @@ export function StudentsScreen() {
                   onClick={() => setPendingPause(student)}
                 >
                   {isActing(student) ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <BarsLoader />
                   ) : (
                     <Pause className="size-4" />
                   )}
@@ -239,7 +240,7 @@ export function StudentsScreen() {
                       que este spinner es su único acuse de recibo hasta que
                       llega el toast. */}
                   {isActing(student) ? (
-                    <Loader2 className="size-4 animate-spin" />
+                    <BarsLoader />
                   ) : (
                     <Play className="size-4" />
                   )}

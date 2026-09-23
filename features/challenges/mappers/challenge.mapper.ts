@@ -54,6 +54,9 @@ export function toBrandChallenge(dto: BrandChallengeDTO): BrandChallenge {
     completedCount: dto.completedCount,
     redeemedCount: dto.redeemedCount,
     stockLeft: dto.stockLeft,
+    // `?? 0` and not `dto.repsCost`: a challenge created before V62 comes back
+    // without the field, and it was free.
+    repsCost: dto.repsCost ?? 0,
     editable: dto.editable,
   }
 }

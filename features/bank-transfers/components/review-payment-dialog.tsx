@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Loader2, X } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { useState } from "react"
 
 import {
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -157,7 +158,7 @@ function ReviewDialogBody({
                 disabled={busy}
               >
                 {approve.isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <BarsLoader />
                 ) : (
                   <Check className="size-4" />
                 )}
@@ -179,7 +180,7 @@ function ReviewDialogBody({
                   )
                 }
               >
-                {reject.isPending && <Loader2 className="size-4 animate-spin" />}
+                {reject.isPending && <BarsLoader />}
                 Rechazar comprobante
               </Button>
             </>

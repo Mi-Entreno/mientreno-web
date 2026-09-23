@@ -1,10 +1,11 @@
 "use client"
 
-import { AlertTriangle, ArrowLeft, Check, Loader2, Send } from "lucide-react"
+import { AlertTriangle, ArrowLeft, Check, Send } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
@@ -176,7 +177,7 @@ function InviteWizard({
         {step === "review" ? (
           <Button type="button" onClick={handleSend} disabled={send.isPending}>
             {send.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
             ) : (
               <Send className="size-4" />
             )}

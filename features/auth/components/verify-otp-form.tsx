@@ -1,11 +1,12 @@
 "use client"
 
-import { Loader2, Mail, MailCheck } from "lucide-react"
+import { Mail, MailCheck } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { ApiError } from "@/core/http/errors"
 import { specificMessage } from "@/core/http/user-message"
@@ -165,7 +166,7 @@ export function VerifyOtpForm() {
             disabled={resend.isPending || cooldown.isCoolingDown}
             onClick={handleResend}
           >
-            {resend.isPending && <Loader2 className="size-4 animate-spin" />}
+            {resend.isPending && <BarsLoader />}
             {cooldown.isCoolingDown ? `Reenviar en ${cooldown.secondsLeft}s` : "Reenviar código"}
           </Button>
         </div>

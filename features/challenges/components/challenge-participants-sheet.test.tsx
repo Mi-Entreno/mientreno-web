@@ -42,6 +42,7 @@ const challenge: BrandChallenge = {
   completedCount: 9,
   redeemedCount: 4,
   stockLeft: 0,
+  repsCost: 0,
   editable: false,
 }
 

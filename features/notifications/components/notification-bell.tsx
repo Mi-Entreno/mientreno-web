@@ -1,10 +1,11 @@
 "use client"
 
-import { Bell, CheckCheck, Loader2 } from "lucide-react"
+import { Bell, CheckCheck } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -80,7 +81,7 @@ function NotificationPanel({ onNavigate }: { onNavigate: () => void }) {
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-2">
         {list.isLoading && (
           <p className="flex items-center gap-2 text-body text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
+            <BarsLoader />
             Cargando…
           </p>
         )}
@@ -128,7 +129,7 @@ function NotificationPanel({ onNavigate }: { onNavigate: () => void }) {
             disabled={markAll.isPending}
             onClick={() => markAll.mutate()}
           >
-            {markAll.isPending && <Loader2 className="size-4 animate-spin" />}
+            {markAll.isPending && <BarsLoader />}
             <CheckCheck className="size-4" />
             Marcar todas
           </Button>

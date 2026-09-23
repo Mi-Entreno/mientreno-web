@@ -1,10 +1,11 @@
 "use client"
 
-import { Apple, Loader2, Plus, SearchX } from "lucide-react"
+import { Apple, Plus, SearchX } from "lucide-react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { Food } from "../model/food.model"
@@ -118,7 +119,7 @@ export function FoodList({
           disabled={isFetchingNextPage}
           onClick={onLoadMore}
         >
-          {isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {isFetchingNextPage && <BarsLoader />}
           {isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}

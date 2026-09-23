@@ -1,9 +1,10 @@
 "use client"
 
-import { Inbox, Landmark, Loader2 } from "lucide-react"
+import { Inbox, Landmark } from "lucide-react"
 import { useState } from "react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { ErrorState } from "@/components/dashboard/error-state"
 import {
@@ -148,7 +149,7 @@ export function BankTransfersScreen() {
                 disabled={payments.isFetchingNextPage}
                 onClick={() => payments.fetchNextPage()}
               >
-                {payments.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+                {payments.isFetchingNextPage && <BarsLoader />}
                 {payments.isFetchingNextPage ? "Cargando…" : "Cargar más"}
               </Button>
             )}

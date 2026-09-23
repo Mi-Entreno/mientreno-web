@@ -1,9 +1,10 @@
 "use client"
 
-import { ImageUp, Loader2, Trash2, UserRound } from "lucide-react"
+import { ImageUp, Trash2, UserRound } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { toMediaUrl } from "@/core/http/media"
@@ -176,7 +177,7 @@ export function ImageUploadField({
               onClick={() => inputRef.current?.click()}
             >
               {pending ? (
-                <Loader2 className="size-4 animate-spin" />
+                <BarsLoader />
               ) : (
                 <ImageUp className="size-4" />
               )}

@@ -1,10 +1,10 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
 import { ImageUploadField } from "@/components/shared/image-upload-field"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -309,7 +309,7 @@ export function TrainerProfileForm({
 
       <div className="flex justify-end gap-3 border-t border-border pt-6">
         <Button type="submit" size="lg" disabled={isPending}>
-          {isPending && <Loader2 className="size-4 animate-spin" />}
+          {isPending && <BarsLoader />}
           {mode === "complete" ? "Crear perfil" : "Guardar cambios"}
         </Button>
       </div>

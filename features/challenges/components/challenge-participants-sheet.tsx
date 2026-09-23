@@ -1,10 +1,11 @@
 "use client"
 
-import { Loader2, Users } from "lucide-react"
+import { Users } from "lucide-react"
 
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { ErrorState } from "@/components/dashboard/error-state"
 import { UserAvatar } from "@/components/shared/user-avatar"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -107,7 +108,7 @@ function ParticipantList({ challenge, enabled }: { challenge: BrandChallenge; en
           disabled={query.isFetchingNextPage}
           onClick={() => query.fetchNextPage()}
         >
-          {query.isFetchingNextPage && <Loader2 className="size-4 animate-spin" />}
+          {query.isFetchingNextPage && <BarsLoader />}
           {query.isFetchingNextPage ? "Cargando…" : "Cargar más"}
         </Button>
       )}
