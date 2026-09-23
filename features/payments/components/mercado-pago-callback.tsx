@@ -1,10 +1,11 @@
 "use client"
 
-import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react"
+import { AlertTriangle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useRef } from "react"
 
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { ApiError } from "@/core/http/errors"
 import { useCompleteMercadoPagoAuthorization } from "../hooks/use-mercado-pago"
@@ -107,7 +108,7 @@ function CallbackState({
 }) {
   return (
     <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-6 py-12 text-center">
-      {tone === "pending" && <Loader2 className="size-8 animate-spin text-muted-foreground" />}
+      {tone === "pending" && <BarsLoader size="lg" className="text-muted-foreground" />}
       {tone === "success" && <CheckCircle2 className="size-8 text-success-text" />}
       {tone === "error" && <AlertTriangle className="size-8 text-error-text" />}
 

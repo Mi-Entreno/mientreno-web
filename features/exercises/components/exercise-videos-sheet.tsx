@@ -1,11 +1,12 @@
 "use client"
 
-import { Film, Loader2, Trash2 } from "lucide-react"
+import { Film, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -61,7 +62,7 @@ export function ExerciseVideosSheet({ exerciseId, onOpenChange }: ExerciseVideos
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-2">
           {detail.isLoading && (
             <p className="flex items-center gap-2 text-body text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
               Cargando ejercicio…
             </p>
           )}

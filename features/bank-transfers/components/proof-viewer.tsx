@@ -1,9 +1,10 @@
 "use client"
 
-import { AlertTriangle, ExternalLink, Loader2 } from "lucide-react"
+import { AlertTriangle, ExternalLink } from "lucide-react"
 import { useState } from "react"
 
 import { proofUrl } from "../model/bank-transfer.model"
+import { BarsLoader } from "@/components/ui/bars-loader"
 
 /**
  * The receipt itself.
@@ -21,7 +22,7 @@ export function ProofViewer({ paymentId, fileName }: { paymentId: number; fileNa
     <div className="flex flex-col gap-2">
       <div className="relative flex min-h-64 items-center justify-center overflow-hidden rounded-xl border border-border bg-secondary/40">
         {state === "loading" && (
-          <Loader2 className="absolute size-6 animate-spin text-muted-foreground" />
+          <BarsLoader size="md" className="absolute text-muted-foreground" />
         )}
 
         {state === "failed" ? (

@@ -1,9 +1,10 @@
 "use client"
 
-import { AlertTriangle, Loader2, Plus, Save, Upload } from "lucide-react"
+import { AlertTriangle, Plus, Save, Upload } from "lucide-react"
 import { useMemo, useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -292,14 +293,14 @@ export function TrainingPlanEditor({
               disabled={isPending}
               onClick={submit(onSaveInPlace)}
             >
-              {isPending && <Loader2 className="size-4 animate-spin" />}
+              {isPending && <BarsLoader />}
               <Save className="size-4" />
               Guardar cambios{editingVersion !== null && ` en v${editingVersion}`}
             </Button>
           )}
 
           <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="size-4 animate-spin" />}
+            {isPending && <BarsLoader />}
             <Upload className="size-4" />
             {/* The first plan is not a "new version" of anything. */}
             {editingPlanId === null ? "Publicar plan" : "Publicar nueva versión"}

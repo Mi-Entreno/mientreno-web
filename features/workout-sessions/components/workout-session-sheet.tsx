@@ -1,6 +1,6 @@
 "use client"
 
-import { Loader2, Star } from "lucide-react"
+import { Star } from "lucide-react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,7 @@ import {
   totalVolume,
   type WorkoutSet,
 } from "../model/workout-session.model"
+import { BarsLoader } from "@/components/ui/bars-loader"
 
 /**
  * A completed workout session: what the student actually did, set by set.
@@ -53,7 +54,7 @@ export function WorkoutSessionSheet({
         <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-4 py-2">
           {isLoading && (
             <p className="flex items-center gap-2 text-body text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
+              <BarsLoader />
               Cargando sesión…
             </p>
           )}

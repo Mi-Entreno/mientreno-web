@@ -1,9 +1,8 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
-
 import { ErrorState } from "@/components/dashboard/error-state"
 import { OptionGroup, type Option } from "@/components/shared/option-group"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useUpdatePreferences, useUserPreferences } from "../hooks/use-user"
 import type { OnboardingMode } from "../model/user.model"
@@ -56,7 +55,7 @@ export function PreferencesCard() {
       />
       {update.isPending && (
         <p className="flex items-center gap-2 text-caption text-muted-foreground">
-          <Loader2 className="size-3 animate-spin" />
+          <BarsLoader size="xs" />
           Guardando…
         </p>
       )}

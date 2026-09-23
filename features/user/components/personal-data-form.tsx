@@ -1,10 +1,10 @@
 "use client"
 
-import { Loader2 } from "lucide-react"
 import { useState, type FormEvent } from "react"
 
 import { ErrorState } from "@/components/dashboard/error-state"
 import { GENDER_OPTIONS, OptionGroup } from "@/components/shared/option-group"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -160,7 +160,7 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
 
       <div className="flex justify-end">
         <Button type="submit" disabled={update.isPending}>
-          {update.isPending && <Loader2 className="size-4 animate-spin" />}
+          {update.isPending && <BarsLoader />}
           Guardar datos
         </Button>
       </div>

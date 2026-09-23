@@ -1,10 +1,11 @@
 "use client"
 
-import { Apple, CheckCircle2, CreditCard, Dumbbell, Loader2, ThumbsDown, Users, XCircle } from "lucide-react"
+import { Apple, CheckCircle2, CreditCard, Dumbbell, ThumbsDown, Users, XCircle } from "lucide-react"
 import { useState } from "react"
 
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -251,7 +252,7 @@ function Offer({
               Volver
             </Button>
             <Button variant="destructive" onClick={onConfirmReject} disabled={rejectPending}>
-              {rejectPending && <Loader2 className="size-4 animate-spin" />}
+              {rejectPending && <BarsLoader />}
               Confirmar rechazo
             </Button>
           </div>
@@ -259,7 +260,7 @@ function Offer({
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button size="lg" className="flex-1" onClick={onAccept} disabled={busy}>
-            {accepting ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+            {accepting ? <BarsLoader /> : <CheckCircle2 className="size-4" />}
             Aceptar plan
           </Button>
           <Button variant="outline" size="lg" onClick={onStartReject} disabled={busy}>

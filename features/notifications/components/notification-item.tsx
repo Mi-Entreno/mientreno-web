@@ -1,9 +1,10 @@
 "use client"
 
-import { ArrowRight, Check, Loader2 } from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
 
 import { Badge } from "@/components/ui/badge"
+import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { describeType, linkFor, relativeTime, type AppNotification } from "../model/notification.model"
@@ -96,7 +97,7 @@ export function NotificationItem({
           aria-label={`Marcar "${notification.title}" como leída`}
           onClick={() => onMarkRead(notification.id)}
         >
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+          {isPending ? <BarsLoader /> : <Check className="size-4" />}
         </Button>
       )}
     </li>

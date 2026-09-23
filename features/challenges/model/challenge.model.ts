@@ -10,8 +10,10 @@ import type {
  * Domain types and pure predicates for the merchant's challenges.
  *
  * The wording rule for the whole slice: a challenge is a promise — *complete
- * this and take this*. There is no currency, no balance and no catalogue, so no
- * label here should read like a price.
+ * this and take this*. Reps came back in backend V61-V62, but they are the
+ * *entry price*, never the prize: the merchant still puts up and pays for the
+ * reward. So `repsCost` reads as "what the student spends to get in", and no
+ * label should suggest the reward itself is bought from the platform.
  */
 
 export interface Reward {
@@ -51,6 +53,8 @@ export interface BrandChallenge {
   completedCount: number
   redeemedCount: number
   stockLeft: number
+  /** Reps the student pays to unlock it. 0 = free. */
+  repsCost: number
   editable: boolean
 }
 
