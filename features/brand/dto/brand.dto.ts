@@ -8,6 +8,17 @@
 
 export type BrandStatus = "ACTIVE" | "SUSPENDED"
 
+/** Mirror of `brand/enums/BrandCategory.java`. The CHECK in V66 holds the same list. */
+export type BrandCategory =
+  | "FOOD"
+  | "CAFE"
+  | "HEALTHY"
+  | "SPORTSWEAR"
+  | "SUPPLEMENTS"
+  | "GYM"
+  | "WELLNESS"
+  | "OTHER"
+
 export interface BrandProfileDTO {
   id: number
   displayName: string
@@ -22,6 +33,12 @@ export interface BrandProfileDTO {
   /** Usuario canónico, sin arroba ni URL: el backend lo garantiza con un CHECK. */
   instagram: string | null
   websiteUrl: string | null
+  category: BrandCategory
+  /** Texto para mostrar, resuelto por el backend. */
+  categoryLabel: string
+  /** Punto de retiro confirmado en el mapa. Las dos o ninguna (CHECK `ck_brands_location`). */
+  latitude: number | null
+  longitude: number | null
   status: BrandStatus
   createdAt: string
 }
@@ -39,4 +56,12 @@ export interface CompleteBrandProfileInput {
   pickupNotes?: string
   instagram?: string
   websiteUrl?: string
+  /** Sin mandar, el backend conserva la que había (OTHER en el alta). */
+  category?: BrandCategory
+  /**
+   * De a par. Sin mandarlas, el backend conserva las que había salvo que haya
+   * cambiado la dirección: ahí las borra, porque el pin quedó apuntando a otro lado.
+   */
+  latitude?: number
+  longitude?: number
 }

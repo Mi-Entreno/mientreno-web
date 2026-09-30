@@ -1,4 +1,4 @@
-import type { BrandStatus } from "@/features/brand/dto/brand.dto"
+import type { BrandCategory, BrandStatus } from "@/features/brand/dto/brand.dto"
 
 /**
  * Mirror of `BrandProfileResponseDTO`, as the platform sees it.
@@ -18,6 +18,10 @@ export interface AdminBrandDTO {
   contactPhone: string | null
   pickupAddress: string | null
   pickupNotes: string | null
+  category: BrandCategory
+  categoryLabel: string
+  latitude: number | null
+  longitude: number | null
   status: BrandStatus
   createdAt: string
 }

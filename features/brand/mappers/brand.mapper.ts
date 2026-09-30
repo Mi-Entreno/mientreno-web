@@ -24,6 +24,10 @@ export function toBrandProfile(dto: BrandProfileDTO): BrandProfile {
     pickupNotes: dto.pickupNotes,
     instagram: dto.instagram,
     websiteUrl: dto.websiteUrl,
+    // Un backend anterior a V66 no manda ninguno de los dos.
+    category: dto.category ?? "OTHER",
+    location:
+      dto.latitude != null && dto.longitude != null ? { lat: dto.latitude, lng: dto.longitude } : null,
     status: dto.status,
   }
 }
