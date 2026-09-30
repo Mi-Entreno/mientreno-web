@@ -142,11 +142,11 @@ describe("toPlanBody", () => {
             name: "Press banca",
             weightUnit: "KG",
             sets: [
-              { key: nextKey("set"), reps: "8", weightValue: "60,5" },
-              { key: nextKey("set"), reps: "6", weightValue: "65" },
+              { key: nextKey("set"), reps: "8", weightValue: "60,5", duration: "" },
+              { key: nextKey("set"), reps: "6", weightValue: "65", duration: "" },
             ],
           },
-          { ...emptyExercise(), catalogExerciseId: 12, name: "Remo", sets: [{ key: nextKey("set"), reps: "", weightValue: "" }] },
+          { ...emptyExercise(), catalogExerciseId: 12, name: "Remo", sets: [{ key: nextKey("set"), reps: "", weightValue: "", duration: "" }] },
         ],
       },
       {
@@ -187,8 +187,22 @@ describe("toPlanBody", () => {
     const exercise = toPlanBody(plan).days[0].exercises[0]
 
     expect(exercise.plannedSets).toEqual([
-      { setNumber: 1, targetReps: 8, targetWeightValue: 60.5, targetWeightUnit: "KG", restSeconds: null },
-      { setNumber: 2, targetReps: 6, targetWeightValue: 65, targetWeightUnit: "KG", restSeconds: null },
+      {
+        setNumber: 1,
+        targetReps: 8,
+        targetWeightValue: 60.5,
+        targetWeightUnit: "KG",
+        restSeconds: null,
+        targetDurationSeconds: null,
+      },
+      {
+        setNumber: 2,
+        targetReps: 6,
+        targetWeightValue: 65,
+        targetWeightUnit: "KG",
+        restSeconds: null,
+        targetDurationSeconds: null,
+      },
     ])
   })
 
@@ -233,5 +247,82 @@ describe("toCreateRequest", () => {
 
     expect(request.subscriptionId).toBe(42)
     expect(request.title).toBe("Plan")
+  })
+})
+
+describe("cardio round trip", () => {
+  it("sends per-set durations and no reps or load", () => {
+    const body = toPlanBody({
+      title: "Cardio",
+      notes: "",
+      days: [
+        {
+          key: nextKey("day"),
+          label: "Día 1",
+          restDay: false,
+          exercises: [
+            {
+              ...emptyExercise(),
+              name: "Cinta",
+              trackingMode: "DURATION",
+              weightUnit: "KG",
+              sets: [
+                { key: nextKey("set"), reps: "10", weightValue: "20", duration: "5" },
+                { key: nextKey("set"), reps: "", weightValue: "", duration: "2:30" },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const exercise = body.days[0].exercises[0]
+    expect(exercise.trackingMode).toBe("DURATION")
+    expect(exercise.reps).toBeNull()
+    expect(exercise.weightUnit).toBeNull()
+    expect(exercise.durationSeconds).toBe(300)
+    expect(exercise.plannedSets?.map((set) => set.targetDurationSeconds)).toEqual([300, 150])
+    expect(exercise.plannedSets?.every((set) => set.targetReps === null && set.targetWeightValue === null)).toBe(true)
+  })
+
+  it("reads the mode and per-set durations back into the editor", () => {
+    const plan = toTrainingPlan({
+      ...RESPONSE,
+      days: [
+        {
+          id: 1,
+          dayNumber: 1,
+          label: "Cardio",
+          restDay: false,
+          exercises: [
+            {
+              ...RESPONSE.days[0].exercises[0],
+              trackingMode: "DURATION",
+              plannedSets: [
+                {
+                  id: 1,
+                  setNumber: 1,
+                  targetReps: null,
+                  targetWeightValue: null,
+                  targetWeightUnit: null,
+                  restSeconds: null,
+                  targetDurationSeconds: 330,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    const editor = toEditorPlan(plan)
+    expect(editor.days[0].exercises[0].trackingMode).toBe("DURATION")
+    expect(editor.days[0].exercises[0].sets[0].duration).toBe("5:30")
+  })
+
+  it("defaults a response without trackingMode to REPS_WEIGHT", () => {
+    const exercises = toTrainingPlan(RESPONSE).days.flatMap((day) => day.exercises)
+    expect(exercises.length).toBeGreaterThan(0)
+    expect(exercises.every((exercise) => exercise.trackingMode === "REPS_WEIGHT")).toBe(true)
   })
 })

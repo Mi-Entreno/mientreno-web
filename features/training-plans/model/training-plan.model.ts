@@ -1,4 +1,6 @@
-import type { WeightUnit } from "../dto/training-plan.dto"
+import { formatDuration } from "@/lib/format"
+
+import type { TrackingMode, WeightUnit } from "../dto/training-plan.dto"
 
 /** Target for one set. What the student should do, not what they did. */
 export interface PlannedSet {
@@ -6,6 +8,8 @@ export interface PlannedSet {
   reps: number | null
   weightValue: number | null
   weightUnit: WeightUnit | null
+  /** Only on `DURATION` exercises. */
+  durationSeconds: number | null
 }
 
 export interface PlanExercise {
@@ -25,6 +29,7 @@ export interface PlanExercise {
   muscleGroup: string | null
   equipment: string | null
   plannedSets: PlannedSet[]
+  trackingMode: TrackingMode
 }
 
 export interface PlanDay {
@@ -62,6 +67,8 @@ export interface EditorSet {
   key: string
   reps: string
   weightValue: string
+  /** "m:ss" as typed. Only read when the exercise is `DURATION`. */
+  duration: string
 }
 
 export interface EditorExercise {
@@ -71,6 +78,8 @@ export interface EditorExercise {
   name: string
   muscleGroup: string | null
   equipment: string | null
+  /** Reps + load, or time (cardio). Switching keeps the other mode's values. */
+  trackingMode: TrackingMode
   /**
    * Per-set targets. `sets.length` is the set count — there is no separate
    * numeric field, so the two can never disagree.
@@ -167,6 +176,49 @@ export function sanitizeDecimal(value: string): string {
   return `${head}.${rest.join("").slice(0, MAX_WEIGHT_DECIMALS)}`
 }
 
+/** Minutos de tres dígitos: 999 min ya pasa el tope de 36000 s del backend. */
+export const MAX_DURATION_MINUTES_DIGITS = 3
+
+/** `ExerciseSet.targetDurationSeconds`: `@Max(36000)`, diez horas. */
+export const MAX_DURATION_SECONDS = 36000
+
+/**
+ * Grupo muscular con el que el catálogo marca el cardio. Es el valor traducido
+ * que guarda `MuscleDictionary` ("cardiovascular_system").
+ */
+export const CARDIO_MUSCLE_GROUP = "Sistema cardiovascular"
+
+/** Modo con el que arranca un ejercicio recién elegido del catálogo. */
+export function defaultTrackingMode(muscleGroup: string | null): TrackingMode {
+  return muscleGroup === CARDIO_MUSCLE_GROUP ? "DURATION" : "REPS_WEIGHT"
+}
+
+/**
+ * Una duración mientras se tipea: dígitos y un único ":" con dos dígitos de
+ * segundos. "5" son cinco minutos; "5:30", cinco y medio.
+ */
+export function sanitizeDuration(value: string): string {
+  const [minutes = "", ...rest] = value.replace(/[^\d:]/g, "").split(":")
+  const head = minutes.slice(0, MAX_DURATION_MINUTES_DIGITS)
+  if (rest.length === 0) return head
+  return `${head}:${rest.join("").slice(0, 2)}`
+}
+
+/** "m:ss" -> segundos, o null si está vacío o no se entiende. */
+export function parseDuration(value: string): number | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+
+  const [minutesRaw = "", secondsRaw] = trimmed.split(":")
+  const minutes = minutesRaw ? Number(minutesRaw) : 0
+  const seconds = secondsRaw ? Number(secondsRaw) : 0
+  if (!Number.isInteger(minutes) || !Number.isInteger(seconds) || seconds >= 60) return null
+
+  return minutes * 60 + seconds
+}
+
+export { formatDuration }
+
 /**
  * Qué le falta a un ejercicio para poder guardarse, o null si está completo.
  *
@@ -180,12 +232,30 @@ export function exerciseIssue(exercise: EditorExercise): string | null {
     return "Este ejercicio necesita un nombre"
   }
 
+  if (exercise.trackingMode === "DURATION") {
+    // `validateDuration` en el backend: sin objetivo de tiempo el alumno no
+    // tiene contra qué correr el timer.
+    const durations = exercise.sets.map((set) => parseDuration(set.duration))
+    if (durations.some((seconds) => seconds === null || seconds <= 0)) {
+      return "Cargá la duración de cada serie (minutos o m:ss)"
+    }
+    if (durations.some((seconds) => seconds !== null && seconds > MAX_DURATION_SECONDS)) {
+      return "Una serie no puede durar más de 10 horas"
+    }
+    return null
+  }
+
   if (exercise.weightUnit === "" && exercise.sets.some((set) => set.weightValue.trim())) {
     return "Elegí la unidad del peso: kg, lb o peso corporal"
   }
 
   return null
 }
+
+export const TRACKING_MODES: { value: TrackingMode; label: string }[] = [
+  { value: "REPS_WEIGHT", label: "Reps y peso" },
+  { value: "DURATION", label: "Tiempo" },
+]
 
 export const WEIGHT_UNITS: { value: WeightUnit; label: string }[] = [
   { value: "KG", label: "kg" },
@@ -200,7 +270,7 @@ export function nextKey(prefix: string): string {
 }
 
 export function emptySet(): EditorSet {
-  return { key: nextKey("set"), reps: "", weightValue: "" }
+  return { key: nextKey("set"), reps: "", weightValue: "", duration: "" }
 }
 
 /**
@@ -228,6 +298,7 @@ export function emptyExercise(): EditorExercise {
     name: "",
     muscleGroup: null,
     equipment: null,
+    trackingMode: "REPS_WEIGHT",
     sets: [emptySet()],
     weightUnit: "",
     restSeconds: "",
@@ -287,4 +358,4 @@ export function countExercises(plan: EditorPlan): number {
   return plan.days.reduce((total, day) => total + (day.restDay ? 0 : day.exercises.length), 0)
 }
 
-export type { WeightUnit }
+export type { TrackingMode, WeightUnit }

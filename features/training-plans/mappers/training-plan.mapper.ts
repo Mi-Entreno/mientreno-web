@@ -11,7 +11,9 @@ import type {
 } from "../dto/training-plan.dto"
 import {
   emptyDay,
+  formatDuration,
   nextKey,
+  parseDuration,
   type EditorDay,
   type EditorExercise,
   type EditorPlan,
@@ -38,6 +40,7 @@ function toPlannedSets(dto: ExerciseResponseDTO): PlannedSet[] {
         reps: set.targetReps,
         weightValue: set.targetWeightValue,
         weightUnit: set.targetWeightUnit,
+        durationSeconds: set.targetDurationSeconds ?? null,
       }))
   }
 
@@ -46,6 +49,7 @@ function toPlannedSets(dto: ExerciseResponseDTO): PlannedSet[] {
     reps: dto.reps,
     weightValue: dto.weightValue,
     weightUnit: dto.weightUnit,
+    durationSeconds: dto.trackingMode === "DURATION" ? dto.durationSeconds : null,
   }))
 }
 
@@ -67,6 +71,7 @@ export function toPlanExercise(dto: ExerciseResponseDTO): PlanExercise {
     muscleGroup: dto.muscleGroup,
     equipment: dto.equipment,
     plannedSets: toPlannedSets(dto),
+    trackingMode: dto.trackingMode ?? "REPS_WEIGHT",
   }
 }
 
@@ -115,10 +120,12 @@ function toEditorExercise(exercise: PlanExercise): EditorExercise {
     name: exercise.name,
     muscleGroup: exercise.muscleGroup,
     equipment: exercise.equipment,
+    trackingMode: exercise.trackingMode,
     sets: exercise.plannedSets.map((set) => ({
       key: nextKey("set"),
       reps: set.reps === null ? "" : String(set.reps),
       weightValue: set.weightValue === null ? "" : String(set.weightValue),
+      duration: set.durationSeconds === null ? "" : formatDuration(set.durationSeconds),
     })),
     // The unit is per exercise in the editor: mixing kg and lb across sets of
     // the same movement is not a real use case and would only add a trap.
@@ -162,8 +169,36 @@ function emptyToNull(value: string): string | null {
 }
 
 function toExerciseRequest(exercise: EditorExercise, index: number): ExerciseRequestDTO {
-  const weightUnit = exercise.weightUnit === "" ? null : exercise.weightUnit
   const [firstSet] = exercise.sets
+
+  if (exercise.trackingMode === "DURATION") {
+    // Cardio: sin reps ni carga. Lo que quedó escrito en esos campos antes de
+    // cambiar de modo no se manda; el backend lo descartaría igual.
+    return {
+      order: index + 1,
+      name: emptyToNull(exercise.name),
+      catalogExerciseId: exercise.catalogExerciseId,
+      sets: exercise.sets.length,
+      reps: null,
+      weightValue: null,
+      weightUnit: null,
+      restSeconds: toNumberOrNull(exercise.restSeconds),
+      durationSeconds: firstSet ? parseDuration(firstSet.duration) : null,
+      mediaUrl: exercise.mediaUrl,
+      trainerNotes: emptyToNull(exercise.trainerNotes),
+      plannedSets: exercise.sets.map((set, setIndex) => ({
+        setNumber: setIndex + 1,
+        targetReps: null,
+        targetWeightValue: null,
+        targetWeightUnit: null,
+        restSeconds: null,
+        targetDurationSeconds: parseDuration(set.duration),
+      })),
+      trackingMode: "DURATION",
+    }
+  }
+
+  const weightUnit = exercise.weightUnit === "" ? null : exercise.weightUnit
 
   return {
     // Derived from position, so reordering in the UI is what the backend sees.
@@ -187,7 +222,9 @@ function toExerciseRequest(exercise: EditorExercise, index: number): ExerciseReq
       targetWeightValue: toNumberOrNull(set.weightValue),
       targetWeightUnit: weightUnit,
       restSeconds: null,
+      targetDurationSeconds: null,
     })),
+    trackingMode: "REPS_WEIGHT",
   }
 }
 

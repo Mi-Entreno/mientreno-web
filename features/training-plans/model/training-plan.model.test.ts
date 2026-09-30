@@ -9,9 +9,12 @@ import {
   emptyDay,
   emptyExercise,
   emptyPlan,
+  defaultTrackingMode,
   exerciseIssue,
+  parseDuration,
   resizeSets,
   sanitizeDecimal,
+  sanitizeDuration,
   sanitizeInteger,
   type EditorExercise,
 } from "./training-plan.model"
@@ -23,8 +26,8 @@ const exercise = (overrides: Partial<EditorExercise> = {}): EditorExercise => ({
   muscleGroup: "Pecho",
   equipment: "Barra",
   sets: [
-    { key: "set-a", reps: "8", weightValue: "60" },
-    { key: "set-b", reps: "6", weightValue: "65" },
+    { key: "set-a", reps: "8", weightValue: "60", duration: "" },
+    { key: "set-b", reps: "6", weightValue: "65", duration: "" },
   ],
   weightUnit: "KG",
   restSeconds: "90",
@@ -188,7 +191,51 @@ describe("exerciseIssue", () => {
   })
 
   it("does not demand a unit when no set carries a weight", () => {
-    const sets = [{ key: "set-a", reps: "8", weightValue: "" }]
+    const sets = [{ key: "set-a", reps: "8", weightValue: "", duration: "" }]
     expect(exerciseIssue(exercise({ weightUnit: "", sets }))).toBeNull()
+  })
+})
+
+describe("cardio (DURATION)", () => {
+  const cardio = (durations: string[]) =>
+    exercise({
+      trackingMode: "DURATION",
+      weightUnit: "",
+      sets: durations.map((duration, index) => ({ key: `set-${index}`, reps: "", weightValue: "", duration })),
+    })
+
+  it("starts catalogue cardio in DURATION and everything else in REPS_WEIGHT", () => {
+    expect(defaultTrackingMode("Sistema cardiovascular")).toBe("DURATION")
+    expect(defaultTrackingMode("Pecho")).toBe("REPS_WEIGHT")
+    expect(defaultTrackingMode(null)).toBe("REPS_WEIGHT")
+  })
+
+  it("reads plain minutes and m:ss", () => {
+    expect(parseDuration("5")).toBe(300)
+    expect(parseDuration("5:30")).toBe(330)
+    expect(parseDuration(":45")).toBe(45)
+    expect(parseDuration("")).toBeNull()
+    expect(parseDuration("1:75")).toBeNull()
+  })
+
+  it("keeps a single separator and two digits of seconds", () => {
+    expect(sanitizeDuration("5m30")).toBe("530")
+    expect(sanitizeDuration("5:3:07")).toBe("5:30")
+    expect(sanitizeDuration("12345")).toBe("123")
+  })
+
+  it("passes when every set has a duration", () => {
+    expect(exerciseIssue(cardio(["5", "3:30"]))).toBeNull()
+  })
+
+  it("demands a duration on every set", () => {
+    expect(exerciseIssue(cardio(["5", ""]))).toBe("Cargá la duración de cada serie (minutos o m:ss)")
+    expect(exerciseIssue(cardio(["0"]))).toBe("Cargá la duración de cada serie (minutos o m:ss)")
+  })
+
+  it("ignores a stale weight left from the other mode", () => {
+    const withWeight = cardio(["5"])
+    withWeight.sets[0].weightValue = "40"
+    expect(exerciseIssue(withWeight)).toBeNull()
   })
 })

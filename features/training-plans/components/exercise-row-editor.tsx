@@ -2,6 +2,7 @@
 
 import { ChevronDown, ChevronUp, Copy, GripVertical, Link2Off, Trash2, Video } from "lucide-react"
 
+import { OptionGroup } from "@/components/shared/option-group"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,11 +14,14 @@ import {
   MAX_REPS_DIGITS,
   MAX_SECONDS_DIGITS,
   MAX_SETS,
+  TRACKING_MODES,
   WEIGHT_UNITS,
   resizeSets,
   sanitizeDecimal,
+  sanitizeDuration,
   sanitizeInteger,
   type EditorExercise,
+  type TrackingMode,
   type WeightUnit,
 } from "../model/training-plan.model"
 
@@ -46,6 +50,7 @@ export function ExerciseRowEditor({
   onMove,
 }: ExerciseRowEditorProps) {
   const isCustom = exercise.catalogExerciseId === null
+  const byDuration = exercise.trackingMode === "DURATION"
   const errorId = error ? `${exercise.key}-error` : undefined
 
   return (
@@ -163,7 +168,22 @@ export function ExerciseRowEditor({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="flex flex-col gap-2">
+        <Label>Registrar</Label>
+        {/* Cardio se planifica en tiempo: el alumno corre un timer por serie en
+            vez de cargar reps y peso. Cambiar de modo no borra lo cargado en
+            el otro, por si fue un click de más. */}
+        <OptionGroup<TrackingMode>
+          name={`${exercise.key}-mode`}
+          label="Qué registra el alumno"
+          options={TRACKING_MODES}
+          value={exercise.trackingMode}
+          disabled={disabled}
+          onChange={(trackingMode) => onChange({ trackingMode })}
+        />
+      </div>
+
+      <div className={cn("grid grid-cols-2 gap-3", !byDuration && "sm:grid-cols-4")}>
         <NumberField
           id={`${exercise.key}-sets`}
           label="Series"
@@ -186,16 +206,20 @@ export function ExerciseRowEditor({
           disabled={disabled}
           onChange={(restSeconds) => onChange({ restSeconds })}
         />
-        <NumberField
-          id={`${exercise.key}-duration`}
-          label="Duración (s)"
-          value={exercise.durationSeconds}
-          maxDigits={MAX_SECONDS_DIGITS}
-          disabled={disabled}
-          onChange={(durationSeconds) => onChange({ durationSeconds })}
-        />
+        {/* En cardio la duración va por serie, abajo; dejar también esta sería
+            tener dos lugares para el mismo número. */}
+        {!byDuration && (
+          <NumberField
+            id={`${exercise.key}-duration`}
+            label="Duración (s)"
+            value={exercise.durationSeconds}
+            maxDigits={MAX_SECONDS_DIGITS}
+            disabled={disabled}
+            onChange={(durationSeconds) => onChange({ durationSeconds })}
+          />
+        )}
 
-        <div className="flex flex-col gap-2">
+        <div className={cn("flex flex-col gap-2", byDuration && "hidden")}>
           <Label htmlFor={`${exercise.key}-unit`}>Unidad</Label>
           <select
             id={`${exercise.key}-unit`}
@@ -245,7 +269,12 @@ export function ExerciseRowEditor({
                 const [first] = exercise.sets
                 if (!first) return
                 onChange({
-                  sets: exercise.sets.map((set) => ({ ...set, reps: first.reps, weightValue: first.weightValue })),
+                  sets: exercise.sets.map((set) => ({
+                    ...set,
+                    reps: first.reps,
+                    weightValue: first.weightValue,
+                    duration: first.duration,
+                  })),
                 })
               }}
             >
@@ -257,38 +286,57 @@ export function ExerciseRowEditor({
         {exercise.sets.map((set, index) => (
           <div key={set.key} className="flex items-center gap-2">
             <span className="w-16 shrink-0 text-body-sm text-muted-foreground">Serie {index + 1}</span>
-            <Input
-              aria-label={`Repeticiones de la serie ${index + 1}`}
-              inputMode="numeric"
-              placeholder="Reps"
-              value={set.reps}
-              disabled={disabled}
-              onChange={(event) =>
-                onChange({
-                  sets: exercise.sets.map((current, position) =>
-                    position === index
-                      ? { ...current, reps: sanitizeInteger(event.target.value, MAX_REPS_DIGITS) }
-                      : current,
-                  ),
-                })
-              }
-            />
-            <Input
-              aria-label={`Peso de la serie ${index + 1}`}
-              inputMode="decimal"
-              placeholder="Peso"
-              value={set.weightValue}
-              disabled={disabled || exercise.weightUnit === "BODYWEIGHT"}
-              onChange={(event) =>
-                onChange({
-                  sets: exercise.sets.map((current, position) =>
-                    position === index
-                      ? { ...current, weightValue: sanitizeDecimal(event.target.value) }
-                      : current,
-                  ),
-                })
-              }
-            />
+            {byDuration ? (
+              <Input
+                aria-label={`Duración de la serie ${index + 1} (minutos o m:ss)`}
+                inputMode="numeric"
+                placeholder="Duración (m:ss)"
+                value={set.duration}
+                disabled={disabled}
+                onChange={(event) =>
+                  onChange({
+                    sets: exercise.sets.map((current, position) =>
+                      position === index ? { ...current, duration: sanitizeDuration(event.target.value) } : current,
+                    ),
+                  })
+                }
+              />
+            ) : (
+              <>
+                <Input
+                  aria-label={`Repeticiones de la serie ${index + 1}`}
+                  inputMode="numeric"
+                  placeholder="Reps"
+                  value={set.reps}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onChange({
+                      sets: exercise.sets.map((current, position) =>
+                        position === index
+                          ? { ...current, reps: sanitizeInteger(event.target.value, MAX_REPS_DIGITS) }
+                          : current,
+                      ),
+                    })
+                  }
+                />
+                <Input
+                  aria-label={`Peso de la serie ${index + 1}`}
+                  inputMode="decimal"
+                  placeholder="Peso"
+                  value={set.weightValue}
+                  disabled={disabled || exercise.weightUnit === "BODYWEIGHT"}
+                  onChange={(event) =>
+                    onChange({
+                      sets: exercise.sets.map((current, position) =>
+                        position === index
+                          ? { ...current, weightValue: sanitizeDecimal(event.target.value) }
+                          : current,
+                      ),
+                    })
+                  }
+                />
+              </>
+            )}
           </div>
         ))}
       </div>

@@ -6,7 +6,7 @@ import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExerciseVideosSheet } from "@/features/exercises/components/exercise-videos-sheet"
-import type { PlanExercise, TrainingPlan } from "../model/training-plan.model"
+import { formatDuration, type PlanExercise, type TrainingPlan } from "../model/training-plan.model"
 
 /**
  * Read-only rendering of a plan version.
@@ -162,8 +162,29 @@ function describeWeight(exercise: PlanExercise): string | null {
   return min === max ? `${min}${suffix}` : `${min}-${max}${suffix}`
 }
 
+/** Cardio: "3 × 5:00" when every set matches, "5:00/3:00/1:00" when they do not. */
+function describeDuration(exercise: PlanExercise): string | null {
+  const durations = exercise.plannedSets.map((set) => set.durationSeconds)
+  if (durations.length === 0) {
+    return exercise.durationSeconds !== null ? formatDuration(exercise.durationSeconds) : null
+  }
+  if (durations.some((value) => value === null)) return `${durations.length} series`
+
+  const formatted = durations.map((value) => formatDuration(value ?? 0))
+  return formatted.every((value) => value === formatted[0])
+    ? `${durations.length} × ${formatted[0]}`
+    : formatted.join("/")
+}
+
 function buildSpecs(exercise: PlanExercise): string[] {
   const specs: string[] = []
+
+  if (exercise.trackingMode === "DURATION") {
+    const duration = describeDuration(exercise)
+    if (duration) specs.push(duration)
+    if (exercise.restSeconds !== null) specs.push(`descanso ${exercise.restSeconds}s`)
+    return specs
+  }
 
   const reps = describeReps(exercise)
   if (reps) specs.push(reps)

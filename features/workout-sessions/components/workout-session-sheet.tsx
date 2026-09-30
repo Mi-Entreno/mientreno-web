@@ -11,7 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatDuration } from "@/lib/format"
 import { useWorkoutSession } from "../hooks/use-workout-session"
 import {
   WORKOUT_STATUS_LABELS,
@@ -167,7 +167,7 @@ function describeSet(set: WorkoutSet): string {
 
   if (set.repsCompleted !== null) parts.push(`${set.repsCompleted} reps`)
   if (set.weightKg !== null) parts.push(`${set.weightKg} kg`)
-  if (set.durationSeconds !== null) parts.push(`${set.durationSeconds}s`)
+  if (set.durationSeconds !== null) parts.push(formatDuration(set.durationSeconds))
   if (set.difficulty !== null) parts.push(`RPE ${set.difficulty}`)
 
   return parts.length > 0 ? parts.join(" · ") : "Sin datos"
