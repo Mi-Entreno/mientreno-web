@@ -13,6 +13,8 @@ export function toAdminBrand(dto: AdminBrandDTO): AdminBrand {
     contactEmail: dto.contactEmail,
     contactPhone: dto.contactPhone,
     pickupAddress: dto.pickupAddress,
+    categoryLabel: dto.categoryLabel ?? "Otros",
+    located: dto.latitude != null && dto.longitude != null,
     status: dto.status,
     createdAt: dto.createdAt,
   }

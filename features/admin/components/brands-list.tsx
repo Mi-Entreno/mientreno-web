@@ -75,7 +75,12 @@ export function BrandsList() {
             </span>
 
             <div className="min-w-40 flex-1">
-              <p className="font-medium">{brand.displayName}</p>
+              <p className="font-medium">
+                {brand.displayName}
+                <span className="ml-2 text-caption font-normal text-muted-foreground">
+                  {brand.categoryLabel}
+                </span>
+              </p>
               {brand.legalName && (
                 <p className="text-caption text-muted-foreground">{brand.legalName}</p>
               )}
@@ -83,6 +88,7 @@ export function BrandsList() {
                 <p className="mt-0.5 flex items-center gap-1.5 text-caption text-muted-foreground">
                   <MapPin className="size-3.5" />
                   {brand.pickupAddress}
+                  {!brand.located && <span className="text-warning-text"> · sin ubicar en el mapa</span>}
                 </p>
               )}
             </div>

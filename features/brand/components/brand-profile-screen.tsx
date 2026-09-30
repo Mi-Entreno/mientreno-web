@@ -5,7 +5,7 @@ import { ImagePlus, Store } from "lucide-react"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
@@ -18,15 +18,21 @@ import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/core/http/errors"
+import { cn } from "@/lib/utils"
 
 import { brandRepository } from "../api/brand.repository"
 import { useBrandProfile, useUpdateBrandProfile } from "../hooks/use-brand"
 import {
+  BRAND_CATEGORIES,
+  BRAND_CATEGORY_LABELS,
   INSTAGRAM_HANDLE,
   WEBSITE_URL,
   normalizeInstagram,
   normalizeWebsite,
+  type BrandCategory,
+  type LatLng,
 } from "../model/brand.model"
+import { LocationField } from "./location-field"
 
 /**
  * Los campos del comercio, que son los mismos en el alta y en la edición.
@@ -69,6 +75,7 @@ const profileFields = {
       "Poné la dirección completa, por ejemplo micomercio.com",
     )
     .optional(),
+  category: z.enum(BRAND_CATEGORIES as [BrandCategory, ...BrandCategory[]]),
 }
 
 const identityFields = {
@@ -136,6 +143,7 @@ export function BrandProfileScreen() {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm<FormValues>({
     resolver,
@@ -152,8 +160,27 @@ export function BrandProfileScreen() {
       pickupNotes: "",
       instagram: "",
       websiteUrl: "",
+      category: "OTHER",
     },
   })
+
+  // The pin lives outside react-hook-form: it is not typed, it is placed, and
+  // what matters is which address it was placed for. If the address changes
+  // afterwards the pin is stale — kept on screen as a starting point, but not
+  // sent, so the backend drops the stored one instead of pointing students at
+  // the old place.
+  //
+  // Until the brand touches the map, the pin is the stored one and it was placed
+  // for the stored address; `placed` only exists once they move it.
+  const [placed, setPlaced] = useState<{ value: LatLng | null; address: string } | null>(null)
+  const pickupAddress = useWatch({ control, name: "pickupAddress" }) ?? ""
+  const location = placed ? placed.value : (query.data?.location ?? null)
+  const locatedFor = placed ? placed.address : (query.data?.pickupAddress ?? "")
+  const locationStale = location !== null && pickupAddress.trim() !== locatedFor.trim()
+
+  function placeLocation(value: LatLng | null) {
+    setPlaced({ value, address: pickupAddress })
+  }
 
   useEffect(() => {
     if (!query.data) return
@@ -170,6 +197,7 @@ export function BrandProfileScreen() {
       pickupNotes: query.data.pickupNotes ?? "",
       instagram: query.data.instagram ?? "",
       websiteUrl: query.data.websiteUrl ?? "",
+      category: query.data.category,
     })
   }, [query.data, reset])
 
@@ -201,6 +229,8 @@ export function BrandProfileScreen() {
       pickupNotes: values.pickupNotes || undefined,
       instagram: normalizeInstagram(values.instagram ?? "") || undefined,
       websiteUrl: normalizeWebsite(values.websiteUrl ?? "") || undefined,
+      category: values.category,
+      ...(location && !locationStale ? { latitude: location.lat, longitude: location.lng } : {}),
     }
 
     if (!isOnboarding) {
@@ -372,6 +402,29 @@ export function BrandProfileScreen() {
               </Field>
             </div>
 
+            <Field
+              id="category"
+              label="Rubro"
+              hint="Los alumnos filtran los locales por rubro en la app."
+              error={errors.category?.message}
+            >
+              <select
+                id="category"
+                disabled={pending}
+                className={cn(
+                  "h-9 rounded-lg border border-border-dark bg-transparent px-2 text-body",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                )}
+                {...register("category")}
+              >
+                {BRAND_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {BRAND_CATEGORY_LABELS[category]}
+                  </option>
+                ))}
+              </select>
+            </Field>
+
             <Field id="description" label="Descripción (opcional)" error={errors.description?.message}>
               <Textarea id="description" rows={3} disabled={pending} {...register("description")} />
             </Field>
@@ -434,6 +487,14 @@ export function BrandProfileScreen() {
             >
               <Input id="pickupAddress" disabled={pending} {...register("pickupAddress")} />
             </Field>
+
+            <LocationField
+              address={pickupAddress}
+              value={location}
+              stale={locationStale}
+              disabled={pending}
+              onChange={placeLocation}
+            />
 
             <Field
               id="pickupNotes"

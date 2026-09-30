@@ -12,6 +12,8 @@ function brand(overrides: Partial<AdminBrand> = {}): AdminBrand {
     contactEmail: null,
     contactPhone: null,
     pickupAddress: "Av. Siempreviva 742",
+    categoryLabel: "Café",
+    located: false,
     status: "ACTIVE",
     createdAt: "2026-09-01T10:00:00Z",
     ...overrides,
