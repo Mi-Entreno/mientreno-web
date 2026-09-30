@@ -12,6 +12,7 @@ import { ExercisePicker, type PickedExercise } from "@/features/catalog-exercise
 import {
   DAY_LABEL_MAX_LENGTH,
   cloneExercise,
+  defaultTrackingMode,
   emptyExercise,
   nextKey,
   type EditorDay,
@@ -82,6 +83,8 @@ export function TrainingDayEditor({
       name: picked.name,
       muscleGroup: picked.muscleGroup,
       equipment: picked.equipment,
+      // Cardio del catálogo arranca por tiempo; el entrenador lo puede cambiar.
+      trackingMode: defaultTrackingMode(picked.muscleGroup),
     }
     onChange({ exercises: [...day.exercises, exercise] })
   }
