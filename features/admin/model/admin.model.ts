@@ -16,6 +16,9 @@ export interface AdminBrand {
   contactEmail: string | null
   contactPhone: string | null
   pickupAddress: string | null
+  categoryLabel: string
+  /** Sin punto confirmado en el mapa, el local sale último en "Más cercanos" de la app. */
+  located: boolean
   status: "ACTIVE" | "SUSPENDED"
   createdAt: string
 }

@@ -24,6 +24,8 @@ function profile(overrides: Partial<BrandProfile> = {}): BrandProfile {
     pickupNotes: null,
     instagram: null,
     websiteUrl: null,
+    category: "OTHER",
+    location: null,
     status: "ACTIVE",
     ...overrides,
   }

@@ -6,6 +6,15 @@
  * desafío que la entrega.
  */
 
+import type { BrandCategory } from "../dto/brand.dto"
+
+export type { BrandCategory }
+
+export interface LatLng {
+  lat: number
+  lng: number
+}
+
 export interface BrandProfile {
   id: number
   displayName: string
@@ -20,7 +29,34 @@ export interface BrandProfile {
   /** Usuario de Instagram, sin arroba: quien lo muestre arma el enlace. */
   instagram: string | null
   websiteUrl: string | null
+  category: BrandCategory
+  /** Null hasta que el comercio confirme el punto en el mapa. */
+  location: LatLng | null
   status: "ACTIVE" | "SUSPENDED"
+}
+
+// ── Rubro ──────────────────────────────────────────────────────────────────
+//
+// Es un enum y no texto libre porque la app del alumno filtra por valor: con
+// texto, "Pizza" y "Pizzería" serían dos opciones del mismo chip. Las etiquetas
+// repiten las de `BrandCategory.label()` del backend; OTHER va último porque es
+// el "ninguna de las anteriores".
+
+export const BRAND_CATEGORY_LABELS: Record<BrandCategory, string> = {
+  FOOD: "Comida",
+  CAFE: "Café",
+  HEALTHY: "Saludable",
+  SPORTSWEAR: "Ropa deportiva",
+  SUPPLEMENTS: "Suplementos",
+  GYM: "Gimnasio",
+  WELLNESS: "Bienestar",
+  OTHER: "Otros",
+}
+
+export const BRAND_CATEGORIES = Object.keys(BRAND_CATEGORY_LABELS) as BrandCategory[]
+
+export function isBrandCategory(value: string): value is BrandCategory {
+  return value in BRAND_CATEGORY_LABELS
 }
 
 // ── Redes ──────────────────────────────────────────────────────────────────
