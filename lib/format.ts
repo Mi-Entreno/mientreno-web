@@ -41,3 +41,11 @@ export function formatCurrency(value: number): string {
 
 /** For input labels and prefixes, where `formatCurrency` has no amount to format. */
 export const CURRENCY_SYMBOL = "$"
+
+/** Segundos -> "m:ss". Duraciones de cardio, planificadas o realizadas. */
+export function formatDuration(totalSeconds: number): string {
+  const safe = Math.max(0, Math.round(totalSeconds))
+  const minutes = Math.floor(safe / 60)
+  const seconds = safe % 60
+  return `${minutes}:${String(seconds).padStart(2, "0")}`
+}

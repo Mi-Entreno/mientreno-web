@@ -4,6 +4,12 @@
 export type WeightUnit = "KG" | "LB" | "BODYWEIGHT"
 
 /**
+ * `ExerciseTrackingMode.java`. `REPS_WEIGHT` is the default when omitted;
+ * `DURATION` (cardio) plans every set in seconds instead of reps and load.
+ */
+export type TrackingMode = "REPS_WEIGHT" | "DURATION"
+
+/**
  * `PlannedSetResponse`. One row of `exercise_sets`: the target for set N.
  *
  * Always populated when the exercise has sets — a plan stored under the old
@@ -17,6 +23,8 @@ export interface PlannedSetResponseDTO {
   targetWeightValue: number | null
   targetWeightUnit: WeightUnit | null
   restSeconds: number | null
+  /** Only on `DURATION` exercises. */
+  targetDurationSeconds?: number | null
 }
 
 export interface ExerciseResponseDTO {
@@ -45,6 +53,8 @@ export interface ExerciseResponseDTO {
   equipment: string | null
   /** Per-set targets, ordered by `setNumber`. */
   plannedSets: PlannedSetResponseDTO[]
+  /** Missing on responses from a backend older than V67: treat as `REPS_WEIGHT`. */
+  trackingMode?: TrackingMode
 }
 
 export interface TrainingDayResponseDTO {
@@ -83,6 +93,8 @@ export interface PlannedSetRequestDTO {
   targetWeightValue: number | null
   targetWeightUnit: WeightUnit | null
   restSeconds: number | null
+  /** Required (> 0) on every set of a `DURATION` exercise; 400 otherwise. */
+  targetDurationSeconds: number | null
 }
 
 export interface ExerciseRequestDTO {
@@ -105,6 +117,7 @@ export interface ExerciseRequestDTO {
   trainerNotes: string | null
   /** Per-set targets; wins over the flat fields when present. */
   plannedSets: PlannedSetRequestDTO[] | null
+  trackingMode: TrackingMode
 }
 
 /**
