@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server"
 
 import { decodeAccessToken, type AccessTokenClaims } from "./jwt"
+import { seal, unseal } from "./session-crypto"
 
 /**
  * Session cookie: encoding, options and request-side reads.
@@ -11,15 +12,20 @@ import { decodeAccessToken, type AccessTokenClaims } from "./jwt"
  *
  * ## What the cookie holds
  *
- * Only the two tokens:
+ * Only the two tokens, encrypted with AES-GCM (`server/session-crypto.ts`):
  *
- *     { a: <accessToken>, r: <refreshToken> }
+ *     seal({ a: <accessToken>, r: <refreshToken> })
+ *
+ * Encrypted because the access token carries the login email and first name,
+ * and the cookie used to be plain base64url anyone holding it could read —
+ * while the published cookie policy said it held neither. Encoding and
+ * decoding are async for that reason (Web Crypto has no sync API).
  *
  * Everything else — role, userId, profileCompleted, expiry — is derived by
  * decoding the access token (`server/jwt.ts`). Copying those claims into the
  * cookie alongside the token would mean two sources of truth that drift apart
  * the moment a token is refreshed, and would need signing or encryption to be
- * trustworthy. Deriving them removes both problems: the JWT is issued and
+ * trustworthy. Deriving them removes that problem: the JWT is issued and
  * signed by the backend, so it cannot be edited to say something the backend
  * will honour.
  *
@@ -59,30 +65,23 @@ export interface Session extends StoredSession {
   claims: AccessTokenClaims
 }
 
-function toBase64Url(value: string): string {
-  const bytes = new TextEncoder().encode(value)
-  let binary = ""
-  for (const byte of bytes) binary += String.fromCharCode(byte)
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")
+export async function encodeSession(session: StoredSession): Promise<string> {
+  return seal(JSON.stringify({ a: session.accessToken, r: session.refreshToken }))
 }
 
-function fromBase64Url(value: string): string {
-  const padded = value.replace(/-/g, "+").replace(/_/g, "/")
-  const withPadding = padded.padEnd(padded.length + ((4 - (padded.length % 4)) % 4), "=")
-  const binary = atob(withPadding)
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
-  return new TextDecoder().decode(bytes)
-}
-
-export function encodeSession(session: StoredSession): string {
-  return toBase64Url(JSON.stringify({ a: session.accessToken, r: session.refreshToken }))
-}
-
-export function decodeSession(raw: string | undefined | null): StoredSession | null {
+/**
+ * Null for a missing, tampered or pre-encryption cookie — all of which mean
+ * "sign in again". A missing `SESSION_SECRET` throws instead: that is a
+ * deployment to fix, not a user to sign out.
+ */
+export async function decodeSession(raw: string | undefined | null): Promise<StoredSession | null> {
   if (!raw) return null
 
+  const plaintext = await unseal(raw)
+  if (!plaintext) return null
+
   try {
-    const parsed = JSON.parse(fromBase64Url(raw)) as { a?: unknown; r?: unknown }
+    const parsed = JSON.parse(plaintext) as { a?: unknown; r?: unknown }
     if (typeof parsed.a !== "string" || !parsed.a) return null
 
     return {
@@ -140,6 +139,6 @@ export function isHttpsRequest(protoHeader: string | null, fallbackProtocol: str
 }
 
 /** Reads the session straight off a request — the only form middleware can use. */
-export function readSessionFromRequest(request: NextRequest): Session | null {
-  return hydrate(decodeSession(request.cookies.get(SESSION_COOKIE)?.value))
+export async function readSessionFromRequest(request: NextRequest): Promise<Session | null> {
+  return hydrate(await decodeSession(request.cookies.get(SESSION_COOKIE)?.value))
 }

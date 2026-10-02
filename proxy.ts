@@ -40,7 +40,7 @@ function signOut(req: NextRequest, params?: Record<string, string>) {
   return response
 }
 
-export default function proxy(req: NextRequest) {
+export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
   // CSRF: a state-changing request from another site never gets to spend this
@@ -53,7 +53,7 @@ export default function proxy(req: NextRequest) {
     return NextResponse.json({ message: "Origen no permitido" }, { status: 403 })
   }
 
-  const session = readSessionFromRequest(req)
+  const session = await readSessionFromRequest(req)
   const home = homeFor(session?.claims ?? null)
 
   // The landing is for people who have not signed in. Someone with a live

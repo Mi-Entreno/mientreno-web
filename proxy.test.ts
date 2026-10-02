@@ -24,7 +24,7 @@ import {
 
 const ORIGIN = "https://panel.mientreno.test"
 
-function request(pathname: string, token?: string) {
+async function request(pathname: string, token?: string) {
   const headers = new Headers({
     // Same-site GET: keeps `isCrossSiteWrite` out of the way, which is a
     // separate concern with its own test file.
@@ -32,15 +32,16 @@ function request(pathname: string, token?: string) {
   })
 
   if (token) {
-    headers.set("cookie", `${SESSION_COOKIE}=${encodeSession({ accessToken: token, refreshToken: "r" })}`)
+    const sealed = await encodeSession({ accessToken: token, refreshToken: "r" })
+    headers.set("cookie", `${SESSION_COOKIE}=${sealed}`)
   }
 
   return new NextRequest(new URL(pathname, ORIGIN), { headers })
 }
 
 /** Redirect target, or null when the request was allowed through. */
-function destination(pathname: string, token?: string): string | null {
-  return hop(pathname, token).to
+async function destination(pathname: string, token?: string): Promise<string | null> {
+  return (await hop(pathname, token)).to
 }
 
 /**
@@ -52,8 +53,11 @@ function destination(pathname: string, token?: string): string | null {
  * there is none — a trainer asking for `/admin` is signed out to `/login`, and
  * only *with* the stale cookie would `/login` bounce them back.
  */
-function hop(pathname: string, token?: string): { to: string | null; clearedSession: boolean } {
-  const response = proxy(request(pathname, token))
+async function hop(
+  pathname: string,
+  token?: string,
+): Promise<{ to: string | null; clearedSession: boolean }> {
+  const response = await proxy(await request(pathname, token))
   const location = response.headers.get("location")
   const cookie = response.cookies.get(SESSION_COOKIE)
 
@@ -70,156 +74,156 @@ const trainerAdminToken = makeToken({ authorities: TRAINER_ADMIN_AUTHORITIES })
 const adminOnlyToken = makeToken({ authorities: ADMIN_ONLY_AUTHORITIES })
 
 describe("the landing", () => {
-  it("is shown to anyone without a session", () => {
-    expect(destination("/")).toBeNull()
+  it("is shown to anyone without a session", async () => {
+    expect(await destination("/")).toBeNull()
   })
 
-  it("sends a signed-in trainer to their panel instead of the pitch", () => {
-    expect(destination("/", trainerToken)).toBe("/dashboard")
+  it("sends a signed-in trainer to their panel instead of the pitch", async () => {
+    expect(await destination("/", trainerToken)).toBe("/dashboard")
   })
 
-  it("sends a signed-in merchant to theirs", () => {
-    expect(destination("/", brandToken)).toBe("/comercio")
+  it("sends a signed-in merchant to theirs", async () => {
+    expect(await destination("/", brandToken)).toBe("/comercio")
   })
 
-  it("still shows the landing to a student, who has no panel here", () => {
+  it("still shows the landing to a student, who has no panel here", async () => {
     // Not a sign-out: they have a perfectly good session, just not for this
     // app. Bouncing them to /login would be a dead end with a cleared cookie.
-    expect(destination("/", studentToken)).toBeNull()
+    expect(await destination("/", studentToken)).toBeNull()
   })
 })
 
 describe("the trainer panel", () => {
-  it("lets a trainer in", () => {
-    expect(destination("/dashboard/students", trainerToken)).toBeNull()
+  it("lets a trainer in", async () => {
+    expect(await destination("/dashboard/students", trainerToken)).toBeNull()
   })
 
-  it("redirects a merchant to their own panel rather than signing them out", () => {
+  it("redirects a merchant to their own panel rather than signing them out", async () => {
     // Someone in the wrong half of the product, not a broken session. Signing
     // them out would be punishing a typo.
-    expect(destination("/dashboard", brandToken)).toBe("/comercio")
+    expect(await destination("/dashboard", brandToken)).toBe("/comercio")
   })
 
-  it("signs out a student", () => {
-    expect(destination("/dashboard", studentToken)).toBe("/login")
+  it("signs out a student", async () => {
+    expect(await destination("/dashboard", studentToken)).toBe("/login")
   })
 
-  it("sends an anonymous visitor to login", () => {
-    expect(destination("/dashboard")).toBe("/login")
+  it("sends an anonymous visitor to login", async () => {
+    expect(await destination("/dashboard")).toBe("/login")
   })
 
-  it("routes an incomplete profile to the trainer onboarding", () => {
+  it("routes an incomplete profile to the trainer onboarding", async () => {
     const token = makeToken({ profileCompleted: false })
-    expect(destination("/dashboard", token)).toBe("/dashboard/profile")
+    expect(await destination("/dashboard", token)).toBe("/dashboard/profile")
   })
 
-  it("does not loop on the profile route itself", () => {
+  it("does not loop on the profile route itself", async () => {
     const token = makeToken({ profileCompleted: false })
-    expect(destination("/dashboard/profile", token)).toBeNull()
+    expect(await destination("/dashboard/profile", token)).toBeNull()
   })
 })
 
 describe("the merchant panel", () => {
-  it("lets a merchant in", () => {
-    expect(destination("/comercio/desafios", brandToken)).toBeNull()
+  it("lets a merchant in", async () => {
+    expect(await destination("/comercio/desafios", brandToken)).toBeNull()
   })
 
-  it("redirects a trainer to their own panel", () => {
-    expect(destination("/comercio", trainerToken)).toBe("/dashboard")
+  it("redirects a trainer to their own panel", async () => {
+    expect(await destination("/comercio", trainerToken)).toBe("/dashboard")
   })
 
-  it("signs out a student", () => {
-    expect(destination("/comercio", studentToken)).toBe("/login")
+  it("signs out a student", async () => {
+    expect(await destination("/comercio", studentToken)).toBe("/login")
   })
 
-  it("sends an anonymous visitor to login", () => {
-    expect(destination("/comercio")).toBe("/login")
+  it("sends an anonymous visitor to login", async () => {
+    expect(await destination("/comercio")).toBe("/login")
   })
 
-  it("routes an incomplete profile to the merchant onboarding", () => {
+  it("routes an incomplete profile to the merchant onboarding", async () => {
     const token = makeToken({ authorities: BRAND_AUTHORITIES, profileCompleted: false })
-    expect(destination("/comercio", token)).toBe("/comercio/perfil")
+    expect(await destination("/comercio", token)).toBe("/comercio/perfil")
   })
 
-  it("does not loop on the merchant profile route itself", () => {
+  it("does not loop on the merchant profile route itself", async () => {
     const token = makeToken({ authorities: BRAND_AUTHORITIES, profileCompleted: false })
-    expect(destination("/comercio/perfil", token)).toBeNull()
+    expect(await destination("/comercio/perfil", token)).toBeNull()
   })
 
-  it("leaves the merchant login reachable without a session", () => {
+  it("leaves the merchant login reachable without a session", async () => {
     // The guard must not claim /comercio/login just because it starts with
     // /comercio: doing so would make signing in as a merchant impossible.
-    expect(destination("/comercio/login")).toBeNull()
-    expect(destination("/comercio/register")).toBeNull()
+    expect(await destination("/comercio/login")).toBeNull()
+    expect(await destination("/comercio/register")).toBeNull()
   })
 })
 
 describe("signed-out-only screens", () => {
-  it("sends a signed-in trainer away from either login door", () => {
-    expect(destination("/login", trainerToken)).toBe("/dashboard")
-    expect(destination("/comercio/login", trainerToken)).toBe("/dashboard")
+  it("sends a signed-in trainer away from either login door", async () => {
+    expect(await destination("/login", trainerToken)).toBe("/dashboard")
+    expect(await destination("/comercio/login", trainerToken)).toBe("/dashboard")
   })
 
-  it("sends a signed-in merchant away from either login door", () => {
+  it("sends a signed-in merchant away from either login door", async () => {
     // Either door accepts either role; the redirect is what sorts them out.
-    expect(destination("/login", brandToken)).toBe("/comercio")
-    expect(destination("/comercio/login", brandToken)).toBe("/comercio")
+    expect(await destination("/login", brandToken)).toBe("/comercio")
+    expect(await destination("/comercio/login", brandToken)).toBe("/comercio")
   })
 
-  it("leaves them alone for a student, who has nowhere to be sent", () => {
-    expect(destination("/login", studentToken)).toBeNull()
+  it("leaves them alone for a student, who has nowhere to be sent", async () => {
+    expect(await destination("/login", studentToken)).toBeNull()
   })
 
-  it("leaves them open with no session", () => {
-    expect(destination("/login")).toBeNull()
-    expect(destination("/register")).toBeNull()
-    expect(destination("/forgot-password")).toBeNull()
+  it("leaves them open with no session", async () => {
+    expect(await destination("/login")).toBeNull()
+    expect(await destination("/register")).toBeNull()
+    expect(await destination("/forgot-password")).toBeNull()
   })
 })
 
 describe("the moderation zone", () => {
-  it("lets an admin in", () => {
-    expect(destination("/admin", trainerAdminToken)).toBeNull()
-    expect(destination("/admin/comercios", adminOnlyToken)).toBeNull()
+  it("lets an admin in", async () => {
+    expect(await destination("/admin", trainerAdminToken)).toBeNull()
+    expect(await destination("/admin/comercios", adminOnlyToken)).toBeNull()
   })
 
-  it("does not redirect a trainer-admin away from it", () => {
+  it("does not redirect a trainer-admin away from it", async () => {
     // The panel blocks run first, but /admin belongs to neither of them, so a
     // trainer who also moderates has to be able to stay here.
-    expect(destination("/admin", trainerAdminToken)).toBeNull()
+    expect(await destination("/admin", trainerAdminToken)).toBeNull()
   })
 
-  it("signs out a trainer without the role", () => {
-    expect(destination("/admin", trainerToken)).toBe("/login")
+  it("signs out a trainer without the role", async () => {
+    expect(await destination("/admin", trainerToken)).toBe("/login")
   })
 
-  it("signs out a merchant without the role", () => {
-    expect(destination("/admin", brandToken)).toBe("/login")
+  it("signs out a merchant without the role", async () => {
+    expect(await destination("/admin", brandToken)).toBe("/login")
   })
 
-  it("sends an anonymous visitor to login", () => {
-    expect(destination("/admin")).toBe("/login")
+  it("sends an anonymous visitor to login", async () => {
+    expect(await destination("/admin")).toBe("/login")
   })
 
-  it("keeps a trainer-admin's home in the trainer panel", () => {
+  it("keeps a trainer-admin's home in the trainer panel", async () => {
     // They reach /admin by asking for it, not by signing in.
-    expect(destination("/", trainerAdminToken)).toBe("/dashboard")
-    expect(destination("/login", trainerAdminToken)).toBe("/dashboard")
+    expect(await destination("/", trainerAdminToken)).toBe("/dashboard")
+    expect(await destination("/login", trainerAdminToken)).toBe("/dashboard")
   })
 
-  it("makes an admin-only account land in moderation", () => {
-    expect(destination("/", adminOnlyToken)).toBe("/admin")
+  it("makes an admin-only account land in moderation", async () => {
+    expect(await destination("/", adminOnlyToken)).toBe("/admin")
   })
 
-  it("keeps an admin-only account out of the two panels", () => {
+  it("keeps an admin-only account out of the two panels", async () => {
     // They have no profile there: every request would 403.
-    expect(destination("/dashboard", adminOnlyToken)).toBe("/login")
-    expect(destination("/comercio", adminOnlyToken)).toBe("/login")
+    expect(await destination("/dashboard", adminOnlyToken)).toBe("/login")
+    expect(await destination("/comercio", adminOnlyToken)).toBe("/login")
   })
 })
 
 describe("no combination loops", () => {
-  it("every role reaches a route it is allowed to stay on", () => {
+  it("every role reaches a route it is allowed to stay on", async () => {
     // The property that matters: following the redirects has to terminate. If
     // any pair bounced forever the panel would be unusable, which is exactly
     // the failure the comment at the top of proxy.ts describes.
@@ -235,13 +239,13 @@ describe("no combination loops", () => {
         let carried: string | undefined = token
 
         for (let step = 0; step < 3; step++) {
-          const { to, clearedSession } = hop(current, carried)
+          const { to, clearedSession } = await hop(current, carried)
           if (to === null) break
           if (clearedSession) carried = undefined
           current = to
         }
 
-        expect(hop(current, carried).to, `cadena que arranca en ${start}`).toBeNull()
+        expect((await hop(current, carried)).to, `cadena que arranca en ${start}`).toBeNull()
       }
     }
   })

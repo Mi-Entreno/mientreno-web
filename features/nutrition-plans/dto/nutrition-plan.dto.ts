@@ -86,5 +86,8 @@ export interface TrainerStudentNutritionSummaryDTO {
   studentId: number
   studentFullName: string | null
   studentImageUrl: string | null
+  /** Backend V69: only consented allergies, empty otherwise. Absent on older backends. */
+  allergies?: string[] | null
+  otherAllergies?: string | null
   currentPlan: NutritionPlanResponseDTO | null
 }

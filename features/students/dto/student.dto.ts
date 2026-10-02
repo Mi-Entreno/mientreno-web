@@ -35,7 +35,18 @@ export interface SubscriptionResponseDTO {
 export interface SubscriptionDetailResponseDTO {
   id: number
   status: SubscriptionStatus
-  student: { id: number; fullName: string | null; profileImageUrl: string | null }
+  /**
+   * `allergies` / `otherAllergies` (backend V69): only those the student
+   * consented to show — `Student.visibleAllergies()` returns an empty list
+   * without consent. Absent on backends older than V69.
+   */
+  student: {
+    id: number
+    fullName: string | null
+    profileImageUrl: string | null
+    allergies?: string[] | null
+    otherAllergies?: string | null
+  }
   trainer: { id: number; fullName: string | null; profileImageUrl: string | null }
   plan: SubscriptionPlanResponseDTO
   startedAt: string | null

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { ApiError } from "@/core/http/errors"
+import { birthDateError } from "@/lib/minimum-age"
 import { SpecialtyTagsInput } from "@/features/specialties/components/specialty-tags-input"
 import type {
   CompleteProfileIdentityValues,
@@ -71,6 +72,9 @@ export function TrainerProfileForm({
     if (mode === "complete") {
       if (!identity.firstName.trim()) found.firstName = "El nombre es obligatorio"
       if (!identity.lastName.trim()) found.lastName = "Los apellidos son obligatorios"
+      // Required since the backend enforces the minimum age on completion.
+      const birthError = birthDateError(identity.birthDate, { required: true })
+      if (birthError) found.birthDate = birthError
     }
 
     if (values.basePrice.trim()) {
@@ -154,7 +158,9 @@ export function TrainerProfileForm({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+              <Label htmlFor="birthDate">
+                Fecha de nacimiento <span className="text-error-text">*</span>
+              </Label>
               <Input
                 id="birthDate"
                 type="date"
@@ -164,6 +170,9 @@ export function TrainerProfileForm({
                   setIdentity((current) => ({ ...current, birthDate: event.target.value }))
                 }
               />
+              {allErrors.birthDate && (
+                <p className="text-body text-error-text">{allErrors.birthDate}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">
