@@ -19,6 +19,7 @@ import { ProgressTab } from "@/features/progress/components/progress-tab"
 import { TrainingPlanTab } from "@/features/training-plans/components/training-plan-tab"
 import { WorkoutSessionSheet } from "@/features/workout-sessions/components/workout-session-sheet"
 import { useStudents, useSubscriptionDetail, useSubscriptionStatus } from "../hooks/use-students"
+import { StudentAllergies } from "./student-allergies"
 import { canPause, canResume } from "../model/student.model"
 
 const TABS = ["summary", "training", "nutrition", "progress"] as const
@@ -133,6 +134,8 @@ export function StudentDetailScreen({ subscriptionId }: { subscriptionId: number
           )}
         </div>
       </header>
+
+      <StudentAllergies allergies={data.allergies} />
 
       <Tabs value={activeTab} onValueChange={(value) => openTab(String(value))}>
         <TabsList>

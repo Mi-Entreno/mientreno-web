@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ApiError } from "@/core/http/errors"
+import { birthDateError } from "@/lib/minimum-age"
 import { useUpdateUserProfile, useUserProfile } from "../hooks/use-user"
 import type { UserProfileFormValues } from "../mappers/user.mapper"
 import type { UserProfile } from "../model/user.model"
@@ -67,6 +68,8 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
     const found: Record<string, string> = {}
     if (!values.firstName.trim()) found.firstName = "El nombre es obligatorio"
     if (!values.lastName.trim()) found.lastName = "Los apellidos son obligatorios"
+    const birthError = birthDateError(values.birthDate, { required: false })
+    if (birthError) found.birthDate = birthError
 
     setErrors(found)
     if (Object.keys(found).length > 0) return
@@ -132,6 +135,7 @@ function PersonalDataFields({ profile }: { profile: UserProfile }) {
             disabled={update.isPending}
             onChange={(event) => patch({ birthDate: event.target.value || null })}
           />
+          {allErrors.birthDate && <p className="text-body text-error-text">{allErrors.birthDate}</p>}
         </div>
 
         <div className="flex flex-col gap-2">

@@ -6,6 +6,10 @@ import { LegalContact, LegalSection } from "@/components/legal/legal-prose";
  * El inventario de abajo refleja las cookies actualmente utilizadas por el panel.
  * Si en el futuro se incorpora una nueva cookie —por ejemplo, analítica,
  * publicidad o un servicio de terceros— deberá incorporarse también a esta política.
+ *
+ * Lo que se dice del contenido de `trainer_session` depende de que esté cifrada
+ * (`server/session-crypto.ts`). Antes decía que no contenía el email ni el
+ * nombre mientras los llevaba legibles en base64 dentro del access token.
  */
 export function CookiePolicy() {
   return (
@@ -32,10 +36,10 @@ export function CookiePolicy() {
             </dt>
 
             <dd className="mt-1 text-body text-muted-foreground text-pretty">
-              Mantiene tu sesión iniciada y contiene la información técnica
-              necesaria para autenticar tu sesión con nuestros servidores. No
-              contiene directamente tu nombre, correo electrónico ni otros datos
-              de perfil.{" "}
+              Mantiene tu sesión iniciada. Contiene tus credenciales de sesión,
+              que incluyen tu identificador de usuario, tu email de acceso, tu
+              nombre de pila y tu rol, y está cifrada: sólo nuestros servidores
+              pueden leerla, y si alguien la modifica deja de servir.{" "}
               <span className="font-medium text-foreground">HttpOnly</span>, por
               lo que los scripts que se ejecutan en la página no pueden acceder
               directamente a su contenido. También utiliza{" "}
@@ -61,8 +65,8 @@ export function CookiePolicy() {
         </p>
 
         <p>
-          Nuestra medición de visitas, cuando corresponda, se realiza de forma
-          anónima y agregada y no requiere almacenar cookies en tu navegador.
+          Medimos las visitas al panel con Vercel Web Analytics, que trabaja de
+          forma agregada y no guarda cookies en tu navegador.
         </p>
       </LegalSection>
 

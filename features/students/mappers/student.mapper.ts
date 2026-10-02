@@ -6,7 +6,11 @@ import type {
   SubscriptionResponseDTO,
   TrainerStudentIdentityDTO,
 } from "../dto/student.dto"
-import type { StudentSubscription, SubscriptionDetail } from "../model/student.model"
+import type {
+  StudentAllergies,
+  StudentSubscription,
+  SubscriptionDetail,
+} from "../model/student.model"
 
 const UNKNOWN_STUDENT = "Alumno sin nombre"
 
@@ -47,6 +51,17 @@ export function toStudentSubscription(
   }
 }
 
+/** Shared with the nutrition list, which receives the same two fields. */
+export function toStudentAllergies(
+  list: string[] | null | undefined,
+  other: string | null | undefined,
+): StudentAllergies {
+  return {
+    list: (list ?? []).map((item) => item.trim()).filter(Boolean),
+    other: other?.trim() || null,
+  }
+}
+
 /** `GET /api/subscriptions/{id}` — this endpoint always carries the student. */
 export function toSubscriptionDetail(dto: SubscriptionDetailResponseDTO): SubscriptionDetail {
   return {
@@ -54,6 +69,7 @@ export function toSubscriptionDetail(dto: SubscriptionDetailResponseDTO): Subscr
     studentId: dto.student?.id ?? null,
     studentName: displayName(dto.student?.fullName),
     studentAvatarUrl: toMediaUrl(dto.student?.profileImageUrl),
+    allergies: toStudentAllergies(dto.student?.allergies, dto.student?.otherAllergies),
     plan: dto.plan ? toSubscriptionPlan(dto.plan) : null,
     status: dto.status,
     startedAt: dto.startedAt,

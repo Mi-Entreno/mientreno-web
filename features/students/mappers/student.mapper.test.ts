@@ -145,4 +145,17 @@ describe("toSubscriptionDetail", () => {
     expect(detail.status).toBe("PAUSED")
     expect(detail.paymentProvider).toBe("MERCADOPAGO")
   })
+
+  it("carries the allergies the student consented to share", () => {
+    const detail = toSubscriptionDetail({
+      ...DETAIL,
+      student: { ...DETAIL.student, allergies: ["Gluten", " "], otherAllergies: "  Kiwi " },
+    })
+
+    expect(detail.allergies).toEqual({ list: ["Gluten"], other: "Kiwi" })
+  })
+
+  it("reads a backend older than V69 as nothing shared", () => {
+    expect(toSubscriptionDetail(DETAIL).allergies).toEqual({ list: [], other: null })
+  })
 })

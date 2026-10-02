@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react"
 
-import { LEGAL_UPDATED_AT } from "@/components/legal/documents"
+import { LEGAL_UPDATED_AT, SUPPORT_EMAIL } from "@/components/legal/documents"
 
 /**
  * Los ladrillos con los que está escrito cada documento legal.
@@ -64,10 +64,10 @@ export function LegalContact() {
       <p>
         Por cualquier duda sobre este documento, escribinos a{" "}
         <a
-          href="mailto:soporte@mientreno.app"
+          href={`mailto:${SUPPORT_EMAIL}`}
           className="font-medium text-foreground underline underline-offset-4"
         >
-          soporte@mientreno.app
+          {SUPPORT_EMAIL}
         </a>
         .
       </p>

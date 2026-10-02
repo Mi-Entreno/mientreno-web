@@ -1,4 +1,4 @@
-import { Cookie, FileText, ShieldCheck, type LucideIcon } from "lucide-react"
+import { Cookie, FileText, ShieldCheck, UserX, type LucideIcon } from "lucide-react"
 
 /**
  * El índice de los documentos legales.
@@ -23,6 +23,17 @@ export interface LegalDocument {
   /** Una línea que dice de qué trata, para la tarjeta del índice. */
   description: string
 }
+
+/**
+ * El único canal de contacto que publican los documentos: consultas, ejercicio
+ * de derechos y pedidos de eliminación de cuenta sin la app.
+ *
+ * Vive acá porque lo citan la política de privacidad, la página de eliminación
+ * y el pie de cada documento; repetido, el día que cambie quedaría uno viejo.
+ * Ojo: el dominio (`mientreno.app`) no es el del sitio (`mientrenoapp.com`);
+ * confirmar que la casilla existe y alguien la lee antes de publicar.
+ */
+export const SUPPORT_EMAIL = "soporte@mientreno.app"
 
 /**
  * La fecha que se muestra al pie de cada documento.
@@ -75,6 +86,18 @@ export const LEGAL_DOCUMENTS: LegalDocument[] = [
     shortTitle: "Cookies",
     description:
       "Qué guardamos en tu navegador, por qué hace falta para mantener la sesión y qué pasa si lo bloqueás.",
+  },
+  {
+    // No es un documento legal sino un procedimiento, pero vive acá porque
+    // Google Play exige una URL pública, sin instalar la app, para pedir la
+    // eliminación de la cuenta, y la política de privacidad la enlaza.
+    slug: "eliminar-cuenta",
+    href: "/documentos/eliminar-cuenta",
+    icon: UserX,
+    title: "Eliminar tu cuenta",
+    shortTitle: "Eliminar cuenta",
+    description:
+      "Cómo pedir que borremos tu cuenta, con o sin la app, qué se borra y qué conservamos.",
   },
 ]
 

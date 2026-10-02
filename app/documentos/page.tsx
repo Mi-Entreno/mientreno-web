@@ -27,7 +27,7 @@ export default function LegalIndexPage() {
         medio.
       </p>
 
-      <ul className="mt-9 grid gap-5 md:grid-cols-3">
+      <ul className="mt-9 grid gap-5 md:grid-cols-2">
         {LEGAL_DOCUMENTS.map(({ slug, href, icon: Icon, title, description }) => (
           <li key={slug}>
             <Link
