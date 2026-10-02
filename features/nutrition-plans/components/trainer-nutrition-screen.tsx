@@ -9,6 +9,7 @@ import { UserAvatar } from "@/components/shared/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDate } from "@/lib/format"
+import { StudentAllergies } from "@/features/students/components/student-allergies"
 import { useTrainerStudentNutrition } from "../hooks/use-nutrition-plans"
 import { sumMealMacros, type StudentNutritionSummary } from "../model/nutrition-plan.model"
 
@@ -110,6 +111,7 @@ function NutritionRow({ row }: { row: StudentNutritionSummary }) {
               Sin plan nutricional
             </p>
           )}
+          <StudentAllergies allergies={row.allergies} compact />
         </div>
 
         <ArrowRight className="size-4 shrink-0 text-muted-foreground" />

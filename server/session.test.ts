@@ -4,34 +4,72 @@ import { makeToken } from "@/test/tokens"
 import { decodeSession, encodeSession, hydrate, isHttpsRequest, sessionCookieOptions } from "./session"
 
 describe("session encoding", () => {
-  it("round-trips both tokens", () => {
+  it("round-trips both tokens", async () => {
     // The old cookie stored only the access token and threw the refresh token
     // away, capping every session at the backend's 30-minute token lifetime.
     const session = { accessToken: makeToken(), refreshToken: "opaque-refresh-token" }
 
-    expect(decodeSession(encodeSession(session))).toEqual(session)
+    expect(await decodeSession(await encodeSession(session))).toEqual(session)
   })
 
-  it("survives multi-byte content", () => {
+  it("survives multi-byte content", async () => {
     const session = { accessToken: makeToken({ firstName: "José" }), refreshToken: "ñ-token" }
 
-    expect(decodeSession(encodeSession(session))).toEqual(session)
+    expect(await decodeSession(await encodeSession(session))).toEqual(session)
   })
 
-  it("returns null for unreadable cookies", () => {
-    expect(decodeSession(undefined)).toBeNull()
-    expect(decodeSession("")).toBeNull()
-    expect(decodeSession("not-base64url!!")).toBeNull()
-    expect(decodeSession(btoa("{}"))).toBeNull()
+  it("does not expose the email or the name to whoever holds the cookie", async () => {
+    // The published cookie policy says the cookie is unreadable without the
+    // server's key. Base64 would have let anyone read `sub` and `firstName`.
+    const token = makeToken({ firstName: "Josefina" })
+    const raw = await encodeSession({ accessToken: token, refreshToken: "r" })
+
+    expect(raw.startsWith("v1.")).toBe(true)
+    expect(raw).not.toContain(token.split(".")[1])
+    const readable = atob(raw.slice(3).replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil((raw.length - 3) / 4) * 4, "="))
+    expect(readable).not.toContain("Josefina")
   })
 
-  it("tolerates a missing refresh token", () => {
-    const raw = btoa(JSON.stringify({ a: makeToken() }))
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "")
+  it("seals the same session differently every time", async () => {
+    const session = { accessToken: makeToken(), refreshToken: "r" }
 
-    expect(decodeSession(raw)?.refreshToken).toBe("")
+    expect(await encodeSession(session)).not.toBe(await encodeSession(session))
+  })
+
+  it("returns null for unreadable, tampered or pre-encryption cookies", async () => {
+    expect(await decodeSession(undefined)).toBeNull()
+    expect(await decodeSession("")).toBeNull()
+    expect(await decodeSession("v1.not-base64url!!")).toBeNull()
+
+    const sealed = await encodeSession({ accessToken: makeToken(), refreshToken: "r" })
+    const flipped = sealed.slice(0, -2) + (sealed.endsWith("AA") ? "BB" : "AA")
+    expect(await decodeSession(flipped)).toBeNull()
+
+    // What the cookie looked like before encryption: its owner signs in again.
+    const legacy = btoa(JSON.stringify({ a: makeToken(), r: "r" })).replace(/=+$/, "")
+    expect(await decodeSession(legacy)).toBeNull()
+  })
+
+  it("does not open a cookie sealed with another secret", async () => {
+    const sealed = await encodeSession({ accessToken: makeToken(), refreshToken: "r" })
+    const original = process.env.SESSION_SECRET
+    process.env.SESSION_SECRET = "another-secret-that-is-also-32-chars-long"
+    try {
+      expect(await decodeSession(sealed)).toBeNull()
+    } finally {
+      process.env.SESSION_SECRET = original
+    }
+  })
+
+  it("fails loudly, naming the fix, when the secret is missing", async () => {
+    // A missing secret is a deployment to fix, not a user to sign out.
+    const original = process.env.SESSION_SECRET
+    delete process.env.SESSION_SECRET
+    try {
+      await expect(encodeSession({ accessToken: makeToken(), refreshToken: "r" })).rejects.toThrow(/SESSION_SECRET/)
+    } finally {
+      process.env.SESSION_SECRET = original
+    }
   })
 })
 

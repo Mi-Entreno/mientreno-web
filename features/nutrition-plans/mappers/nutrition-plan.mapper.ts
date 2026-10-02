@@ -1,4 +1,5 @@
 import { toMediaUrl } from "@/core/http/media"
+import { toStudentAllergies } from "@/features/students/mappers/student.mapper"
 
 import type {
   MealFoodRequestDTO,
@@ -63,6 +64,7 @@ export function toStudentNutritionSummary(
     studentId: dto.studentId,
     studentName: name && name.length > 0 ? name : "Alumno sin nombre",
     studentAvatarUrl: toMediaUrl(dto.studentImageUrl),
+    allergies: toStudentAllergies(dto.allergies, dto.otherAllergies),
     currentPlan: dto.currentPlan ? toNutritionPlan(dto.currentPlan) : null,
   }
 }

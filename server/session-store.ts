@@ -27,7 +27,7 @@ async function protocolIsHttps(): Promise<boolean> {
 
 export async function readSession(): Promise<Session | null> {
   const store = await cookies()
-  return hydrate(decodeSession(store.get(SESSION_COOKIE)?.value))
+  return hydrate(await decodeSession(store.get(SESSION_COOKIE)?.value))
 }
 
 /** The raw tokens, without requiring the access token to still be decodable. */
@@ -38,7 +38,7 @@ export async function readStoredSession(): Promise<StoredSession | null> {
 
 export async function writeSession(session: StoredSession): Promise<void> {
   const store = await cookies()
-  store.set(SESSION_COOKIE, encodeSession(session), sessionCookieOptions(await protocolIsHttps()))
+  store.set(SESSION_COOKIE, await encodeSession(session), sessionCookieOptions(await protocolIsHttps()))
 }
 
 export async function clearSession(): Promise<void> {

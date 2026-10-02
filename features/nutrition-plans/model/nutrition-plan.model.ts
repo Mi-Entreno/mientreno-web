@@ -1,4 +1,5 @@
 import type { FoodMacros } from "@/features/foods/model/food.model"
+import type { StudentAllergies } from "@/features/students/model/student.model"
 
 import type { TimeOfDay } from "../dto/nutrition-plan.dto"
 
@@ -37,6 +38,8 @@ export interface StudentNutritionSummary {
   studentId: number
   studentName: string
   studentAvatarUrl: string | null
+  /** Consented allergies, shown where the plan is built (the reason they are shared). */
+  allergies: StudentAllergies
   currentPlan: NutritionPlan | null
 }
 
