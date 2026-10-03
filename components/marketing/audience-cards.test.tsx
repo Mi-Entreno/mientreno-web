@@ -2,32 +2,42 @@ import { render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { AudienceCards } from "./audience-cards"
+import { SiteFooter } from "./site-footer"
 
 /**
- * `NEXT_PUBLIC_BRAND_SIGNUP_ENABLED=false` tiene que borrar el registro de
- * comercios de la portada sin llevarse el ingreso: los comercios que ya tienen
- * cuenta siguen entrando por su tarjeta.
+ * `NEXT_PUBLIC_BRAND_SIGNUP_ENABLED=false` tiene que borrar a los comercios de
+ * la portada —tarjeta y enlace del pie— sin tocar a los entrenadores.
+ * `/comercio/login` sigue existiendo; sólo deja de anunciarse.
  */
-describe("las tarjetas de públicos", () => {
+describe("los comercios en la portada", () => {
   afterEach(() => vi.unstubAllEnvs())
 
   function hrefs(container: HTMLElement) {
     return [...container.querySelectorAll("a")].map((a) => a.getAttribute("href"))
   }
 
-  it("ofrece el registro de comercios por defecto", () => {
+  it("muestran su tarjeta por defecto", () => {
     const { container } = render(<AudienceCards />)
 
-    expect(hrefs(container)).toContain("/comercio/register")
+    expect(hrefs(container)).toEqual(
+      expect.arrayContaining(["/comercio/login", "/comercio/register"]),
+    )
+    expect(screen.getByRole("heading", { name: /desde dónde entrás/i })).toBeInTheDocument()
   })
 
-  it("lo oculta con el flag apagado, pero deja ingresar", () => {
+  it("desaparecen de las tarjetas con el flag apagado", () => {
     vi.stubEnv("NEXT_PUBLIC_BRAND_SIGNUP_ENABLED", "false")
     const { container } = render(<AudienceCards />)
 
-    expect(hrefs(container)).not.toContain("/comercio/register")
-    expect(hrefs(container)).toContain("/comercio/login")
-    expect(hrefs(container)).toContain("/register")
-    expect(screen.getAllByRole("link", { name: /registrate/i })).toHaveLength(1)
+    expect(hrefs(container)).toEqual(["/login", "/register"])
+    expect(screen.queryByText(/para comercios/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole("heading", { name: /desde dónde entrás/i })).not.toBeInTheDocument()
+  })
+
+  it("desaparecen del pie con el flag apagado", () => {
+    expect(hrefs(render(<SiteFooter />).container)).toContain("/comercio/login")
+
+    vi.stubEnv("NEXT_PUBLIC_BRAND_SIGNUP_ENABLED", "false")
+    expect(hrefs(render(<SiteFooter />).container)).not.toContain("/comercio/login")
   })
 })
