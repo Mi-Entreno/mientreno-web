@@ -2,6 +2,7 @@ import { Dumbbell, Gift, PackageCheck, Salad, Store, Users, type LucideIcon } fr
 import Link from "next/link"
 
 import { buttonVariants } from "@/components/ui/button"
+import { isBrandSignupEnabled } from "@/core/config/features"
 import { cn } from "@/lib/utils"
 
 interface Audience {
@@ -12,6 +13,11 @@ interface Audience {
   points: { icon: LucideIcon; label: string }[]
   loginHref: string
   registerHref: string
+  /**
+   * Read on render, not at module load, so the card follows the flag in tests
+   * too. When it says no, the card keeps only "Ingresar".
+   */
+  canRegister?: () => boolean
 }
 
 /**
@@ -47,6 +53,7 @@ const AUDIENCES: Audience[] = [
     ],
     loginHref: "/comercio/login",
     registerHref: "/comercio/register",
+    canRegister: isBrandSignupEnabled,
   },
 ]
 
@@ -108,12 +115,14 @@ function AudienceCard({ audience }: { audience: Audience }) {
         <Link href={audience.loginHref} className={cn(buttonVariants({ size: "lg" }), "h-10 px-4")}>
           Ingresar
         </Link>
-        <Link
-          href={audience.registerHref}
-          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 px-4")}
-        >
-          Registrate
-        </Link>
+        {(audience.canRegister?.() ?? true) && (
+          <Link
+            href={audience.registerHref}
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 px-4")}
+          >
+            Registrate
+          </Link>
+        )}
       </div>
     </article>
   )
