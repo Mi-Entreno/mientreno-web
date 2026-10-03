@@ -15,9 +15,9 @@ interface Audience {
   registerHref: string
   /**
    * Read on render, not at module load, so the card follows the flag in tests
-   * too. When it says no, the card keeps only "Ingresar".
+   * too. When it says no, the card is not shown at all.
    */
-  canRegister?: () => boolean
+  isShown?: () => boolean
 }
 
 /**
@@ -53,23 +53,33 @@ const AUDIENCES: Audience[] = [
     ],
     loginHref: "/comercio/login",
     registerHref: "/comercio/register",
-    canRegister: isBrandSignupEnabled,
+    // Con el registro de comercios apagado, la tarjeta entera desaparece y no
+    // sólo su "Registrate": un comercio sin cuenta no tiene nada que hacer acá,
+    // y uno con cuenta entra por `/login` (el JWT lo lleva a su panel) o por
+    // `/comercio/login`, que sigue respondiendo a quien tenga el enlace.
+    isShown: isBrandSignupEnabled,
   },
 ]
 
 export function AudienceCards() {
+  const audiences = AUDIENCES.filter((audience) => audience.isShown?.() ?? true)
+  // "¿Desde dónde entrás?" y "los dos" sólo tienen sentido con dos tarjetas.
+  const single = audiences.length === 1
+
   return (
     <section id="accesos" className="scroll-mt-8 px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
       <div className="mx-auto max-w-5xl">
         <h2 className="font-heading text-headline font-semibold tracking-tight uppercase text-balance">
-          ¿Desde dónde entrás?
+          {single ? "Empezá hoy" : "¿Desde dónde entrás?"}
         </h2>
-        <p className="mt-2.5 max-w-xl text-body-lg text-muted-foreground text-pretty">
-          El panel es el mismo para los dos, pero cada uno tiene su propio espacio.
-        </p>
+        {!single && (
+          <p className="mt-2.5 max-w-xl text-body-lg text-muted-foreground text-pretty">
+            El panel es el mismo para los dos, pero cada uno tiene su propio espacio.
+          </p>
+        )}
 
-        <div className="mt-9 grid gap-5 md:grid-cols-2">
-          {AUDIENCES.map((audience) => (
+        <div className={cn("mt-9 grid gap-5", single ? "max-w-xl" : "md:grid-cols-2")}>
+          {audiences.map((audience) => (
             <AudienceCard key={audience.eyebrow} audience={audience} />
           ))}
         </div>
@@ -115,14 +125,12 @@ function AudienceCard({ audience }: { audience: Audience }) {
         <Link href={audience.loginHref} className={cn(buttonVariants({ size: "lg" }), "h-10 px-4")}>
           Ingresar
         </Link>
-        {(audience.canRegister?.() ?? true) && (
-          <Link
-            href={audience.registerHref}
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 px-4")}
-          >
-            Registrate
-          </Link>
-        )}
+        <Link
+          href={audience.registerHref}
+          className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-10 px-4")}
+        >
+          Registrate
+        </Link>
       </div>
     </article>
   )
