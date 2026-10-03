@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+import { isBrandSignupEnabled } from "@/core/config/features"
 import { readClientOrigin } from "@/server/client-origin"
 import { postJson } from "@/server/upstream"
 
@@ -16,6 +17,12 @@ import { postJson } from "@/server/upstream"
  * `verificationCodeSent` mirrors whether registration itself succeeded.
  */
 export async function POST(req: NextRequest) {
+  // Hiding the links is not enough: this handler is reachable with a bare
+  // fetch. 404 matches what the page answers with the flag off.
+  if (!isBrandSignupEnabled()) {
+    return NextResponse.json({ message: "No encontrado" }, { status: 404 })
+  }
+
   const body = (await req.json().catch(() => null)) as
     | {
         email?: string

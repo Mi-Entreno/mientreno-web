@@ -9,6 +9,8 @@ import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 
+import { isBrandSignupEnabled } from "@/core/config/features"
+
 import { emailSchema } from "../model/password"
 import { AuthField } from "./auth-field"
 import {
@@ -161,7 +163,7 @@ export function LoginForm({ audience: audienceId }: { audience?: AudienceId }) {
       title={copy.title}
       description={copy.description}
       footer={
-        audience ? (
+        audience?.id === "brand" && !isBrandSignupEnabled() ? null : audience ? (
           <>
             ¿Aún no tenés cuenta?{" "}
             <RegisterLink href={audience.registerHref}>Creá una</RegisterLink>
@@ -170,11 +172,19 @@ export function LoginForm({ audience: audienceId }: { audience?: AudienceId }) {
           // Acá sí hay que elegir, y por eso son dos enlaces y no uno: el
           // registro pega a `/auth/trainer/register` o a `/auth/brand/register`
           // según el público, y equivocarse crea la cuenta con el rol que no es.
-          <>
-            ¿Aún no tenés cuenta? Creá una como{" "}
-            <RegisterLink href={TRAINER_AUDIENCE.registerHref}>entrenador</RegisterLink> o como{" "}
-            <RegisterLink href={BRAND_AUDIENCE.registerHref}>comercio</RegisterLink>.
-          </>
+          // Sin registro de comercios no queda nada que elegir.
+          isBrandSignupEnabled() ? (
+            <>
+              ¿Aún no tenés cuenta? Creá una como{" "}
+              <RegisterLink href={TRAINER_AUDIENCE.registerHref}>entrenador</RegisterLink> o como{" "}
+              <RegisterLink href={BRAND_AUDIENCE.registerHref}>comercio</RegisterLink>.
+            </>
+          ) : (
+            <>
+              ¿Aún no tenés cuenta?{" "}
+              <RegisterLink href={TRAINER_AUDIENCE.registerHref}>Creá una</RegisterLink>
+            </>
+          )
         )
       }
     >
