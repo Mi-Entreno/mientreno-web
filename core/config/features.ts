@@ -17,8 +17,12 @@
  * deploy that never heard of the flag keeps behaving as before.
  *
  * Off hides it as if it never existed: no links, `/comercio/register` is a 404
- * and `/auth/brand/register` answers 404 to a bare fetch. Existing merchant
- * accounts are untouched — they still sign in and use their panel.
+ * and `/auth/brand/register` answers 404 to a bare fetch. The landing also
+ * drops the merchant card and the footer's merchant login link, since with no
+ * sign-up they only advertise a door nobody new can walk through.
+ *
+ * Existing merchant accounts are untouched: `/login` still routes them to
+ * their panel, and `/comercio/login` still answers to anyone with the URL.
  */
 export function isBrandSignupEnabled(): boolean {
   return process.env.NEXT_PUBLIC_BRAND_SIGNUP_ENABLED !== "false"

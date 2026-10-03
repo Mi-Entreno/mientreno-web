@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 import { LEGAL_DOCUMENTS } from "@/components/legal/documents"
+import { isBrandSignupEnabled } from "@/core/config/features"
 
 /**
  * El pie del sitio público.
@@ -30,7 +31,10 @@ export function SiteFooter() {
               Acceso
             </p>
             <FooterLink href="/login">Ingresar como entrenador</FooterLink>
-            <FooterLink href="/comercio/login">Ingresar como comercio</FooterLink>
+            {/* Mismo criterio que la tarjeta de comercios en la portada. */}
+            {isBrandSignupEnabled() && (
+              <FooterLink href="/comercio/login">Ingresar como comercio</FooterLink>
+            )}
           </nav>
 
           <nav className="flex flex-col gap-2.5" aria-label="Documentos">
