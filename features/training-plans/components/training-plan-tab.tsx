@@ -20,6 +20,7 @@ import {
 } from "../hooks/use-training-plans"
 import { toEditorPlan } from "../mappers/training-plan.mapper"
 import { emptyPlan, type EditorPlan, type TrainingPlan } from "../model/training-plan.model"
+import { PlanTemplatesBar } from "@/features/plan-templates/components/plan-templates-bar"
 import { PlanView } from "./plan-view"
 import { TrainingPlanEditor } from "./training-plan-editor"
 
@@ -62,6 +63,12 @@ export function TrainingPlanTab({ subscriptionId }: { subscriptionId: number }) 
   // ── Editing ───────────────────────────────────────────────────────────────
   if (session) {
     return (
+      <div className="flex flex-col gap-4">
+      <PlanTemplatesBar
+        plan={session.draft}
+        disabled={publish.isPending || edit.isPending}
+        onLoad={(draft) => setSession({ ...session, draft })}
+      />
       <TrainingPlanEditor
         value={session.draft}
         onChange={(draft) => setSession({ ...session, draft })}
@@ -86,6 +93,7 @@ export function TrainingPlanTab({ subscriptionId }: { subscriptionId: number }) 
           )
         }}
       />
+      </div>
     )
   }
 

@@ -155,3 +155,35 @@ describe("unclaimedFieldErrors", () => {
     )
   })
 })
+
+describe("the paywall (402 PREMIUM_REQUIRED)", () => {
+  it("keeps what the paywall needs: feature, limit, usage and the plan to upgrade to", () => {
+    const error = new ApiError(
+      normalizeError(402, {
+        message: "Alcanzaste el límite de tu plan para alumnos activos (10 alumnos).",
+        status: 402,
+        code: "PREMIUM_REQUIRED",
+        feature: "TRAINER_MAX_ACTIVE_STUDENTS",
+        limit: 10,
+        current: 10,
+        upgradePlanCode: "TRAINER_PRO",
+      }),
+    )
+
+    expect(error.kind).toBe("premium")
+    expect(error.premium).toEqual({
+      feature: "TRAINER_MAX_ACTIVE_STUDENTS",
+      limit: 10,
+      current: 10,
+      upgradePlanCode: "TRAINER_PRO",
+    })
+    expect(error.message).toBe("Alcanzaste el límite de tu plan para alumnos activos (10 alumnos).")
+  })
+
+  it("treats a 402 that does not say it is the paywall as a plain business error", () => {
+    const error = new ApiError(normalizeError(402, { message: "Pago requerido", status: 402 }))
+
+    expect(error.kind).toBe("business")
+    expect(error.premium).toBeNull()
+  })
+})

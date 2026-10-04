@@ -46,6 +46,34 @@ export const qk = {
   admin: {
     all: ["admin"] as const,
     brands: ["admin", "brands"] as const,
+    membershipPlans: ["admin", "membership-plans"] as const,
+    memberships: (status: string | null, page: number) =>
+      ["admin", "memberships", status ?? "all", page] as const,
+    membership: (id: number) => ["admin", "membership", id] as const,
+    membershipMetrics: ["admin", "membership-metrics"] as const,
+  },
+
+  /**
+   * The trainer's plan with the platform (Pro), not the plans they sell to
+   * students — those are `subscriptionPlans`. One namespace for the membership
+   * and what it unlocks, because they change together: a checkout, a cancel or
+   * a renewal invalidates `qk.membership.all` and every gate re-reads.
+   */
+  /** The trainer's saved plans (Pro). Separate from `trainingPlans`, which are per subscription. */
+  planTemplates: {
+    all: ["plan-templates"] as const,
+    list: ["plan-templates", "list"] as const,
+  },
+
+  /** Adherence dashboard (Pro): who trains and who is falling off. */
+  adherence: ["adherence"] as const,
+
+  membership: {
+    all: ["membership"] as const,
+    me: ["membership", "me"] as const,
+    plans: ["membership", "plans"] as const,
+    payments: ["membership", "payments"] as const,
+    entitlements: ["membership", "entitlements"] as const,
   },
 
   /**

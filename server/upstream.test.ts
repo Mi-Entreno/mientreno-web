@@ -81,6 +81,25 @@ describe("proxyToUpstream", () => {
     expect((init.headers as Headers).get("Authorization")).toMatch(/^Bearer /)
   })
 
+  it("forwards Idempotency-Key and nothing that is not allowlisted", async () => {
+    // A double-clicked membership checkout must reach the backend with the same
+    // key, or the backend cannot tell it from a second purchase.
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }))
+
+    await proxyToUpstream(
+      request("/api/backend/api/membership/checkout", {
+        method: "POST",
+        body: "{}",
+        headers: { "content-type": "application/json", "idempotency-key": "k-1", "x-forwarded-host": "evil" },
+      }),
+      "/api/membership/checkout",
+    )
+
+    const headers = fetchMock.mock.calls[0][1].headers as Headers
+    expect(headers.get("idempotency-key")).toBe("k-1")
+    expect(headers.get("x-forwarded-host")).toBeNull()
+  })
+
   it("does not impose a JSON content-type on uploads", async () => {
     // POST /api/exercises/{id}/videos is multipart/form-data; the old proxy
     // hardcoded application/json and read the body as text, corrupting it.

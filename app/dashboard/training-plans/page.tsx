@@ -1,3 +1,4 @@
+import { PlanTemplatesList } from "@/features/plan-templates/components/plan-templates-list"
 import { TrainerPlansScreen } from "@/features/training-plans/components/trainer-plans-screen"
 
 export default function TrainingPlansPage() {
@@ -8,6 +9,7 @@ export default function TrainingPlansPage() {
         suscripción, así que se crea y edita desde la ficha del alumno.
       </p>
       <TrainerPlansScreen />
+      <PlanTemplatesList />
     </div>
   )
 }

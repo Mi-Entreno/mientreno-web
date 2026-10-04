@@ -6,7 +6,7 @@ import { toast } from "sonner"
 
 import { nextPageParam } from "@/core/http/pagination"
 import { qk } from "@/core/http/query-keys"
-import { specificMessage } from "@/core/http/user-message"
+import { isPremiumRequired, specificMessage } from "@/core/http/user-message"
 import { planInvitationsRepository } from "../api/plan-invitations.repository"
 import type { InvitationStatus, PlanInvitation } from "../model/plan-invitation.model"
 
@@ -81,8 +81,12 @@ export function useSendInvitation() {
       toast.success(`Invitación enviada a ${invitation.student.name}`)
     },
 
-    onError: (error) =>
-      toast.error(errorMessage(error, "No pudimos enviar la invitación")),
+    // The plan's student limit (402) is announced by `providers.tsx` with a
+    // "Ver planes" action; a red toast on top of it would read as a bug.
+    onError: (error) => {
+      if (isPremiumRequired(error)) return
+      toast.error(errorMessage(error, "No pudimos enviar la invitación"))
+    },
   })
 }
 
