@@ -3,6 +3,7 @@ import Link from "next/link"
 
 import { DeleteAccountCard } from "@/features/account/components/delete-account-card"
 import { AccountCard } from "@/features/account/components/account-card"
+import { MembershipCard } from "@/features/membership/components/membership-card"
 import { BillingCard } from "@/features/payments/components/billing-card"
 import { PreferencesCard } from "@/features/user/components/preferences-card"
 
@@ -13,7 +14,8 @@ import { PreferencesCard } from "@/features/user/components/preferences-card"
  * could change their name, birth date and photo here *and* on
  * `/dashboard/profile`, with a separate photo field in each. Editing now lives
  * entirely on the profile; what stays here is the account, how the app behaves,
- * how money arrives, the legal pages, and the way out.
+ * the trainer's own plan with Mi Entreno, how money arrives, the legal pages,
+ * and the way out.
  */
 export default function SettingsPage() {
   return (
@@ -33,6 +35,10 @@ export default function SettingsPage() {
         <div className="rounded-2xl border border-border bg-card p-6">
           <PreferencesCard />
         </div>
+      </Section>
+
+      <Section title="Tu plan" description="Tu plan con Mi Entreno: qué incluye y cuándo se renueva.">
+        <MembershipCard />
       </Section>
 
       <Section title="Cobros" description="Cómo recibís el dinero de tus suscripciones.">

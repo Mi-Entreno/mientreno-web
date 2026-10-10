@@ -75,6 +75,9 @@ const FORWARDED_REQUEST_HEADERS = [
   "range",
   "if-none-match",
   "if-modified-since",
+  // Lets the backend recognise a double-clicked membership checkout as the same
+  // one. Opaque and minted by the client, so forwarding it exposes nothing.
+  "idempotency-key",
 ]
 
 /** Backend -> client. Includes range headers so video seeking works. */

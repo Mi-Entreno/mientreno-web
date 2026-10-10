@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+import { track } from "@/core/analytics/track"
 import { ApiError } from "@/core/http/errors"
 
 /**
@@ -63,6 +64,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       // put and explaining beats bouncing the user to login.
       if (error.status === 403) {
         toast.error(error.message)
+        return
+      }
+
+      // 402 is the paywall: the action needs a plan the trainer does not have.
+      // Not an error toast — the backend already phrased the limit, and the one
+      // thing worth offering is the way to lift it. A screen that renders the
+      // paywall itself (PremiumGate) never fires the request in the first place.
+      if (error.kind === "premium") {
+        track("PAYWALL_VIEWED", error.premium?.feature ? { feature: error.premium.feature } : undefined)
+        toast(error.message, {
+          action: { label: "Ver planes", onClick: () => router.push("/dashboard/plan") },
+        })
       }
     }
 

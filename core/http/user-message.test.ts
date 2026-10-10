@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { ApiError } from "./errors"
-import { isMissingFeature, isRetryable, userMessage } from "./user-message"
+import { ApiError, normalizeError } from "./errors"
+import { isMissingFeature, isPremiumRequired, isRetryable, userMessage } from "./user-message"
 
 const SERVER_TROUBLE = "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos."
 
@@ -117,5 +117,26 @@ describe("isMissingFeature", () => {
     expect(isMissingFeature(new ApiError({ kind: "business", status: 404, message: "x" }))).toBe(true)
     expect(isMissingFeature(new ApiError({ kind: "business", status: 500, message: "x" }))).toBe(false)
     expect(isMissingFeature(new Error("x"))).toBe(false)
+  })
+})
+
+describe("paywall wording", () => {
+  const premium = new ApiError(
+    normalizeError(402, {
+      message: "Alcanzaste el límite de tu plan para alumnos activos (10 alumnos).",
+      status: 402,
+      code: "PREMIUM_REQUIRED",
+      feature: "TRAINER_MAX_ACTIVE_STUDENTS",
+      limit: 10,
+      current: 10,
+      upgradePlanCode: null,
+    }),
+  )
+
+  it("shows the limit as the backend phrased it, and never offers a retry", () => {
+    expect(userMessage(premium, "send")).toBe("Alcanzaste el límite de tu plan para alumnos activos (10 alumnos).")
+    expect(isRetryable(premium)).toBe(false)
+    expect(isPremiumRequired(premium)).toBe(true)
+    expect(isPremiumRequired(new ApiError(normalizeError(409, { message: "x" })))).toBe(false)
   })
 })

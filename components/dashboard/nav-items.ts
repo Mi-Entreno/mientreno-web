@@ -1,4 +1,5 @@
 import {
+  Activity,
   CreditCard,
   Dumbbell,
   LayoutDashboard,
@@ -23,11 +24,15 @@ export interface NavItem {
  * "Invitaciones" earns a slot here because it is a queue: something is waiting
  * for an answer, and a trainer needs to see the pending ones without hunting
  * for them.
+ *
+ * "Adherencia" (Pro) earns one for the same reason: it is the list of students
+ * who need a message this week. Without Pro the page explains the benefit.
  */
 export const navItems: NavItem[] = [
   { label: "Inicio", href: "/dashboard", icon: LayoutDashboard },
   { label: "Planes", href: "/dashboard/plans", icon: CreditCard },
   { label: "Mis alumnos", href: "/dashboard/students", icon: Users },
+  { label: "Adherencia", href: "/dashboard/adherence", icon: Activity },
   { label: "Invitaciones", href: "/dashboard/invitations", icon: Send },
   { label: "Entrenamiento", href: "/dashboard/training-plans", icon: Dumbbell },
   { label: "Nutrición", href: "/dashboard/nutrition-plans", icon: Salad },

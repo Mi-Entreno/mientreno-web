@@ -44,6 +44,8 @@ const NOT_AVAILABLE_YET = "Esta sección todavía no está disponible."
 
 const FORBIDDEN = "No tenés permiso para hacer esto."
 
+const PLAN_REQUIRED = "Esta funcionalidad está disponible en un plan superior."
+
 /**
  * Guards against a "business" message that is really a technical one.
  *
@@ -83,6 +85,11 @@ function fromNormalized(error: NormalizedError, context: FailureContext): string
     case "rate-limit":
       // The backend names the exact seconds remaining. Nothing we write beats that.
       return isDisplayable(error.message) ? error.message : GENERIC[context]
+
+    case "premium":
+      // The backend phrases the limit ("Alcanzaste el límite de tu plan para
+      // alumnos activos (10 alumnos)"), which is exactly what the trainer needs.
+      return isDisplayable(error.message) ? error.message : PLAN_REQUIRED
 
     case "validation": {
       const first = Object.values(error.fields)[0]
@@ -139,10 +146,16 @@ export function isRetryable(error: unknown): boolean {
     case "validation":
       return false
     case "rate-limit":
+    case "premium":
       return false
     default:
       return error.status === null || error.status >= 500 || error.status === 408
   }
+}
+
+/** True when the failure is the paywall: show the benefit, not an error. */
+export function isPremiumRequired(error: unknown): error is ApiError {
+  return error instanceof ApiError && error.kind === "premium"
 }
 
 /** True when the failure means "the backend does not implement this yet". */
