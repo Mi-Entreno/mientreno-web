@@ -23,6 +23,8 @@ export interface RequestOptions {
   /** Sent as multipart/form-data — used by exercise video upload. */
   formData?: FormData
   query?: Record<string, string | number | boolean | null | undefined>
+  /** Extra request headers, e.g. `Idempotency-Key` on a checkout. */
+  headers?: Record<string, string>
   signal?: AbortSignal
 }
 
@@ -57,7 +59,7 @@ export async function publicApiFetch<T>(path: string, options: RequestOptions = 
 }
 
 async function request<T>(path: string, options: RequestOptions, base: string): Promise<T> {
-  const { method = "GET", body, formData, query, signal } = options
+  const { method = "GET", body, formData, query, headers, signal } = options
 
   const init: RequestInit = {
     method,
@@ -69,9 +71,12 @@ async function request<T>(path: string, options: RequestOptions, base: string): 
     // Deliberately no Content-Type: the browser must set the multipart
     // boundary itself.
     init.body = formData
+    if (headers) init.headers = { ...headers }
   } else if (body !== undefined) {
-    init.headers = { "Content-Type": "application/json" }
+    init.headers = { ...headers, "Content-Type": "application/json" }
     init.body = JSON.stringify(body)
+  } else if (headers) {
+    init.headers = { ...headers }
   }
 
   let response: Response

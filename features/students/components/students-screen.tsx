@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LimitMeter } from "@/features/membership/components/limit-meter"
+import { FEATURES } from "@/features/membership/model/membership.model"
 import { InviteStudentSheet } from "@/features/plan-invitations/components/invite-student-sheet"
 import { useInvitationCounts } from "@/features/plan-invitations/hooks/use-plan-invitations"
 import { formatDate } from "@/lib/format"
@@ -68,10 +70,16 @@ export function StudentsScreen() {
           </span>
         )}
       </Link>
-      <Button onClick={() => setInviteOpen(true)} className="sm:shrink-0">
-        <Send className="size-4" />
-        Invitar alumno
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        {/* Empty until the trainer's plan has a student limit. The invite still
+            goes through when it is full: the backend answers 402 and
+            providers.tsx offers the plan page, which is the clearer message. */}
+        <LimitMeter feature={FEATURES.maxActiveStudents} />
+        <Button onClick={() => setInviteOpen(true)} className="sm:shrink-0">
+          <Send className="size-4" />
+          Invitar alumno
+        </Button>
+      </div>
     </div>
   )
 

@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useLogout } from "@/features/auth/hooks/use-auth-actions"
+import { PremiumBadge } from "@/features/membership/components/premium-badge"
 import { NotificationBell } from "@/features/notifications/components/notification-bell"
 import { useTrainerProfile } from "@/features/trainer-profile/hooks/use-trainer-profile"
 
@@ -29,6 +30,9 @@ const TITLES: Record<string, string> = {
   "/dashboard/invitations": "Invitaciones",
   "/dashboard/payments": "Cobros",
   "/dashboard/payments/callback": "Cobros",
+  "/dashboard/plan": "Mi plan",
+  "/dashboard/adherence": "Adherencia",
+  "/dashboard/plan/callback": "Mi plan",
   "/dashboard/training-plans": "Planes de entrenamiento",
   "/dashboard/nutrition-plans": "Planes de nutrición",
 }
@@ -81,6 +85,7 @@ export function DashboardHeader({ initialName }: { initialName?: string | null }
               <>
                 <UserAvatar name={name} src={profile?.avatarUrl} className="size-8" />
                 <span className="hidden text-body font-medium sm:inline">{name}</span>
+                <PremiumBadge className="hidden sm:inline-flex" />
               </>
             )}
           </DropdownMenuTrigger>

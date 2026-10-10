@@ -22,9 +22,26 @@ export type NormalizedError =
   | { kind: "auth"; status: 401 | 403; message: string }
   /** Rate limiting — login and password-reset are throttled upstream. */
   | { kind: "rate-limit"; status: 429; message: string }
+  /**
+   * The action needs a plan the user does not have (`PremiumRequiredException`,
+   * 402 with `code: "PREMIUM_REQUIRED"`). Not a failure to apologise for: the
+   * UI explains the benefit and points at the plan page instead of a red toast.
+   */
+  | ({ kind: "premium"; status: 402; message: string } & PremiumDetails)
   /** Request never reached the backend. */
   | { kind: "network"; message: string }
   | { kind: "unknown"; status: number; message: string }
+
+/** What the backend says about a paywall hit, straight from the 402 body. */
+export interface PremiumDetails {
+  /** Feature code, e.g. `TRAINER_MAX_ACTIVE_STUDENTS`. */
+  feature: string | null
+  /** The limit that was hit; null when the feature is simply not enabled. */
+  limit: number | null
+  current: number | null
+  /** The cheapest published plan that unlocks it; null when none is on sale. */
+  upgradePlanCode: string | null
+}
 
 export class ApiError extends Error {
   readonly normalized: NormalizedError
@@ -46,6 +63,13 @@ export class ApiError extends Error {
   /** True when retrying cannot help: the caller is not allowed, full stop. */
   get isAuthFailure(): boolean {
     return this.normalized.kind === "auth"
+  }
+
+  /** The paywall details when this is a 402 PREMIUM_REQUIRED, otherwise null. */
+  get premium(): PremiumDetails | null {
+    if (this.normalized.kind !== "premium") return null
+    const { feature, limit, current, upgradePlanCode } = this.normalized
+    return { feature, limit, current, upgradePlanCode }
   }
 
   /** Field errors, or an empty object for non-validation failures. */
@@ -117,6 +141,20 @@ function isErrorResponseBody(body: unknown): body is { message?: unknown; status
   return typeof body === "object" && body !== null && ("message" in body || "status" in body)
 }
 
+function premiumDetails(body: unknown): PremiumDetails | null {
+  if (typeof body !== "object" || body === null) return null
+  const record = body as Record<string, unknown>
+  if (record.code !== "PREMIUM_REQUIRED") return null
+  const num = (value: unknown) => (typeof value === "number" ? value : null)
+  const str = (value: unknown) => (typeof value === "string" ? value : null)
+  return {
+    feature: str(record.feature),
+    limit: num(record.limit),
+    current: num(record.current),
+    upgradePlanCode: str(record.upgradePlanCode),
+  }
+}
+
 /**
  * Turns an HTTP status + parsed body into a `NormalizedError`.
  * `body` may be `undefined` when the response had no readable payload.
@@ -139,6 +177,13 @@ export function normalizeError(status: number, body: unknown): NormalizedError {
 
   if (status === 429) {
     return { kind: "rate-limit", status: 429, message }
+  }
+
+  // Only a 402 that says it is the paywall: a bare 402 from somewhere else
+  // (a proxy, a future billing endpoint) stays a plain business error.
+  const premium = status === 402 ? premiumDetails(body) : null
+  if (premium) {
+    return { kind: "premium", status: 402, message, ...premium }
   }
 
   if (status >= 400) {
