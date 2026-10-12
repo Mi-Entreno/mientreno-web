@@ -51,6 +51,13 @@ export const qk = {
       ["admin", "memberships", status ?? "all", page] as const,
     membership: (id: number) => ["admin", "membership", id] as const,
     membershipMetrics: ["admin", "membership-metrics"] as const,
+    /** The reps economy: the live config, its versions and its dashboard. */
+    economy: ["admin", "economy"] as const,
+    economyHistory: ["admin", "economy", "history"] as const,
+    economyVersion: (id: number) => ["admin", "economy", "version", id] as const,
+    economyMetrics: (months: number) => ["admin", "economy", "metrics", months] as const,
+    wallets: (search: string) => ["admin", "wallets", search] as const,
+    walletHistory: (studentId: number, page: number) => ["admin", "wallet-history", studentId, page] as const,
   },
 
   /**
