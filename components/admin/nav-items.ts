@@ -1,4 +1,4 @@
-import { BarChart3, CreditCard, Receipt, Store } from "lucide-react"
+import { BarChart3, Coins, CreditCard, Receipt, Store } from "lucide-react"
 
 import type { NavItem } from "@/components/dashboard/nav-items"
 
@@ -13,10 +13,14 @@ import type { NavItem } from "@/components/dashboard/nav-items"
  *
  * Planes y Membresías se sumaron con las membresías de la plataforma: precios y
  * límites se cambian desde acá, sin deploy, y quién paga qué se consulta acá.
+ *
+ * Economía es la de las repes: reglas, topes, ruleta, su tablero y los ajustes
+ * de saldo. Antes se cambiaba editando una variable de entorno del backend.
  */
 export const adminNavItems: NavItem[] = [
   { label: "Comercios", href: "/admin/comercios", icon: Store },
   { label: "Planes", href: "/admin/planes", icon: CreditCard },
   { label: "Membresías", href: "/admin/membresias", icon: Receipt },
   { label: "Métricas", href: "/admin/metricas", icon: BarChart3 },
+  { label: "Economía", href: "/admin/economia", icon: Coins },
 ]

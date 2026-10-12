@@ -141,6 +141,10 @@
   --color-chart-3: var(--brand-blue);
   --color-chart-4: var(--brand-purple);
   --color-chart-5: var(--brand-navy);
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
 
   /* ── Radios (radius) ───────────────────────────────────────────────── */
   --radius-xs: 6px;
@@ -178,6 +182,18 @@
   --brand-purple: #7b4dff;
   --brand-blue: #00b4ff;
   --brand-gray: #f2f4f7;
+
+  /*
+   * Data-viz categorical slots, in fixed order. Not the brand colours, which
+   * were picked for UI and never checked as neighbouring chart series. These
+   * four come from a palette validated for colour-blind separation against the
+   * white card. Slot 3 sits under 3:1, so marks in it always carry a printed
+   * value.
+   */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #4a3aa7;
 
   /* ct — superficies y texto */
   --background: #f2f4f7;
