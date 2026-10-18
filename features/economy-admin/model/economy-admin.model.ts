@@ -330,7 +330,14 @@ export function validateEconomy(config: EconomyConfig): string[] {
     if (prize.weight < 0) errors.push(`El premio "${prize.label}" no puede tener peso negativo.`)
   }
   if (config.wheel.spinEveryTrainingDays < 0) errors.push("Los días por tirada no pueden ser negativos.")
-  const wheelOn = config.wheel.monthlySpin || config.wheel.dailySpin || config.wheel.spinEveryTrainingDays > 0
+  const adSpin = config.wheel.adSpin
+  if (adSpin?.enabled && adSpin.dailyCap < 1)
+    errors.push("Las tiradas por video están prendidas con un tope diario menor a 1: no otorgarían nada.")
+  const wheelOn =
+    config.wheel.monthlySpin ||
+    config.wheel.dailySpin ||
+    config.wheel.spinEveryTrainingDays > 0 ||
+    adSpin?.enabled === true
   const totalWeight = activePrizes(config.wheel.prizes).reduce((sum, p) => sum + p.weight, 0)
   if (wheelOn && totalWeight <= 0) errors.push("La ruleta está prendida pero ningún premio activo tiene peso.")
 
@@ -377,6 +384,9 @@ export function diffEconomy(before: EconomyConfig, after: EconomyConfig): string
   if (w0.monthlySpin !== w1.monthlySpin) changes.push(`Tirada mensual: ${w1.monthlySpin ? "prendida" : "apagada"}`)
   if (w0.dailySpin !== w1.dailySpin) changes.push(`Tirada diaria: ${w1.dailySpin ? "prendida" : "apagada"}`)
   num("Días entrenados por tirada", w0.spinEveryTrainingDays, w1.spinEveryTrainingDays)
+  if ((w0.adSpin?.enabled ?? false) !== (w1.adSpin?.enabled ?? false))
+    changes.push(`Tirada por video: ${w1.adSpin?.enabled ? "prendida" : "apagada"}`)
+  num("Tope diario de tiradas por video", w0.adSpin?.dailyCap ?? 0, w1.adSpin?.dailyCap ?? 0)
   const ev0 = expectedRepsPerSpin(w0.prizes)
   const ev1 = expectedRepsPerSpin(w1.prizes)
   if (JSON.stringify(w0.prizes) !== JSON.stringify(w1.prizes)) {

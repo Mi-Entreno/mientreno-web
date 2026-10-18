@@ -31,6 +31,9 @@ export function WheelEditor({ config, onChange }: { config: EconomyConfig; onCha
   const setPrize = (index: number, patch: Partial<WheelPrize>) =>
     setWheel({ prizes: wheel.prizes.map((prize, i) => (i === index ? { ...prize, ...patch } : prize)) })
 
+  const adSpin = wheel.adSpin ?? { enabled: false, dailyCap: 3 }
+  const setAdSpin = (patch: Partial<typeof adSpin>) => setWheel({ adSpin: { ...adSpin, ...patch } })
+
   const probabilities = prizeProbabilities(wheel.prizes)
   const average = expectedRepsPerSpin(wheel.prizes)
 
@@ -70,6 +73,26 @@ export function WheelEditor({ config, onChange }: { config: EconomyConfig; onCha
             </span>
           </span>
         </label>
+        <label className="flex items-start gap-3 text-body">
+          <Switch checked={adSpin.enabled} onCheckedChange={(enabled) => setAdSpin({ enabled })} />
+          <span>
+            <span className="font-medium">Por ver un video</span>
+            <span className="block text-caption text-muted-foreground">
+              Sólo plan gratis, sin tiradas disponibles. La otorga el callback de AdMob, no la app. Prendela con el
+              build con anuncios ya en las tiendas.
+            </span>
+          </span>
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="ad-spin-cap">Tope de tiradas por video por día</Label>
+          <WholeInput
+            id="ad-spin-cap"
+            min={0}
+            value={adSpin.dailyCap}
+            onValueChange={(value) => setAdSpin({ dailyCap: value ?? 0 })}
+          />
+          <p className="text-caption text-muted-foreground">No entra en la simulación: depende de cuántos miren videos.</p>
+        </div>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-4">
