@@ -40,7 +40,14 @@ export interface EconomyConfigDTO {
   version: number
   challenges: { maxPerMonth: number }
   earning: { dailyCapReps: number; rules: EarnRuleDTO[] }
-  wheel: { monthlySpin: boolean; spinEveryTrainingDays: number; prizes: WheelPrizeDTO[]; dailySpin: boolean }
+  wheel: {
+    monthlySpin: boolean
+    spinEveryTrainingDays: number
+    prizes: WheelPrizeDTO[]
+    dailySpin: boolean
+    /** Tiradas por ver un video recompensado (AdMob). Null o ausente = apagada. */
+    adSpin?: { enabled: boolean; dailyCap: number } | null
+  }
   analytics: { occasionalMaxReps: number; activeMinReps: number } | null
 }
 
