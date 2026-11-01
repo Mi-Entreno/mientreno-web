@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { fireEvent, render, screen, within } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { HttpResponse, http } from "msw"
+import { setupServer } from "msw/node"
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest"
 
 import { METRIC_OPTIONS } from "../model/challenge.model"
 import { ChallengeWizard } from "./challenge-wizard"
@@ -124,5 +126,104 @@ describe("ChallengeWizard · costo en repes", () => {
     // Antes el botón se deshabilitaba con una sola fila, porque cero condiciones
     // era imposible. Con precio dejó de serlo.
     expect(screen.getByRole("button", { name: "Quitar condición" })).toBeEnabled()
+  })
+})
+
+describe("ChallengeWizard · foto del premio", () => {
+  const server = setupServer()
+  beforeAll(() => {
+    server.listen({ onUnhandledRequest: "error" })
+    // jsdom no implementa object URLs.
+    URL.createObjectURL = vi.fn(() => "blob:premio")
+    URL.revokeObjectURL = vi.fn()
+  })
+  afterEach(() => server.resetHandlers())
+  afterAll(() => server.close())
+
+  const saved = {
+    id: 42,
+    name: "Café directo",
+    description: null,
+    imageUrl: null,
+    terms: null,
+    status: "DRAFT",
+    requirementMode: "ALL",
+    requiredCount: null,
+    startsAt: "2099-01-01T00:00:00Z",
+    endsAt: "2099-01-31T23:59:59Z",
+    publishedAt: null,
+    reward: {
+      name: "Café gratis",
+      description: null,
+      imageUrl: null,
+      terms: null,
+      expiresAt: "2099-03-01T23:59:59Z",
+      stock: 20,
+    },
+    requirements: [],
+    goalSignature: "",
+    acceptedCount: 0,
+    completedCount: 0,
+    redeemedCount: 0,
+    stockLeft: 20,
+    repsCost: 0,
+    editable: true,
+  }
+
+  /**
+   * El endpoint de la foto necesita el id, y en un alta el id recién existe
+   * después del POST. Lo que se fija es el orden: primero el desafío, después
+   * la foto contra el id que devolvió.
+   */
+  it("en un alta, sube la foto después de crear el desafío y contra su id", async () => {
+    const calls: string[] = []
+    server.use(
+      http.post("*/api/backend/api/brand/challenges", () => {
+        calls.push("create")
+        return HttpResponse.json(saved)
+      }),
+      // El cuerpo no se inspecciona: el `FormData` de jsdom no se serializa como
+      // multipart, así que MSW no lo puede leer. Que llegue al id correcto y
+      // después del alta es lo que importa acá.
+      http.post("*/api/backend/api/brand/challenges/42/reward-image", () => {
+        calls.push("reward-image")
+        return HttpResponse.json(saved)
+      }),
+    )
+    const onOpenChange = vi.fn()
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <ChallengeWizard open onOpenChange={onOpenChange} />
+      </QueryClientProvider>,
+    )
+
+    fireEvent.change(screen.getByPlaceholderText("Constancia de acero"), { target: { value: "Café directo" } })
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+
+    fireEvent.change(await screen.findByPlaceholderText("20% OFF en toda la tienda"), {
+      target: { value: "Café gratis" },
+    })
+    const file = new File(["png"], "cafe.png", { type: "image/png" })
+    fireEvent.change(screen.getByLabelText("Foto del premio"), { target: { files: [file] } })
+    expect(await screen.findByText("Se sube cuando guardes el desafío.")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+    fireEvent.click(await screen.findByRole("button", { name: "Crear borrador" }))
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(calls).toEqual(["create", "reward-image"])
+  })
+
+  it("rechaza un archivo que no es imagen sin subir nada", async () => {
+    renderWizard()
+
+    fireEvent.change(screen.getByPlaceholderText("Constancia de acero"), { target: { value: "Café directo" } })
+    fireEvent.click(screen.getByRole("button", { name: "Siguiente" }))
+
+    const file = new File(["%PDF"], "menu.pdf", { type: "application/pdf" })
+    fireEvent.change(await screen.findByLabelText("Foto del premio"), { target: { files: [file] } })
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/ese formato no sirve/i)
   })
 })
