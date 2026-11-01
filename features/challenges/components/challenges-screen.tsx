@@ -1,6 +1,7 @@
 "use client"
 
 import { Gift, Plus, Target, Users } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 
 import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
@@ -191,28 +192,44 @@ function ChallengeRow({
   return (
     <li className="rounded-xl border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-heading text-subtitle uppercase">{challenge.name}</h3>
-            <StatusPill tone={CHALLENGE_STATUS_TONES[challenge.status]}>
-              {CHALLENGE_STATUS_LABELS[challenge.status]}
-            </StatusPill>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted">
+            {challenge.reward.imageUrl ? (
+              <Image
+                src={challenge.reward.imageUrl}
+                alt=""
+                width={56}
+                height={56}
+                className="size-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <Gift className="size-5 text-muted-foreground" />
+            )}
+          </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-heading text-subtitle uppercase">{challenge.name}</h3>
+              <StatusPill tone={CHALLENGE_STATUS_TONES[challenge.status]}>
+                {CHALLENGE_STATUS_LABELS[challenge.status]}
+              </StatusPill>
+            </div>
+            <p className="flex flex-wrap items-center gap-1 text-body text-muted-foreground">
+              <Target className="size-4" />
+              {challenge.requirements.map((requirement) => describeRequirement(requirement)).join(" + ")}
+              <span className="text-caption">· {describeMode(challenge)}</span>
+            </p>
+            <p className="flex items-center gap-1 text-body">
+              <Gift className="size-4" /> {challenge.reward.name}
+            </p>
+            <p className="text-caption text-muted-foreground tabular-nums">
+              Del {formatDate(challenge.startsAt)} al {formatDate(challenge.endsAt)} · la recompensa vence el{" "}
+              {formatDate(challenge.reward.expiresAt)}
+            </p>
+            {blocked && challenge.status !== "DRAFT" && (
+              <p className="text-caption text-warning-text">{blocked}</p>
+            )}
           </div>
-          <p className="flex flex-wrap items-center gap-1 text-body text-muted-foreground">
-            <Target className="size-4" />
-            {challenge.requirements.map((requirement) => describeRequirement(requirement)).join(" + ")}
-            <span className="text-caption">· {describeMode(challenge)}</span>
-          </p>
-          <p className="flex items-center gap-1 text-body">
-            <Gift className="size-4" /> {challenge.reward.name}
-          </p>
-          <p className="text-caption text-muted-foreground tabular-nums">
-            Del {formatDate(challenge.startsAt)} al {formatDate(challenge.endsAt)} · la recompensa vence el{" "}
-            {formatDate(challenge.reward.expiresAt)}
-          </p>
-          {blocked && challenge.status !== "DRAFT" && (
-            <p className="text-caption text-warning-text">{blocked}</p>
-          )}
         </div>
 
         <dl className="flex gap-4 text-caption tabular-nums">
