@@ -2,7 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ArrowLeft, Gift, Plus, Target, Trash2 } from "lucide-react"
-import { useState } from "react"
+import Image from "next/image"
+import { useEffect, useRef, useState } from "react"
 import { useFieldArray, useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 
@@ -29,7 +30,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
 import type { SaveChallengeInput } from "../dto/challenge.dto"
-import { useCreateChallenge, useUpdateChallenge } from "../hooks/use-challenges"
+import { useCreateChallenge, useUpdateChallenge, useUploadChallengeImage } from "../hooks/use-challenges"
 import {
   FAMILY_LABELS,
   METRIC_OPTIONS,
@@ -37,6 +38,7 @@ import {
   metricOption,
   type BrandChallenge,
 } from "../model/challenge.model"
+import { RewardImagePicker, type PickedImage } from "./reward-image-picker"
 
 /**
  * Un desafío y su recompensa, en un solo flujo.
@@ -198,7 +200,26 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
 
   const create = useCreateChallenge()
   const update = useUpdateChallenge()
-  const pending = create.isPending || update.isPending
+  const uploadImage = useUploadChallengeImage()
+  const pending = create.isPending || update.isPending || uploadImage.isPending
+
+  // Fuera del formulario: un `File` no es un valor que zod ni react-hook-form
+  // tengan que validar, y la subida necesita el id que recién da el guardado.
+  const [rewardImage, setRewardImage] = useState<PickedImage | null>(null)
+  const rewardImageRef = useRef<PickedImage | null>(null)
+  useEffect(() => {
+    // Cerrar el asistente con una foto elegida no la deja retenida en memoria.
+    return () => {
+      if (rewardImageRef.current) URL.revokeObjectURL(rewardImageRef.current.preview)
+    }
+  }, [])
+
+  function pickRewardImage(file: File | null) {
+    if (rewardImageRef.current) URL.revokeObjectURL(rewardImageRef.current.preview)
+    const next = file ? { file, preview: URL.createObjectURL(file) } : null
+    rewardImageRef.current = next
+    setRewardImage(next)
+  }
 
   const {
     register,
@@ -248,7 +269,7 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
     else if (step === "reward") setStep("challenge")
   }
 
-  function onSubmit(values: FormValues) {
+  async function onSubmit(values: FormValues) {
     const parsed = schema.parse(values)
     const input: SaveChallengeInput = {
       name: parsed.name,
@@ -271,11 +292,24 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
       repsCost: parsed.repsCost,
     }
 
-    const action = isEditing
-      ? update.mutateAsync({ id: challenge.id, input })
-      : create.mutateAsync(input)
+    let saved: BrandChallenge
+    try {
+      saved = isEditing
+        ? await update.mutateAsync({ id: challenge.id, input })
+        : await create.mutateAsync(input)
+    } catch {
+      return // El hook ya avisó; el formulario sigue abierto para corregir.
+    }
 
-    action.then(onDone).catch(() => {})
+    if (rewardImage) {
+      // Si la foto falla, el desafío ya está guardado y el asistente se cierra
+      // igual: quedarse abierto en un alta haría que reintentar cree otro
+      // borrador. El toast del hook dice qué falló, y "Editar" permite resubirla.
+      await uploadImage
+        .mutateAsync({ id: saved.id, file: rewardImage.file, target: "reward" })
+        .catch(() => {})
+    }
+    onDone()
   }
 
   return (
@@ -449,6 +483,13 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
 
         {step === "reward" && (
           <>
+            <RewardImagePicker
+              storedUrl={challenge?.reward.imageUrl ?? null}
+              picked={rewardImage}
+              onPick={pickRewardImage}
+              disabled={pending}
+            />
+
             <Field label="Qué se lleva" error={errors.rewardName?.message}>
               <Input
                 id="rewardName"
@@ -491,7 +532,13 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
           </>
         )}
 
-        {step === "review" && <ReviewStep control={control} onEdit={setStep} />}
+        {step === "review" && (
+          <ReviewStep
+            control={control}
+            onEdit={setStep}
+            rewardImageUrl={rewardImage?.preview ?? challenge?.reward.imageUrl ?? null}
+          />
+        )}
       </div>
 
       <SheetFooter className="flex-row justify-between gap-2">
@@ -524,9 +571,11 @@ function WizardForm({ challenge, onDone }: { challenge: BrandChallenge | null; o
 function ReviewStep({
   control,
   onEdit,
+  rewardImageUrl,
 }: {
   control: ReturnType<typeof useForm<FormValues>>["control"]
   onEdit: (step: Step) => void
+  rewardImageUrl: string | null
 }) {
   const values = useWatch({ control })
 
@@ -579,11 +628,30 @@ function ReviewStep({
             Editar
           </Button>
         </header>
-        <p className="text-body-strong">{values.rewardName || "Sin nombre"}</p>
-        {values.rewardDescription && (
-          <p className="text-body text-muted-foreground">{values.rewardDescription}</p>
+        <div className="flex items-start gap-3">
+          {rewardImageUrl && (
+            <Image
+              src={rewardImageUrl}
+              alt=""
+              width={64}
+              height={64}
+              className="size-16 shrink-0 rounded-xl border border-border object-cover"
+              unoptimized
+            />
+          )}
+          <div className="flex min-w-0 flex-col">
+            <p className="text-body-strong">{values.rewardName || "Sin nombre"}</p>
+            {values.rewardDescription && (
+              <p className="text-body text-muted-foreground">{values.rewardDescription}</p>
+            )}
+            {values.rewardTerms && <p className="text-caption text-muted-foreground">{values.rewardTerms}</p>}
+          </div>
+        </div>
+        {!rewardImageUrl && (
+          <p className="mt-2 text-caption text-warning-text">
+            Sin foto: en la app se va a ver el logo del local en su lugar.
+          </p>
         )}
-        {values.rewardTerms && <p className="text-caption text-muted-foreground">{values.rewardTerms}</p>}
         <p className="mt-2 text-caption text-muted-foreground tabular-nums">
           {String(values.rewardStock ?? "")} unidades · vence el {values.rewardExpirationDate}
         </p>

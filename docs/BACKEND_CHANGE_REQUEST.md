@@ -8,11 +8,18 @@
 4. [Un vídeo demasiado grande devuelve 500](#petición-4--un-vídeo-demasiado-grande-devuelve-500) (fase 8)
 5. [El entrenador no puede listar las sesiones de sus alumnos](#petición-5--el-entrenador-no-puede-listar-las-sesiones-de-sus-alumnos) (fase 9)
 6. [Cinco tipos de notificación no se emiten nunca](#petición-6--cinco-tipos-de-notificación-no-se-emiten-nunca) (fase 10)
-7. [No hay dónde subir una foto de perfil](#petición-7--no-hay-dónde-subir-una-foto-de-perfil) (segunda ronda de pruebas)
+7. [No hay dónde subir una foto de perfil](#petición-7--no-hay-dónde-subir-una-foto-de-perfil) (segunda ronda de pruebas) — **resuelta**
 
 ---
 
 # Petición 7 — No hay dónde subir una foto de perfil
+
+> **Resuelta.** El backend agregó `POST /api/users/me/profile-picture`
+> (`ProfilePictureController`, campo `file`, JPG/PNG/WEBP/HEIC hasta 5 MB) que
+> responde `{ profileImageUrl }` y actualiza tanto `UserDetail` como
+> `Trainer.profileImageUrl`. En vez del `/api/files` genérico propuesto abajo,
+> que sigue siendo sólo GET. `app/api/uploads/avatar/route.ts` apunta ahí.
+> Lo de abajo queda como registro.
 
 El backend almacena y **sirve** archivos: `LocalFileStorageService` los guarda y
 `FileController` los expone en `/api/files/**`. Pero el único punto de **entrada**
