@@ -7,22 +7,23 @@ import { ensureFreshSession } from "@/server/upstream"
 /**
  * Profile photo upload.
  *
- * ## Why this is a handler and not `apiFetch` straight to the proxy
+ * Forwards to `POST /api/users/me/profile-picture` (`ProfilePictureController`),
+ * which stores the file, writes it to `UserDetail` **and** to the denormalized
+ * `Trainer.profileImageUrl`, deletes the previous file and answers
+ * `ProfilePictureResponseDTO { profileImageUrl }`. So the photo is saved the
+ * moment the upload succeeds; the URL handed back to the form only keeps the
+ * later profile `PUT` from overwriting it with the old value.
  *
- * The upload target is the one thing about this feature that is not settled.
- * `LocalFileStorageService` already stores files and serves them from
- * `/api/files/**`, but the only multipart *ingest* the backend exposes today is
- * `POST /api/exercises/{id}/videos`, which is scoped to an exercise and cannot
- * take an avatar. `profileImageUrl` and `pathProfilePicture` are plain String
- * columns, so whatever stores the bytes only has to hand back a URL.
+ * This used to target `POST /api/files`, the generic endpoint proposed in
+ * `docs/BACKEND_CHANGE_REQUEST.md` (petición 7). The backend shipped a
+ * profile-specific one instead and `/api/files` only serves GET, so every
+ * upload came back 405/404 and the UI said "todavía no está disponible".
  *
- * Keeping that decision behind this route means the app talks to one stable
- * endpoint of ours, and moving to a different store later is a change in this
- * file rather than in every form. `UPSTREAM_UPLOAD_PATH` is the whole seam.
- *
- * Requested upstream in `docs/BACKEND_CHANGE_REQUEST.md`, petición 7.
+ * Kept as a handler rather than `apiFetch` to the proxy so the app talks to one
+ * stable endpoint of ours: moving to a different store later is a change in
+ * this file, not in every form. `UPSTREAM_UPLOAD_PATH` is the whole seam.
  */
-const UPSTREAM_UPLOAD_PATH = "/api/files"
+const UPSTREAM_UPLOAD_PATH = "/api/users/me/profile-picture"
 
 export async function POST(req: NextRequest) {
   const session = await ensureFreshSession()
@@ -37,10 +38,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "No pudimos leer el archivo." }, { status: 400 })
   }
 
-  const file = form.get("file")
-  if (!(file instanceof File)) {
+  const part = form.get("file")
+  if (!(part instanceof File)) {
     return NextResponse.json({ message: "No pudimos leer el archivo." }, { status: 400 })
   }
+
+  const file = withDeclaredType(part)
 
   // The browser checked this too, but a handler must never trust its client:
   // this is the boundary where the bytes stop being the user's problem.
@@ -63,8 +66,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = new FormData()
-  // Matches `@RequestParam("file") MultipartFile`, the shape the video endpoint
-  // already uses.
+  // Matches `@RequestParam("file") MultipartFile`.
   body.append("file", file, file.name)
 
   let upstream: Response
@@ -118,25 +120,30 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ url: stored })
 }
 
-/**
- * Reads the stored location out of whatever the upload answered.
- *
- * The response shape is not pinned down yet, so the three plausible spellings
- * are all accepted rather than betting on one: `ExerciseVideoResponseDTO` calls
- * it `url`, and a generic file endpoint might just as well answer `fileUrl` or
- * a bare string.
- */
+/** `ProfilePictureResponseDTO.profileImageUrl`. */
 function readStoredUrl(payload: unknown): string | null {
-  if (typeof payload === "string" && payload.trim()) return payload.trim()
   if (typeof payload !== "object" || payload === null) return null
+  const value = (payload as Record<string, unknown>).profileImageUrl
+  return typeof value === "string" && value.trim() ? value.trim() : null
+}
 
-  const record = payload as Record<string, unknown>
-  for (const key of ["url", "fileUrl", "path", "location"]) {
-    const value = record[key]
-    if (typeof value === "string" && value.trim()) return value.trim()
-  }
+const TYPE_BY_EXTENSION: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+}
 
-  return null
+/**
+ * A file the browser could not type (`rejectImage` accepts those by extension)
+ * arrives here as `application/octet-stream`. Without this, our own check
+ * answers 415 and, past it, the backend's Content-Type allowlist answers 400.
+ */
+function withDeclaredType(file: File): File {
+  if (file.type && file.type !== "application/octet-stream") return file
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? ""
+  const type = TYPE_BY_EXTENSION[extension]
+  return type ? new File([file], file.name, { type }) : file
 }
 
 export const maxDuration = 30
