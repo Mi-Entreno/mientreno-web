@@ -30,10 +30,9 @@ export interface LegalDocument {
  *
  * Vive acá porque lo citan la política de privacidad, la página de eliminación
  * y el pie de cada documento; repetido, el día que cambie quedaría uno viejo.
- * Ojo: el dominio (`mientreno.app`) no es el del sitio (`mientrenoapp.com`);
- * confirmar que la casilla existe y alguien la lee antes de publicar.
+ * Same mailbox as `BRAND.supportEmail` in the student app (`../fitness_app`).
  */
-export const SUPPORT_EMAIL = "soporte@mientreno.app"
+export const SUPPORT_EMAIL = "soporte@mientrenoapp.com"
 
 /**
  * La fecha que se muestra al pie de cada documento.
