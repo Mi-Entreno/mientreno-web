@@ -1,6 +1,4 @@
-import Image from "next/image"
-import Link from "next/link"
-
+import { PublicHeader } from "@/components/marketing/public-header"
 import { SiteFooter } from "@/components/marketing/site-footer"
 
 /**
@@ -21,25 +19,7 @@ export const metadata = {
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="border-b border-border bg-brand-navy px-5 py-4 sm:px-8 lg:px-12">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-          <Link href="/" aria-label="Ir a la portada de Mi Entreno">
-            <Image
-              src="/logo-light.png"
-              alt="Mi Entreno"
-              width={410}
-              height={241}
-              className="h-9 w-auto"
-            />
-          </Link>
-          <Link
-            href="/documentos"
-            className="text-body text-white/70 transition-colors hover:text-white"
-          >
-            Documentos
-          </Link>
-        </div>
-      </header>
+      <PublicHeader link={{ href: "/documentos", label: "Documentos" }} />
 
       <main className="flex-1">{children}</main>
 

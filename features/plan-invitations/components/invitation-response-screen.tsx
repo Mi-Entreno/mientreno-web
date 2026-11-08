@@ -76,7 +76,7 @@ export function InvitationResponseScreen({ token }: { token: string }) {
             href="/login"
             className="font-semibold text-primary-text underline underline-offset-4 hover:text-foreground"
           >
-            mientreno.app/login
+            mientrenoapp.com/login
           </a>
           .
         </>
