@@ -50,6 +50,11 @@ export function SiteFooter() {
               </FooterLink>
             ))}
           </nav>
+
+          <nav className="flex flex-col gap-2.5" aria-label="Ayuda">
+            <p className="font-mono text-caption tracking-widest text-white/45 uppercase">Ayuda</p>
+            <FooterLink href="/soporte">Soporte</FooterLink>
+          </nav>
         </div>
       </div>
 

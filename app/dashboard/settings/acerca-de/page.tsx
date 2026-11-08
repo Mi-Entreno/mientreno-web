@@ -1,3 +1,4 @@
+import { SUPPORT_EMAIL } from "@/components/legal/documents"
 import { SettingsPageShell } from "@/features/account/components/settings-page-shell"
 
 export const metadata = { title: "Acerca de Mi Entreno" }
@@ -10,7 +11,7 @@ export default function AboutPage() {
     >
       <dl className="grid gap-4 rounded-2xl border border-border bg-card p-6 sm:grid-cols-2">
         <Field label="Versión" value="MVP" />
-        <Field label="Soporte" value="soporte@mientreno.app" />
+        <Field label="Soporte" value={SUPPORT_EMAIL} />
       </dl>
 
       <p className="text-body text-muted-foreground text-pretty">
