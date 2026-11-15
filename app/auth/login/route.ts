@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-import { decodeAccessToken, homeFor } from "@/server/jwt"
-import { clearSession, writeSession } from "@/server/session-store"
+import { respondWithSession } from "@/server/sign-in"
 import { postJson, type AuthResponseDTO } from "@/server/upstream"
 
 /**
@@ -36,66 +35,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message }, { status })
   }
 
-  const auth = data as AuthResponseDTO
-
-  // Verification is checked before the token is decoded, because an unverified
-  // account no longer comes with one.
-  //
-  // The backend used to issue a working JWT regardless of `accountVerified` and
-  // leave it to each client to decline it — which meant the token was real and
-  // anyone bypassing the UI had a usable session. It now withholds `jwt` and
-  // `refreshToken` for unverified accounts and still answers 200, so the shape
-  // both clients already branch on is unchanged.
-  //
-  // Decoding first would turn that null token into `!claims` and report a 502
-  // "inconveniente", hiding a perfectly ordinary state behind a server error
-  // and stranding the user with no way to reach the OTP screen.
-  if (!auth.accountVerified) {
-    await clearSession()
-    return NextResponse.json({
-      email: auth.email,
-      firstName: auth.firstName,
-      profileCompleted: false,
-      accountVerified: false,
-    })
-  }
-
-  const claims = decodeAccessToken(auth.jwt)
-
-  if (!claims) {
-    return NextResponse.json(
-      { message: "Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos." },
-      { status: 502 },
-    )
-  }
-
-  // This panel serves trainers and merchants. `homeFor` is the single place
-  // that maps a role to a destination — the guard and the landing consult the
-  // same function, so there is no way for two of them to disagree about where
-  // a session belongs and bounce it back and forth.
-  //
-  // A null home means the account is a student's: their place is the mobile
-  // app, and letting them in would only get every request 403'd.
-  const home = homeFor(claims)
-
-  if (!home) {
-    await clearSession()
-    return NextResponse.json(
-      { message: "Esta cuenta es de alumno. Usá la aplicación móvil para entrenar." },
-      { status: 403 },
-    )
-  }
-
-  await writeSession({ accessToken: auth.jwt, refreshToken: auth.refreshToken })
-
-  // Tokens stay server-side; the client only gets what it needs to route.
-  // `home` travels in the response so the form does not have to re-derive the
-  // role it cannot see — the claims never reach the browser.
-  return NextResponse.json({
-    email: claims.email,
-    firstName: claims.firstName,
-    profileCompleted: claims.profileCompleted,
-    accountVerified: auth.accountVerified,
-    home,
-  })
+  return respondWithSession(data as AuthResponseDTO)
 }

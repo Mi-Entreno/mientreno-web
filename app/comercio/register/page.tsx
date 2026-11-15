@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation"
+import { Suspense } from "react"
 
 import { isBrandSignupEnabled } from "@/core/config/features"
+import { AuthShellFallback } from "@/features/auth/components/auth-shell"
 import { RegisterForm } from "@/features/auth/components/register-form"
 
 export default function BrandRegisterPage() {
@@ -9,5 +11,10 @@ export default function BrandRegisterPage() {
   if (!isBrandSignupEnabled()) notFound()
 
   // Id y no el objeto de copy: ver el comentario de la página de login.
-  return <RegisterForm audience="brand" />
+  // Suspense: `RegisterForm` reads search params through `useFinishSignIn`.
+  return (
+    <Suspense fallback={<AuthShellFallback />}>
+      <RegisterForm audience="brand" />
+    </Suspense>
+  )
 }

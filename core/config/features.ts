@@ -27,3 +27,28 @@
 export function isBrandSignupEnabled(): boolean {
   return process.env.NEXT_PUBLIC_BRAND_SIGNUP_ENABLED !== "false"
 }
+
+/**
+ * Client ids for "Continuar con Google / Apple". Public by nature — they end up
+ * in the provider's popup URL — and each must also be listed upstream
+ * (`GOOGLE_CLIENT_IDS` / `APPLE_CLIENT_IDS`), since the backend checks the id
+ * token's `aud` against them. Empty hides that provider's button.
+ *
+ * Apple's is the **Services ID** (web), not the app's bundle id.
+ */
+export function googleClientId(): string | null {
+  return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID?.trim() || null
+}
+
+export function appleClientId(): string | null {
+  return process.env.NEXT_PUBLIC_APPLE_CLIENT_ID?.trim() || null
+}
+
+/**
+ * Return URL registered for the Services ID. With the popup flow Apple never
+ * navigates there, but it still has to match exactly. Defaults to this
+ * origin's `/login`.
+ */
+export function appleRedirectUri(): string | null {
+  return process.env.NEXT_PUBLIC_APPLE_REDIRECT_URI?.trim() || null
+}
