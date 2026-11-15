@@ -1,7 +1,7 @@
 import { ApiError, networkError, normalizeError, readErrorBody } from "@/core/http/errors"
 import { LEGAL_DOCUMENTS_VERSION } from "@/components/legal/documents"
 
-import type { MessageResponse, RegisterResult } from "../dto/auth.dto"
+import type { LegalAcceptanceDTO, MessageResponse, RegisterResult } from "../dto/auth.dto"
 
 /**
  * The unauthenticated half of the auth API.
@@ -55,6 +55,47 @@ export interface RegisterInput {
   endpoint?: string
 }
 
+export type SocialProvider = "google" | "apple"
+
+export interface SocialSignInInput {
+  idToken: string
+  /** Raw nonce; the backend accepts the token carrying it raw (Google) or SHA-256'd (Apple). */
+  nonce: string
+  /** Apple only, and only on the first authorization. */
+  authorizationCode?: string | null
+}
+
+/** Shape returned by `server/sign-in.ts#respondWithSession` — never includes tokens. */
+export interface SignInResult {
+  email: string
+  firstName: string | null
+  profileCompleted: boolean
+  accountVerified: boolean
+  /** Panel this session belongs to, decided upstream by `homeFor`. */
+  home?: string | null
+}
+
+/**
+ * One checkbox (or one "al continuar, aceptás" notice), three flags. The label
+ * names all three documents, so the single answer is honest for each of them —
+ * and upstream they are three separate rows because the documents version
+ * independently.
+ *
+ * `clientIp` and `userAgent` are deliberately absent here: this runs in the
+ * browser, so anything it put there would be self-reported. The BFF route
+ * fills them from its own request headers.
+ */
+function legalAcceptance(accepted: boolean): LegalAcceptanceDTO {
+  return {
+    termsAccepted: accepted,
+    privacyAccepted: accepted,
+    cookiesAcknowledged: accepted,
+    documentsVersion: LEGAL_DOCUMENTS_VERSION,
+    platform: "WEB",
+    locale: typeof navigator !== "undefined" ? navigator.language : null,
+  }
+}
+
 export const authRepository = {
   /**
    * Registers a trainer or a merchant. Answers `AuthResponseDTO.noToken(...)`
@@ -66,24 +107,18 @@ export const authRepository = {
       email: input.email.trim(),
       password: input.password,
       phone: input.phone.trim() || null,
-      /*
-       * One checkbox, three flags. The label names all three documents, so the
-       * single tick is an honest answer for each of them — and upstream they
-       * are three separate rows because the documents version independently.
-       *
-       * `clientIp` and `userAgent` are deliberately absent here: this runs in
-       * the browser, so anything it put there would be self-reported. The BFF
-       * route fills them from its own request headers.
-       */
-      legal: {
-        termsAccepted: input.acceptedLegal,
-        privacyAccepted: input.acceptedLegal,
-        cookiesAcknowledged: input.acceptedLegal,
-        documentsVersion: LEGAL_DOCUMENTS_VERSION,
-        platform: "WEB" as const,
-        locale: typeof navigator !== "undefined" ? navigator.language : null,
-      },
+      legal: legalAcceptance(input.acceptedLegal),
     })
+  },
+
+  /**
+   * "Continuar con Google / Apple". Signs in, or creates a trainer account if
+   * the email is new — which is why it always carries the legal block. 403
+   * means a student-only account; 409 an existing account that cannot be
+   * linked automatically (the message says what to do).
+   */
+  socialSignIn(provider: SocialProvider, input: SocialSignInInput): Promise<SignInResult> {
+    return post<SignInResult>(`/auth/social/${provider}`, { ...input, legal: legalAcceptance(true) })
   },
 
   verifyOtp(email: string, code: string): Promise<MessageResponse> {
