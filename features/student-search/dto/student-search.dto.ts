@@ -32,4 +32,10 @@ export interface StudentSearchResultDTO {
   alreadyMyStudent: boolean
   /** Id of a PENDING invitation this trainer already sent, or null. */
   pendingInvitationId: number | null
+  /**
+   * Accepted one of this trainer's offers and the subscription is still
+   * `PENDING_PAYMENT` — the payment or its proof is waiting. Neither flag above
+   * covers that stretch, which is how a second invitation used to get through.
+   */
+  awaitingPayment: boolean
 }

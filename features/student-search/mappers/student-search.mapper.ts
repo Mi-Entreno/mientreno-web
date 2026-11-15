@@ -19,5 +19,6 @@ export function toStudentCandidate(dto: StudentSearchResultDTO): StudentCandidat
     // should degrade to "invitable", not to a screen of disabled rows.
     alreadyMyStudent: dto.alreadyMyStudent ?? false,
     pendingInvitationId: dto.pendingInvitationId ?? null,
+    awaitingPayment: dto.awaitingPayment ?? false,
   }
 }

@@ -1,5 +1,6 @@
 import {
   Activity,
+  Banknote,
   CreditCard,
   Dumbbell,
   LayoutDashboard,
@@ -17,13 +18,16 @@ export interface NavItem {
 
 /**
  * Main navigation, kept short on purpose. "Mi perfil" is reached from the
- * sidebar's profile card, "Ajustes" from its footer, and "Cobros" from inside
- * Ajustes — plus a direct link from the screens where charging actually comes
- * up.
+ * sidebar's profile card and "Ajustes" from its footer.
  *
  * "Invitaciones" earns a slot here because it is a queue: something is waiting
  * for an answer, and a trainer needs to see the pending ones without hunting
  * for them.
+ *
+ * "Cobros" earns one for the same reason. It used to live only inside Ajustes,
+ * but bank transfers made it a queue too: a proof a student uploaded waits
+ * there for the trainer to approve it, and the student's plan does not start
+ * until they do. Buried two clicks deep, trainers never found it.
  *
  * "Adherencia" (Pro) earns one for the same reason: it is the list of students
  * who need a message this week. Without Pro the page explains the benefit.
@@ -34,6 +38,7 @@ export const navItems: NavItem[] = [
   { label: "Mis alumnos", href: "/dashboard/students", icon: Users },
   { label: "Adherencia", href: "/dashboard/adherence", icon: Activity },
   { label: "Invitaciones", href: "/dashboard/invitations", icon: Send },
+  { label: "Cobros", href: "/dashboard/payments", icon: Banknote },
   { label: "Entrenamiento", href: "/dashboard/training-plans", icon: Dumbbell },
   { label: "Nutrición", href: "/dashboard/nutrition-plans", icon: Salad },
 ]
