@@ -1,4 +1,8 @@
-import type { PaymentProviderDTO, PaymentStatusDTO } from "../dto/bank-transfer.dto"
+import type {
+  PaymentProviderDTO,
+  PaymentStatusDTO,
+  SubscriptionStatusDTO,
+} from "../dto/bank-transfer.dto"
 
 /** A charge as the trainer sees it, whichever way the money came in. */
 export interface TrainerPayment {
@@ -8,6 +12,7 @@ export interface TrainerPayment {
   studentName: string
   studentImageUrl: string | null
   planName: string
+  subscriptionStatus: SubscriptionStatusDTO | null
   amount: number
   currency: string
   status: PaymentStatusDTO
@@ -90,9 +95,24 @@ export const isAwaitingProof = (payment: TrainerPayment): boolean =>
  * trainer rejects it first — with a reason the student sees — and cancels from
  * the rejection itself. Cancelling acts on the subscription, so every pending
  * charge of it goes at once.
+ *
+ * And only while the subscription is still waiting for a payment. A student
+ * who opened the Mercado Pago checkout and then paid by transfer leaves a
+ * PENDING row behind on an already active subscription; offering "Cancelar
+ * cobro" there ended in a 409, because that student has nothing left to pay.
  */
 export const canCancelPending = (payment: TrainerPayment): boolean =>
-  (payment.status === "PENDING" || payment.status === "IN_PROCESS") && !isReviewable(payment)
+  (payment.status === "PENDING" || payment.status === "IN_PROCESS") &&
+  !isReviewable(payment) &&
+  isAwaitingPayment(payment)
+
+/**
+ * Whether the subscription behind this row still waits for a payment. An
+ * unknown state (older backend) keeps the previous behaviour: the server
+ * still answers 409 if it is not.
+ */
+export const isAwaitingPayment = (payment: TrainerPayment): boolean =>
+  payment.subscriptionStatus === null || payment.subscriptionStatus === "PENDING_PAYMENT"
 
 /** Where the proof bytes come from. Never a storage URL. */
 export const proofUrl = (paymentId: number): string => `/api/proofs/${paymentId}`
