@@ -4,6 +4,7 @@ import type { TrainerPaymentDTO } from "../dto/bank-transfer.dto"
 import { toTrainerPayment } from "../mappers/bank-transfer.mapper"
 import { isValidCbu } from "./cbu"
 import {
+  canCancelPending,
   formatCbu,
   isAwaitingProof,
   isReviewable,
@@ -53,6 +54,31 @@ describe("toTrainerPayment", () => {
     // The backend does not send one: the receipt is read through an endpoint
     // that checks who is asking.
     expect(Object.keys(toTrainerPayment(DTO))).not.toContain("proofUrl")
+  })
+})
+
+describe("canCancelPending", () => {
+  it("offers cancelling a transfer still waiting for its receipt", () => {
+    expect(canCancelPending(toTrainerPayment({ ...DTO, proofUploaded: false }))).toBe(true)
+  })
+
+  it("offers cancelling a pending Mercado Pago charge", () => {
+    expect(canCancelPending(toTrainerPayment({ ...DTO, provider: "mercadopago" }))).toBe(true)
+    expect(
+      canCancelPending(toTrainerPayment({ ...DTO, provider: "mercadopago", status: "IN_PROCESS" })),
+    ).toBe(true)
+  })
+
+  it("hides it while a receipt awaits review", () => {
+    // The student has probably paid already: they get a rejection with a
+    // reason first, never a silent cancellation.
+    expect(canCancelPending(toTrainerPayment(DTO))).toBe(false)
+  })
+
+  it("hides it once the charge was resolved", () => {
+    expect(canCancelPending(toTrainerPayment({ ...DTO, status: "APPROVED" }))).toBe(false)
+    expect(canCancelPending(toTrainerPayment({ ...DTO, status: "REJECTED" }))).toBe(false)
+    expect(canCancelPending(toTrainerPayment({ ...DTO, status: "CANCELLED" }))).toBe(false)
   })
 })
 

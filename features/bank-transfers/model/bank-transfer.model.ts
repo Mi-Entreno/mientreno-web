@@ -82,6 +82,18 @@ export const isReviewable = (payment: TrainerPayment): boolean =>
 export const isAwaitingProof = (payment: TrainerPayment): boolean =>
   payment.provider === "bank_transfer" && payment.status === "PENDING" && !payment.proofUploaded
 
+/**
+ * Whether the trainer can give up on this charge from the row.
+ *
+ * A receipt waiting for review is excluded on purpose, and the backend answers
+ * 409 for it too: that student has probably already sent the money, so the
+ * trainer rejects it first — with a reason the student sees — and cancels from
+ * the rejection itself. Cancelling acts on the subscription, so every pending
+ * charge of it goes at once.
+ */
+export const canCancelPending = (payment: TrainerPayment): boolean =>
+  (payment.status === "PENDING" || payment.status === "IN_PROCESS") && !isReviewable(payment)
+
 /** Where the proof bytes come from. Never a storage URL. */
 export const proofUrl = (paymentId: number): string => `/api/proofs/${paymentId}`
 

@@ -135,6 +135,68 @@ export function useApprovePayment() {
   })
 }
 
+/**
+ * Cancelling also changes who can be invited: the student stops being
+ * "awaiting payment" in the search and in the invitations list.
+ */
+function invalidateAfterCancel(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: qk.payments.all })
+  queryClient.invalidateQueries({ queryKey: qk.students.all })
+  queryClient.invalidateQueries({ queryKey: qk.studentSearch.all })
+  queryClient.invalidateQueries({ queryKey: qk.planInvitations.all })
+}
+
+export function useCancelPendingPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (subscriptionId: number) => bankTransfersRepository.cancelPending(subscriptionId),
+    onSuccess: () => toast.success("Cobro cancelado. Si querés, podés volver a invitar al alumno."),
+    onError: (error) => toast.error(errorMessage(error, "No pudimos cancelar el cobro")),
+    onSettled: () => invalidateAfterCancel(queryClient),
+  })
+}
+
+/**
+ * Rejecting a receipt and giving up on the student, as one action.
+ *
+ * One mutation rather than chaining the two hooks: each would toast its own
+ * outcome, and "El alumno puede cargar otro" right before "Cobro cancelado"
+ * contradicts itself. If the rejection lands and the cancellation does not,
+ * the message says exactly that — the receipt is already rejected, so retrying
+ * the whole thing would 409 — and what happens next: with no receipt pending,
+ * `PendingPaymentTimeoutJob` cancels the subscription by itself after 48 h.
+ */
+export function useRejectAndCancelPayment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ payment, reason }: { payment: TrainerPayment; reason: string }) => {
+      await bankTransfersRepository.reject(payment.id, reason)
+      try {
+        await bankTransfersRepository.cancelPending(payment.subscriptionId)
+      } catch (error) {
+        throw new PartialCancelError(error)
+      }
+    },
+    onSuccess: () => toast.success("Comprobante rechazado y cobro cancelado."),
+    onError: (error) =>
+      toast.error(
+        error instanceof PartialCancelError
+          ? "Rechazamos el comprobante, pero no pudimos cancelar el cobro. Si el alumno no carga otro, se cancela solo en 48 horas."
+          : errorMessage(error, "No pudimos rechazar el comprobante"),
+      ),
+    onSettled: () => invalidateAfterCancel(queryClient),
+  })
+}
+
+/** The receipt got rejected; only the cancellation failed. The dialog closes for it. */
+export class PartialCancelError extends Error {
+  constructor(readonly original: unknown) {
+    super("Rejected but not cancelled")
+  }
+}
+
 export function useRejectPayment() {
   const queryClient = useQueryClient()
 

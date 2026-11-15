@@ -65,6 +65,19 @@ export const bankTransfersRepository = {
     )
   },
 
+  /**
+   * `POST /api/subscriptions/{id}/cancel-pending` — 204.
+   *
+   * Takes the subscription, not the payment: the trainer gives up on the
+   * student, not on one attempt. Upstream cancels the PENDING_PAYMENT
+   * subscription and all its pending charges, which frees the seat and lets
+   * the student be invited again. 409 when a receipt still awaits review or
+   * the subscription no longer waits for payment.
+   */
+  async cancelPending(subscriptionId: number): Promise<void> {
+    await apiFetch<void>(`/api/subscriptions/${subscriptionId}/cancel-pending`, { method: "POST" })
+  },
+
   /** `GET /api/trainer/bank-transfer-info` — 404 while the trainer has not filled it in. */
   async getInfo(): Promise<BankTransferInfo> {
     return toBankTransferInfo(await apiFetch<TrainerBankTransferInfoDTO>(INFO))
