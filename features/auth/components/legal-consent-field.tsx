@@ -19,7 +19,7 @@ const COOKIES = legalDocument("cookies")
  * `<label>` del checkbox y, sin `stopPropagation`, ir a los Términos también
  * marcaba —o desmarcaba— la casilla al volver.
  */
-function LegalLink({ href, children }: { href: string; children: ReactNode }) {
+export function LegalLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link
       href={href}

@@ -9,6 +9,7 @@ import { toast } from "sonner"
 
 import { ApiError } from "@/core/http/errors"
 import { useRegister } from "../hooks/use-auth-actions"
+import { useFinishSignIn } from "../hooks/use-finish-sign-in"
 import { registerSchema, type RegisterFormValues } from "../model/password"
 import { AuthField } from "./auth-field"
 import { AUDIENCES, TRAINER_AUDIENCE, type AudienceId } from "../model/audience"
@@ -16,6 +17,7 @@ import { AuthShell } from "./auth-shell"
 import { AuthSubmitButton } from "./auth-submit-button"
 import { LegalConsentField } from "./legal-consent-field"
 import { PasswordField } from "./password-field"
+import { SocialSignIn } from "./social-sign-in"
 
 /**
  * Registration for either audience — `POST /auth/{trainer,brand}/register`.
@@ -32,6 +34,7 @@ export function RegisterForm({ audience: audienceId = "trainer" }: { audience?: 
   const audience = AUDIENCES[audienceId] ?? TRAINER_AUDIENCE
   const router = useRouter()
   const register = useRegister()
+  const finishSignIn = useFinishSignIn(audience)
 
   const {
     register: field,
@@ -200,6 +203,11 @@ export function RegisterForm({ audience: audienceId = "trainer" }: { audience?: 
           Crear cuenta
         </AuthSubmitButton>
       </form>
+
+      {/* A new account made here is a trainer, so the merchant door does not offer it. */}
+      {audience.id !== "brand" && (
+        <SocialSignIn onSignedIn={finishSignIn} disabled={register.isPending} />
+      )}
     </AuthShell>
   )
 }
