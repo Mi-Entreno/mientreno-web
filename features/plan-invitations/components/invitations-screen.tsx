@@ -251,10 +251,18 @@ function InvitationRow({
           who has not paid as a student. Say what is actually happening instead.
         */}
         {isAwaitingPayment(invitation) && (
-          <p className="mr-auto flex items-center gap-1.5 text-caption text-muted-foreground">
-            <Clock className="size-3.5" />
-            Aceptada · pendiente de pago
-          </p>
+          <>
+            <p className="mr-auto flex items-center gap-1.5 text-caption text-muted-foreground">
+              <Clock className="size-3.5" />
+              Aceptada · pendiente de pago
+            </p>
+            {/* If the student paid by transfer, the proof waits for review in
+                Cobros — the only place it can be approved. */}
+            <Button variant="ghost" size="sm" render={<Link href="/dashboard/payments" />}>
+              Ver cobros
+              <ArrowRight className="size-4" />
+            </Button>
+          </>
         )}
 
         {isEnrolled(invitation) && invitation.subscriptionId !== null && (
