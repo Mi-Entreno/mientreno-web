@@ -7,6 +7,7 @@ export interface StudentCandidate {
   location: string | null
   alreadyMyStudent: boolean
   pendingInvitationId: number | null
+  awaitingPayment: boolean
 }
 
 /** `@PageableDefault(size = 20)`; a picker list does not need more per page. */
@@ -20,11 +21,16 @@ export const STUDENT_SEARCH_PAGE_SIZE = 20
  */
 export const MIN_SEARCH_LENGTH = 2
 
-export type CandidateState = "invitable" | "already-student" | "invitation-pending"
+export type CandidateState =
+  | "invitable"
+  | "already-student"
+  | "invitation-pending"
+  | "awaiting-payment"
 
 export function candidateState(candidate: StudentCandidate): CandidateState {
   if (candidate.alreadyMyStudent) return "already-student"
   if (candidate.pendingInvitationId !== null) return "invitation-pending"
+  if (candidate.awaitingPayment) return "awaiting-payment"
   return "invitable"
 }
 
@@ -32,6 +38,7 @@ const STATE_REASONS: Record<CandidateState, string | null> = {
   invitable: null,
   "already-student": "Ya es alumno tuyo",
   "invitation-pending": "Ya tiene una invitación pendiente",
+  "awaiting-payment": "Aceptó tu plan, falta el pago",
 }
 
 /** Why a row is not selectable, or null when it is. */

@@ -33,6 +33,12 @@ export type NotificationType =
   | "PLAN_INVITATION_REJECTED"
   /** -> the **trainer**: nobody answered before `expiresAt`. */
   | "PLAN_INVITATION_EXPIRED"
+  // ── Bank transfers ────────────────────────────────────────────────────────
+  /**
+   * -> the **trainer**, from `BankTransferPaymentService.uploadProof`: a student
+   * uploaded a receipt and the payment waits on the trainer's review.
+   */
+  | "BANK_TRANSFER_PROOF_UPLOADED"
 
 export interface NotificationResponseDTO {
   id: number

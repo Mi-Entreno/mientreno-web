@@ -101,6 +101,12 @@ describe("linkFor", () => {
     expect(linkFor(notification("PAYMENT_APPROVED"))).toBeNull()
   })
 
+  it("sends an uploaded proof to the payments queue", () => {
+    expect(linkFor(notification("BANK_TRANSFER_PROOF_UPLOADED", { subscriptionId: 41 }))).toBe(
+      "/dashboard/payments",
+    )
+  })
+
   it("returns null for a type this build has never seen", () => {
     expect(linkFor(notification("SOMETHING_NEW" as NotificationType))).toBeNull()
   })
@@ -122,6 +128,7 @@ describe("describeType", () => {
       "PLAN_INVITATION_ACCEPTED",
       "PLAN_INVITATION_REJECTED",
       "PLAN_INVITATION_EXPIRED",
+      "BANK_TRANSFER_PROOF_UPLOADED",
     ]
 
     for (const type of all) {

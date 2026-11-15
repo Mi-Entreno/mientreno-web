@@ -58,6 +58,7 @@ const TYPES: Record<NotificationType, TypeDescriptor> = {
   PLAN_INVITATION_ACCEPTED: { label: "Invitación aceptada", tone: "success" },
   PLAN_INVITATION_REJECTED: { label: "Invitación rechazada", tone: "danger" },
   PLAN_INVITATION_EXPIRED: { label: "Invitación caducada", tone: "warning" },
+  BANK_TRANSFER_PROOF_UPLOADED: { label: "Comprobante para revisar", tone: "warning" },
 }
 
 /**
@@ -82,6 +83,11 @@ export function describeType(type: NotificationType): TypeDescriptor {
  * `PENDING_PAYMENT`, precisely so this row cannot open a student page for
  * someone who has not paid. `NEW_STUDENT` — which only fires after an approved
  * payment — is the notification that does carry it.
+ *
+ * `BANK_TRANSFER_PROOF_UPLOADED` always goes to Cobros, whose transfers tab opens
+ * on the pending queue. Before this case existed the type was unknown here, so
+ * the notification rendered as a generic, unclickable row and the trainer had
+ * no path from "te mandaron un comprobante" to the proof itself.
  */
 export function linkFor(notification: AppNotification): string | null {
   const { subscriptionId } = notification.metadata
@@ -103,6 +109,9 @@ export function linkFor(notification: AppNotification): string | null {
 
     case "NEW_STUDENT":
       return student ?? "/dashboard/students"
+
+    case "BANK_TRANSFER_PROOF_UPLOADED":
+      return "/dashboard/payments"
 
     case "PAYMENT_APPROVED":
     case "PAYMENT_REJECTED":

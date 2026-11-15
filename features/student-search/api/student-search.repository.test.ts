@@ -86,6 +86,7 @@ describe("candidateState", () => {
     location: null,
     alreadyMyStudent: false,
     pendingInvitationId: null,
+    awaitingPayment: false,
   }
 
   it("marks an existing student as not invitable, with the reason", () => {
@@ -101,6 +102,15 @@ describe("candidateState", () => {
 
     expect(candidateState(candidate)).toBe("invitation-pending")
     expect(blockedReason(candidate)).toBe("Ya tiene una invitación pendiente")
+  })
+
+  it("blocks a new invitation once one was accepted and is waiting on payment", () => {
+    // The invitation is no longer PENDING and the subscription is not ACTIVE
+    // yet; neither flag above covers it, and the backend answers 409.
+    const candidate = { ...base, awaitingPayment: true }
+
+    expect(candidateState(candidate)).toBe("awaiting-payment")
+    expect(blockedReason(candidate)).toBe("Aceptó tu plan, falta el pago")
   })
 
   it("has no reason to block anyone else", () => {
