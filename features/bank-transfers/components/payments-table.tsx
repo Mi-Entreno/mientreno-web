@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Eye } from "lucide-react"
+import { Ban, Clock, Eye } from "lucide-react"
 
 import {
   Table,
@@ -17,6 +17,7 @@ import { formatCurrency, formatDate } from "@/lib/format"
 
 import {
   PROVIDER_LABELS,
+  canCancelPending,
   isAwaitingProof,
   isReviewable,
   type TrainerPayment,
@@ -26,11 +27,12 @@ import { PaymentStatusBadge } from "./payment-status-badge"
 /**
  * Both ways of charging in one table.
  *
- * Mercado Pago rows are read-only and that is deliberate: their state is moved
- * by the webhook, so an action button next to one would promise something this
- * panel cannot do. The action column stays, because the alternative — two
- * tables — asks the trainer to know which method a charge used before they can
- * find it.
+ * Mercado Pago rows cannot be approved or rejected here: their state is moved
+ * by the webhook, so those buttons would promise something this panel cannot
+ * do. What any pending row *can* do is be given up on — "Cancelar cobro" acts
+ * on the subscription upstream, not on Mercado Pago. The action column stays,
+ * because the alternative — two tables — asks the trainer to know which method
+ * a charge used before they can find it.
  *
  * On narrow screens the table scrolls inside its own container rather than
  * pushing the page sideways.
@@ -39,10 +41,12 @@ export function PaymentsTable({
   payments,
   onReview,
   reviewingId,
+  onCancel,
 }: {
   payments: TrainerPayment[]
   onReview: (payment: TrainerPayment) => void
   reviewingId: number | null
+  onCancel: (payment: TrainerPayment) => void
 }) {
   return (
     <div className="overflow-x-auto rounded-xl border border-border">
@@ -78,34 +82,43 @@ export function PaymentsTable({
                 <PaymentStatusBadge status={payment.status} />
               </TableCell>
               <TableCell className="text-right">
-                {isReviewable(payment) && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onReview(payment)}
-                    disabled={reviewingId === payment.id}
-                  >
-                    {reviewingId === payment.id ? (
-                      <BarsLoader />
-                    ) : (
-                      <Eye className="size-4" />
-                    )}
-                    Ver comprobante
-                  </Button>
-                )}
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {isReviewable(payment) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onReview(payment)}
+                      disabled={reviewingId === payment.id}
+                    >
+                      {reviewingId === payment.id ? (
+                        <BarsLoader />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
+                      Ver comprobante
+                    </Button>
+                  )}
 
-                {isAwaitingProof(payment) && (
-                  <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
-                    <Clock className="size-3.5" />
-                    Esperando el comprobante
-                  </span>
-                )}
+                  {isAwaitingProof(payment) && (
+                    <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
+                      <Clock className="size-3.5" />
+                      Esperando el comprobante
+                    </span>
+                  )}
 
-                {payment.status === "REJECTED" && payment.rejectionReason && (
-                  <span className="text-caption text-muted-foreground">
-                    {payment.rejectionReason}
-                  </span>
-                )}
+                  {payment.status === "REJECTED" && payment.rejectionReason && (
+                    <span className="text-caption text-muted-foreground">
+                      {payment.rejectionReason}
+                    </span>
+                  )}
+
+                  {canCancelPending(payment) && (
+                    <Button size="sm" variant="ghost" onClick={() => onCancel(payment)}>
+                      <Ban className="size-4" />
+                      Cancelar cobro
+                    </Button>
+                  )}
+                </div>
               </TableCell>
             </TableRow>
           ))}

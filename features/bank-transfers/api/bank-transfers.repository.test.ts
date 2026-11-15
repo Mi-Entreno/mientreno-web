@@ -7,6 +7,7 @@ import { bankTransfersRepository } from "./bank-transfers.repository"
 
 let lastListUrl: URL | null = null
 let lastRejectBody: unknown = null
+let lastCancelledSubscription: string | null = null
 
 const PAYMENT = {
   id: 55,
@@ -77,6 +78,11 @@ const server = setupServer(
     })
   }),
 
+  http.post("*/api/backend/api/subscriptions/:id/cancel-pending", ({ params }) => {
+    lastCancelledSubscription = String(params.id)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
   http.get("*/api/backend/api/trainer/bank-transfer-info", () =>
     HttpResponse.json({
       id: 1,
@@ -97,6 +103,7 @@ afterEach(() => {
   server.resetHandlers()
   lastListUrl = null
   lastRejectBody = null
+  lastCancelledSubscription = null
 })
 afterAll(() => server.close())
 
@@ -159,6 +166,32 @@ describe("reject", () => {
     expect(lastRejectBody).toEqual({ reason: "El importe no coincide con el del plan" })
     expect(payment.status).toBe("REJECTED")
     expect(payment.rejectionReason).toBe("El importe no coincide con el del plan")
+  })
+})
+
+describe("cancelPending", () => {
+  it("cancels by subscription, not by payment", async () => {
+    // The trainer gives up on the student: every pending charge of that
+    // subscription goes, so the id that travels is the subscription's.
+    await bankTransfersRepository.cancelPending(PAYMENT.subscriptionId)
+
+    expect(lastCancelledSubscription).toBe("101")
+  })
+
+  it("surfaces the 409 for a receipt still awaiting review", async () => {
+    server.use(
+      http.post("*/api/backend/api/subscriptions/:id/cancel-pending", () =>
+        HttpResponse.json(
+          {
+            message: "El alumno ya cargó un comprobante. Revisalo y rechazalo antes de cancelar el cobro.",
+            status: 409,
+          },
+          { status: 409 },
+        ),
+      ),
+    )
+
+    await expect(bankTransfersRepository.cancelPending(101)).rejects.toMatchObject({ status: 409 })
   })
 })
 

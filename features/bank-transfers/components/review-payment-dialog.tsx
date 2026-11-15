@@ -13,11 +13,17 @@ import {
 } from "@/components/ui/dialog"
 import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { formatCurrency, formatDate } from "@/lib/format"
 
-import { useApprovePayment, useRejectPayment } from "../hooks/use-bank-transfers"
+import {
+  PartialCancelError,
+  useApprovePayment,
+  useRejectAndCancelPayment,
+  useRejectPayment,
+} from "../hooks/use-bank-transfers"
 import { OTHER_REASON, REJECTION_REASONS, type TrainerPayment } from "../model/bank-transfer.model"
 import { ProofViewer } from "./proof-viewer"
 
@@ -29,6 +35,11 @@ import { ProofViewer } from "./proof-viewer"
  * Rejecting always takes a reason. A rejection is the only thing that tells the
  * student what to fix, and one without a reason leaves them re-uploading the
  * same wrong receipt.
+ *
+ * The rejection step can also cancel the charge. That is the only place a
+ * charge with a receipt can be cancelled from — the row's "Cancelar cobro"
+ * skips it, and the backend refuses it, while the receipt is unjudged — so
+ * the student always learns why before the subscription goes away.
  */
 export function ReviewPaymentDialog({
   payment,
@@ -63,12 +74,15 @@ function ReviewDialogBody({
 }) {
   const approve = useApprovePayment()
   const reject = useRejectPayment()
+  const rejectAndCancel = useRejectAndCancelPayment()
 
   const [mode, setMode] = useState<"review" | "reject">("review")
   const [reason, setReason] = useState<string>(REJECTION_REASONS[0])
   const [otherReason, setOtherReason] = useState("")
+  const [alsoCancel, setAlsoCancel] = useState(false)
 
-  const busy = approve.isPending || reject.isPending
+  const rejecting = reject.isPending || rejectAndCancel.isPending
+  const busy = approve.isPending || rejecting
   const finalReason = reason === OTHER_REASON ? otherReason.trim() : reason
   const canReject = finalReason.length > 0
 
@@ -83,7 +97,9 @@ function ReviewDialogBody({
           <DialogDescription>
             {mode === "review"
               ? "Compará el importe y la fecha del comprobante con lo que esperás cobrar."
-              : "El alumno ve este motivo y puede cargar un comprobante nuevo."}
+              : alsoCancel
+                ? "El alumno ve este motivo y se le cancela el cobro: no va a poder cargar otro comprobante."
+                : "El alumno ve este motivo y puede cargar un comprobante nuevo."}
           </DialogDescription>
         </DialogHeader>
 
@@ -141,6 +157,24 @@ function ReviewDialogBody({
                 />
               </div>
             )}
+
+            <label
+              htmlFor="also-cancel"
+              className="flex items-start gap-2.5 rounded-lg border border-border p-3 text-body"
+            >
+              <Checkbox
+                id="also-cancel"
+                checked={alsoCancel}
+                onCheckedChange={setAlsoCancel}
+                className="mt-0.5"
+              />
+              <span className="text-pretty">
+                Cancelar también el cobro
+                <span className="block text-caption text-muted-foreground">
+                  Se libera su lugar y podés volver a invitarlo más adelante.
+                </span>
+              </span>
+            </label>
           </div>
         )}
 
@@ -174,14 +208,24 @@ function ReviewDialogBody({
                 variant="destructive"
                 disabled={busy || !canReject}
                 onClick={() =>
-                  reject.mutate(
-                    { paymentId: payment.id, reason: finalReason },
-                    { onSuccess: close },
-                  )
+                  alsoCancel
+                    ? rejectAndCancel.mutate(
+                        { payment, reason: finalReason },
+                        {
+                          onSuccess: close,
+                          // The rejection is done either way: keeping the form open
+                          // would invite re-sending it, which 409s.
+                          onError: (error) => error instanceof PartialCancelError && close(),
+                        },
+                      )
+                    : reject.mutate(
+                        { paymentId: payment.id, reason: finalReason },
+                        { onSuccess: close },
+                      )
                 }
               >
-                {reject.isPending && <BarsLoader />}
-                Rechazar comprobante
+                {rejecting && <BarsLoader />}
+                {alsoCancel ? "Rechazar y cancelar" : "Rechazar comprobante"}
               </Button>
             </>
           )}
