@@ -22,6 +22,7 @@ export function toTrainerPayment(dto: TrainerPaymentDTO): TrainerPayment {
     studentName: dto.studentName?.trim() || "Alumno",
     studentImageUrl: toMediaUrl(dto.studentImageUrl),
     planName: dto.planName?.trim() || "Plan",
+    subscriptionStatus: dto.subscriptionStatus ?? null,
     amount: dto.amount,
     currency: dto.currency || "ARS",
     status: dto.status,

@@ -27,6 +27,9 @@ export type PaymentStatusDTO =
 /** `payments.provider`. Lowercase because it is a legacy String column, not an enum. */
 export type PaymentProviderDTO = "mercadopago" | "bank_transfer"
 
+/** `subscriptions.status`. */
+export type SubscriptionStatusDTO = "PENDING_PAYMENT" | "ACTIVE" | "PAUSED" | "CANCELLED" | "EXPIRED"
+
 /** `GET /api/trainer/payments` — one row. */
 export interface TrainerPaymentDTO {
   id: number
@@ -35,6 +38,11 @@ export interface TrainerPaymentDTO {
   studentName: string | null
   studentImageUrl: string | null
   planName: string | null
+  /**
+   * The subscription's state, not the payment's. Null only from a backend
+   * older than this field.
+   */
+  subscriptionStatus: SubscriptionStatusDTO | null
   amount: number
   currency: string
   status: PaymentStatusDTO

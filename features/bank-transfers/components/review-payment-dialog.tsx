@@ -24,7 +24,12 @@ import {
   useRejectAndCancelPayment,
   useRejectPayment,
 } from "../hooks/use-bank-transfers"
-import { OTHER_REASON, REJECTION_REASONS, type TrainerPayment } from "../model/bank-transfer.model"
+import {
+  OTHER_REASON,
+  REJECTION_REASONS,
+  isAwaitingPayment,
+  type TrainerPayment,
+} from "../model/bank-transfer.model"
 import { ProofViewer } from "./proof-viewer"
 
 /**
@@ -158,23 +163,26 @@ function ReviewDialogBody({
               </div>
             )}
 
-            <label
-              htmlFor="also-cancel"
-              className="flex items-start gap-2.5 rounded-lg border border-border p-3 text-body"
-            >
-              <Checkbox
-                id="also-cancel"
-                checked={alsoCancel}
-                onCheckedChange={setAlsoCancel}
-                className="mt-0.5"
-              />
-              <span className="text-pretty">
-                Cancelar también el cobro
-                <span className="block text-caption text-muted-foreground">
-                  Se libera su lugar y podés volver a invitarlo más adelante.
+            {/* Nothing to cancel once the student paid the other way. */}
+            {isAwaitingPayment(payment) && (
+              <label
+                htmlFor="also-cancel"
+                className="flex items-start gap-2.5 rounded-lg border border-border p-3 text-body"
+              >
+                <Checkbox
+                  id="also-cancel"
+                  checked={alsoCancel}
+                  onCheckedChange={setAlsoCancel}
+                  className="mt-0.5"
+                />
+                <span className="text-pretty">
+                  Cancelar también el cobro
+                  <span className="block text-caption text-muted-foreground">
+                    Se libera su lugar y podés volver a invitarlo más adelante.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            )}
           </div>
         )}
 
