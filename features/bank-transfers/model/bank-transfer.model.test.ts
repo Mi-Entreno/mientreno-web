@@ -19,6 +19,7 @@ const DTO: TrainerPaymentDTO = {
   studentName: "Juan Pérez",
   studentImageUrl: "http://localhost:8080/api/files/avatars/10/me.png",
   planName: "Plan Mensual",
+  subscriptionStatus: "PENDING_PAYMENT",
   amount: 25000,
   currency: "ARS",
   status: "PENDING",
@@ -79,6 +80,24 @@ describe("canCancelPending", () => {
     expect(canCancelPending(toTrainerPayment({ ...DTO, status: "APPROVED" }))).toBe(false)
     expect(canCancelPending(toTrainerPayment({ ...DTO, status: "REJECTED" }))).toBe(false)
     expect(canCancelPending(toTrainerPayment({ ...DTO, status: "CANCELLED" }))).toBe(false)
+  })
+
+  it("hides it when the student already paid the other way", () => {
+    // Opened the Mercado Pago checkout, then paid by transfer: the checkout row
+    // is still PENDING but the subscription is active and has nothing to cancel.
+    expect(
+      canCancelPending(
+        toTrainerPayment({ ...DTO, provider: "mercadopago", subscriptionStatus: "ACTIVE" }),
+      ),
+    ).toBe(false)
+  })
+
+  it("keeps offering it when the backend does not say the subscription state", () => {
+    expect(
+      canCancelPending(
+        toTrainerPayment({ ...DTO, provider: "mercadopago", subscriptionStatus: null }),
+      ),
+    ).toBe(true)
   })
 })
 

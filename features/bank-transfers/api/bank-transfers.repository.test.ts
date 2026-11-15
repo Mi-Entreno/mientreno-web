@@ -16,6 +16,7 @@ const PAYMENT = {
   studentName: "Juan Pérez",
   studentImageUrl: null,
   planName: "Plan Mensual",
+  subscriptionStatus: "PENDING_PAYMENT",
   amount: 25000,
   currency: "ARS",
   status: "PENDING" as const,
