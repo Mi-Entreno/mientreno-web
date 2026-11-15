@@ -32,7 +32,15 @@ interface TrainerProfileFormProps {
   initialIdentity?: CompleteProfileIdentityValues
   isPending: boolean
   error?: unknown
-  onSubmit: (values: TrainerProfileFormValues, identity: CompleteProfileIdentityValues) => void
+  /**
+   * `avatarFile` is only set in `complete` mode: there the photo is held back
+   * and uploaded after the profile exists (see `useCompleteTrainerProfile`).
+   */
+  onSubmit: (
+    values: TrainerProfileFormValues,
+    identity: CompleteProfileIdentityValues,
+    avatarFile: File | null,
+  ) => void
 }
 
 const EMPTY_IDENTITY: CompleteProfileIdentityValues = {
@@ -56,6 +64,7 @@ export function TrainerProfileForm({
     initialIdentity ?? EMPTY_IDENTITY,
   )
   const [errors, setErrors] = useState<Errors>({})
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
 
   // Bean-validation 400s come back as a field -> message map. Showing them
   // inline beats a toast, since they are per-field by construction.
@@ -108,7 +117,7 @@ export function TrainerProfileForm({
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
     if (!validate()) return
-    onSubmit(values, identity)
+    onSubmit(values, identity, avatarFile)
   }
 
   return (
@@ -221,6 +230,9 @@ export function TrainerProfileForm({
           value={values.avatarPath}
           disabled={isPending}
           onChange={(value) => patch({ avatarPath: value })}
+          // Before completion there is no `UserDetail` row yet, so
+          // `POST /api/users/me/profile-picture` answers 404 for a new trainer.
+          onDefer={mode === "complete" ? setAvatarFile : undefined}
         />
 
         <div className="flex flex-col gap-2">

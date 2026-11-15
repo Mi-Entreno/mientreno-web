@@ -51,6 +51,8 @@ export function TrainerProfileScreen() {
 
   const isCreating = profile.data === null
   const forcedByGuard = params.get("complete") === "1"
+  // Set by `useCompleteTrainerProfile` when the deferred photo upload failed.
+  const photoFailed = params.get("foto") === "error"
 
   const initialValues = useMemo<TrainerProfileFormValues>(
     () => (profile.data ? toFormValues(profile.data) : BLANK_FORM),
@@ -105,6 +107,14 @@ export function TrainerProfileScreen() {
         profile.data && <ProfileStats profile={profile.data} />
       )}
 
+      {!isCreating && photoFailed && (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Tu perfil se creó, pero la foto no se subió</AlertTitle>
+          <AlertDescription>Probá subirla de nuevo desde “Perfil profesional”.</AlertDescription>
+        </Alert>
+      )}
+
       {/*
         Personal data used to live on /dashboard/settings, which meant a trainer
         edited "who I am" in one place and "what students see" in another —
@@ -150,9 +160,9 @@ export function TrainerProfileScreen() {
           initialIdentity={initialIdentity}
           isPending={update.isPending || complete.isPending}
           error={update.error ?? complete.error}
-          onSubmit={(values, identity) => {
+          onSubmit={(values, identity, avatarFile) => {
             if (isCreating) {
-              complete.mutate({ values, identity })
+              complete.mutate({ values, identity, avatarFile })
             } else {
               update.mutate(values)
             }

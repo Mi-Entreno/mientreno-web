@@ -141,10 +141,21 @@ export function SocialSignIn({ onSignedIn, disabled }: SocialSignInProps) {
         <span className="h-px flex-1 bg-border" />o<span className="h-px flex-1 bg-border" />
       </div>
 
-      {googleId && <GoogleButton clientId={googleId} busy={busy} onToken={submit} />}
-      {appleId && (
-        <AppleButton clientId={appleId} busy={busy} pending={pending === "apple"} onToken={submit} />
-      )}
+      {/*
+        Capped at the width Google's rendered button can reach (GIS refuses more
+        than 400px), so Apple's — ours, and otherwise full width — matches it.
+      */}
+      <div className="mx-auto flex w-full max-w-[400px] flex-col gap-3">
+        {googleId && <GoogleButton clientId={googleId} busy={busy} onToken={submit} />}
+        {appleId && (
+          <AppleButton
+            clientId={appleId}
+            busy={busy}
+            pending={pending === "apple"}
+            onToken={submit}
+          />
+        )}
+      </div>
 
       {pending === "google" && (
         <p className="flex items-center justify-center gap-2 text-caption text-muted-foreground">
@@ -213,7 +224,7 @@ function GoogleButton({
       <div
         ref={container}
         aria-busy={busy}
-        className="flex min-h-11 w-full justify-center aria-busy:pointer-events-none aria-busy:opacity-50"
+        className="flex min-h-10 w-full justify-center aria-busy:pointer-events-none aria-busy:opacity-50"
       />
     </>
   )
@@ -280,7 +291,7 @@ function AppleButton({
         size="lg"
         onClick={signIn}
         disabled={busy || !loaded}
-        className="h-11 w-full gap-2 bg-black text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/85"
+        className="h-10 w-full gap-2 bg-black text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/85"
       >
         {pending ? <BarsLoader /> : <AppleLogo />}
         Continuar con Apple

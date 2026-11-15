@@ -1,11 +1,11 @@
 "use client"
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { specificMessage } from "@/core/http/user-message"
 import { qk } from "@/core/http/query-keys"
+import { uploadAvatar } from "@/core/media/upload-avatar"
 import { userRepository } from "@/features/user/api/user.repository"
 import { trainerProfileRepository } from "../api/trainer-profile.repository"
 import type {
@@ -78,28 +78,48 @@ async function mirrorAvatarToAccount(avatarPath: string): Promise<void> {
 /**
  * Completes the profile for the first time.
  *
- * On success the session cookie has already been replaced server-side with a
- * token whose `profileCompleted` claim is true, so `router.refresh()` is what
- * lets the route guard stop redirecting to onboarding.
+ * The photo is uploaded *after* completing, not when picked: the upload endpoint
+ * writes to `UserDetail`, a row `POST /complete` itself creates, so before it a
+ * new trainer's upload answered 404 (shown as "todavía no está disponible").
+ * The upload also writes `Trainer.profileImageUrl`, so no follow-up `PUT` is
+ * needed. Best-effort: the profile already exists, and failing the mutation
+ * would invite a second completion that answers 409 — so a failed photo lands
+ * the trainer on their profile with `?foto=error` to retry it there (a toast
+ * would not survive the navigation below).
+ *
+ * Then a hard navigation, not `router.replace("/dashboard")`. The sidebar
+ * prefetches its links while the profile is still incomplete, and what the
+ * router caches from those prefetches is the guard's redirect back to
+ * `/dashboard/profile?complete=1`. A soft navigation reused it — the trainer
+ * stayed on this screen and every drawer link bounced back here until a
+ * reload. A new document request drops the router cache and re-runs the guard
+ * against the cookie just written. Same fix as the brand onboarding.
  */
 export function useCompleteTrainerProfile() {
-  const queryClient = useQueryClient()
-  const router = useRouter()
-
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       values,
       identity,
+      avatarFile,
     }: {
       values: TrainerProfileFormValues
       identity: CompleteProfileIdentityValues
-    }) => trainerProfileRepository.complete(values, identity),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: qk.trainerProfile })
-      await queryClient.invalidateQueries({ queryKey: qk.session })
-      toast.success("Perfil completado. ¡Bienvenido!")
-      router.replace("/dashboard")
-      router.refresh()
+      avatarFile: File | null
+    }) => {
+      await trainerProfileRepository.complete(values, identity)
+      if (!avatarFile) return { photoFailed: false }
+      try {
+        await uploadAvatar(avatarFile)
+        return { photoFailed: false }
+      } catch {
+        return { photoFailed: true }
+      }
+    },
+    onSuccess: ({ photoFailed }) => {
+      // Never resolves: `isPending` stays true until the page unloads, keeping
+      // the submit button disabled — re-enabling it would only invite a 409.
+      window.location.assign(photoFailed ? "/dashboard/profile?foto=error" : "/dashboard")
+      return new Promise<never>(() => {})
     },
     onError: (error) => {
       toast.error(
