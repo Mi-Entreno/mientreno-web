@@ -3,6 +3,7 @@
 import { Inbox, Landmark } from "lucide-react"
 import { useState } from "react"
 
+import { ConfirmDialog } from "@/components/dashboard/confirm-dialog"
 import { EmptyState } from "@/components/dashboard/empty-state"
 import { BarsLoader } from "@/components/ui/bars-loader"
 import { Button } from "@/components/ui/button"
@@ -17,7 +18,11 @@ import {
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { useBankTransferInfo, useTrainerPayments } from "../hooks/use-bank-transfers"
+import {
+  useBankTransferInfo,
+  useCancelPendingPayment,
+  useTrainerPayments,
+} from "../hooks/use-bank-transfers"
 import type { TrainerPayment } from "../model/bank-transfer.model"
 import { BankInfoForm } from "./bank-info-form"
 import { PaymentsTable } from "./payments-table"
@@ -55,6 +60,8 @@ export function BankTransfersScreen() {
   const [provider, setProvider] = useState<ProviderFilter>("all")
   const [status, setStatus] = useState<StatusFilter>("PENDING")
   const [reviewing, setReviewing] = useState<TrainerPayment | null>(null)
+  const [cancelling, setCancelling] = useState<TrainerPayment | null>(null)
+  const cancel = useCancelPendingPayment()
 
   const info = useBankTransferInfo()
   const payments = useTrainerPayments({
@@ -140,6 +147,7 @@ export function BankTransfersScreen() {
               payments={payments.items}
               onReview={setReviewing}
               reviewingId={reviewing?.id ?? null}
+              onCancel={setCancelling}
             />
 
             {payments.hasNextPage && (
@@ -163,6 +171,21 @@ export function BankTransfersScreen() {
         payment={reviewing}
         open={reviewing !== null}
         onOpenChange={(open) => !open && setReviewing(null)}
+      />
+
+      <ConfirmDialog
+        open={cancelling !== null}
+        onOpenChange={(open) => !open && setCancelling(null)}
+        title={`¿Cancelar el cobro a ${cancelling?.studentName ?? "este alumno"}?`}
+        description={`Se cancela su suscripción pendiente al plan "${cancelling?.planName ?? ""}" y se libera su lugar. Le avisamos al alumno, y si querés podés volver a invitarlo.`}
+        confirmLabel="Cancelar cobro"
+        cancelLabel="Volver"
+        destructive
+        loading={cancel.isPending}
+        onConfirm={() =>
+          cancelling &&
+          cancel.mutate(cancelling.subscriptionId, { onSettled: () => setCancelling(null) })
+        }
       />
     </div>
   )

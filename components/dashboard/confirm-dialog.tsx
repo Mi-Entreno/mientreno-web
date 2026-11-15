@@ -17,6 +17,8 @@ interface ConfirmDialogProps {
   title: string
   description: string
   confirmLabel?: string
+  /** Para cuando la acción misma es "cancelar algo" y dos "Cancelar" juntos confunden. */
+  cancelLabel?: string
   destructive?: boolean
   loading?: boolean
   onConfirm: () => void
@@ -36,6 +38,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar",
   destructive,
   loading,
   onConfirm,
@@ -51,7 +54,7 @@ export function ConfirmDialog({
         {children && <div className="flex flex-col gap-3">{children}</div>}
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Cancelar
+            {cancelLabel}
           </Button>
           <Button
             variant={destructive ? "destructive" : "default"}
