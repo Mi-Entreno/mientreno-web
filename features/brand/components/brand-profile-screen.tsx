@@ -276,6 +276,7 @@ export function BrandProfileScreen() {
       //
       // No se apaga `completing`: la página se está yendo y reactivar el botón
       // sólo invita a un segundo alta que responde 409.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- navegación dura a propósito, ver arriba
       window.location.assign("/comercio")
     } catch {
       toast.error("Estamos teniendo un pequeño inconveniente. Intentá nuevamente en unos minutos.")
