@@ -28,6 +28,12 @@ interface ImageUploadFieldProps {
   onChange: (value: string) => void
   disabled?: boolean
   hint?: string
+  /**
+   * When set, picking a file does **not** upload it: the field shows the local
+   * preview and hands the file here (`null` on "Quitar"), and the caller
+   * uploads it later. For onboarding, where the upload endpoint cannot work yet.
+   */
+  onDefer?: (file: File | null) => void
 }
 
 /**
@@ -55,6 +61,7 @@ export function ImageUploadField({
   onChange,
   disabled,
   hint,
+  onDefer,
 }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -88,13 +95,19 @@ export function ImageUploadField({
     setProblem(null)
     setFailedToLoad(false)
     setProgress(0)
-    setPending(true)
 
     const objectUrl = URL.createObjectURL(file)
     setLocalPreview((current) => {
       if (current) URL.revokeObjectURL(current)
       return objectUrl
     })
+
+    if (onDefer) {
+      onDefer(file)
+      return
+    }
+
+    setPending(true)
 
     try {
       const url = await uploadAvatar(file, setProgress)
@@ -119,8 +132,11 @@ export function ImageUploadField({
     })
     setProblem(null)
     setFailedToLoad(false)
+    onDefer?.(null)
     onChange("")
   }
+
+  const hasPhoto = Boolean(value || localPreview)
 
   return (
     <div className="flex flex-col gap-2">
@@ -181,10 +197,10 @@ export function ImageUploadField({
               ) : (
                 <ImageUp className="size-4" />
               )}
-              {pending ? `Subiendo… ${progress}%` : value ? "Cambiar foto" : "Subir foto"}
+              {pending ? `Subiendo… ${progress}%` : hasPhoto ? "Cambiar foto" : "Subir foto"}
             </Button>
 
-            {value && !pending && (
+            {hasPhoto && !pending && (
               <Button
                 type="button"
                 variant="ghost"
